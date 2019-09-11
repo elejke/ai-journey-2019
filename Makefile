@@ -1,3 +1,5 @@
+SHELL         := /bin/bash
+
 BASE_PATH     := code
 ABS_BASE_PATH := $$(realpath .)/${BASE_PATH}
 IMAGE         := $$(jq -r ".image" ${BASE_PATH}/metadata.json)
@@ -29,6 +31,7 @@ destroy:
 	sudo docker rm tester
 
 submit:
-	cd ${ABS_BASE_PATH} && \
-	zip -r ../submissions/code_$$(date +%s%N | cut -b1-13).zip * && \
-	cd ..
+	pushd ${ABS_BASE_PATH} && \
+	zip -r code.zip * && \
+	popd && \
+	cp ${ABS_BASE_PATH}/code.zip submissions/.
