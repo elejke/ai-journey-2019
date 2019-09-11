@@ -1,6 +1,19 @@
 import random
 from flask import Flask, request, jsonify
 
+def task_class_number(task):
+    """ Function takes as an input a separate task from the list of tasks and output task class number using our own
+    taxonomy of them.
+
+    :param task: dict with keys: 'id', 'question', 'type', 'text', 'id'
+    :return: the number of the class of task in our own taxonomy
+    """
+
+    # TODO: To change numeration in case of discovery that 'id' doesn't match task class number in other types of test
+    return int(task['id'])
+
+
+
 def take_exam(tasks):
     answers = {}
     
