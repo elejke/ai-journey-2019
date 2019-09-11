@@ -70,10 +70,8 @@ class Client(object):
         self.out_path = out_path
         self.url = url
 
-        # create report folder
         # the name of the folder is the UNIX timestamp of the moment when class instance was created
         self._report_path = os.path.join(out_path, str(int(time.time() * 10 ** 6)))
-        os.makedirs(self._report_path, exist_ok=False)
 
         # read input files
         if os.path.isdir(in_dir):
@@ -82,11 +80,16 @@ class Client(object):
         else:
             raise ValueError("'in_dir' should be a directory!")
 
+        readiness_start_time = time.time()
         self._is_ready()
+        readiness_end_time = time.time()
+        self._readiness_time = readiness_end_time - readiness_start_time
 
     def _is_ready(self):
-        num_retries = 0
-        while num_retries < 600:
+        max_wait_time = 600
+        current_wait_time = 0
+        start_time = time.time()
+        while current_wait_time < max_wait_time:
             try:
                 response = requests.get(os.path.join(self.url, "ready"))
                 if response.status_code == 200:
@@ -95,7 +98,7 @@ class Client(object):
                 raise KeyboardInterrupt
             except:
                 time.sleep(1)
-                num_retries += 1
+                current_wait_time = time.time() - start_time
 
     def query(self, save=True, n_jobs=1) -> pd.DataFrame:
         """ Queries the endpoint with all the files specified in 'in_dir' folder.
@@ -115,13 +118,31 @@ class Client(object):
             return json.dumps(ask_endpoint(file, os.path.join(self.url, "take_exam")))
 
         # send each file to the endpoint
+        query_start_time = time.time()
         answers = Parallel(n_jobs=n_jobs)(delayed(get_one_answer)(file) for file in tqdm(self.filelist))
+        query_end_time = time.time()
+        query_time = query_end_time - query_start_time
 
         # put all answers to the dataframe
         answers = pd.DataFrame(answers, columns=["predictions"])
         answers["path"] = self.filelist
 
         if save:
+            # create report folder
+            os.makedirs(self._report_path, exist_ok=False)
+            # save answers
             answers.to_csv(os.path.join(self._report_path, "answers.csv"), index=False)
+            # save statistics
+            stats = {
+                "readiness_time": self._readiness_time,
+                "query_total_files": len(self.filelist),
+                "query_total_time": query_time,
+                "query_n_jobs": n_jobs,
+                "query_mean_latency": query_time / len(self.filelist) * n_jobs,
+                "query_rps": len(self.filelist) / query_time
+            }
+            with open(os.path.join(self._report_path, "stats.json"), "w") as f:
+                json.dump(stats, f)
+
 
         return answers
