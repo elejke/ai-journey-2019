@@ -1,7 +1,12 @@
 # ai-journey-2019
 AI Journey 2019
+
 # Algorithm
 
+
+# External data:
+
+1. Список слов с частотами и частями речи: http://dict.ruslang.ru/Freq2011.zip
 
 # Question taxonomy
 
