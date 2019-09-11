@@ -7,8 +7,6 @@ DATA_PATH     := ./data/check
 
 ###### END CHANGABLE ######
 
-SHELL         := /bin/bash
-
 ABS_BASE_PATH := $$(realpath .)/${BASE_PATH}
 IMAGE         := $$(jq -r ".image" ${BASE_PATH}/metadata.json)
 RUNNER        := $$(jq -r ".entry_point" ${BASE_PATH}/metadata.json)
@@ -38,7 +36,7 @@ destroy:
 	sudo docker rm tester
 
 submit:
-	pushd ${ABS_BASE_PATH} && \
+	cd ${ABS_BASE_PATH} && \
 	zip -r code.zip * && \
-	popd && \
-	cp ${ABS_BASE_PATH}/code.zip submissions/.
+	cd - && \
+	mv ${ABS_BASE_PATH}/code.zip submissions/.
