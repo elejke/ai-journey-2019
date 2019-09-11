@@ -1,10 +1,17 @@
+###### START CHANGABLE ######
+
+# path to the code
+BASE_PATH     := code
+# path to the data
+DATA_PATH     := ./data/check
+
+###### END CHANGABLE ######
+
 SHELL         := /bin/bash
 
-BASE_PATH     := code
 ABS_BASE_PATH := $$(realpath .)/${BASE_PATH}
 IMAGE         := $$(jq -r ".image" ${BASE_PATH}/metadata.json)
 RUNNER        := $$(jq -r ".entry_point" ${BASE_PATH}/metadata.json)
-DATA_PATH     := ./data/check
 
 all:
 	@echo "Please specify target"
