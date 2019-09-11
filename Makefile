@@ -42,3 +42,7 @@ submit:
 	zip -r code.zip * && \
 	cd - && \
 	mv ${ABS_BASE_PATH}/code.zip submissions/.
+	@if [ `stat --printf="%s" submissions/code.zip` -gt 21474836480 ]; \
+	then \
+		echo 'THE SUBMISSION IS TOO BIG. IT SHOULD BE LESS THAN 20GB.'; \
+	fi
