@@ -27,3 +27,8 @@ test:
 destroy:
 	sudo docker stop tester
 	sudo docker rm tester
+
+submit:
+	cd ${ABS_BASE_PATH} && \
+	zip -r ../submissions/code_$$(date +%s%N | cut -b1-13).zip * && \
+	cd ..
