@@ -86,7 +86,7 @@ class Client(object):
 
     def _is_ready(self):
         num_retries = 0
-        while num_retries < 300:
+        while num_retries < 600:
             try:
                 response = requests.get(os.path.join(self.url, "ready"))
                 if response.status_code == 200:
