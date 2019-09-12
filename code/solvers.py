@@ -3,11 +3,11 @@ import pandas as pd
 
 from solvers_utils import remove_additional, check_pair
 
-df_dict_full = pd.read_csv("../data/dictionaries/russian_1.5kk_words.txt", encoding="windows-1251", header=None)
+df_dict_full = pd.read_csv("../models/data/dictionaries/russian_1.5kk_words.txt", encoding="windows-1251", header=None)
 df_dict_full.columns = ["Lemma"]
 big_words_set = frozenset(df_dict_full["Lemma"].values)
 
-df_dict = pd.read_table("../data/dictionaries/freqrnc2011.csv")
+df_dict = pd.read_table("../models/data/dictionaries/freqrnc2011.csv")
 small_words_dict = df_dict.set_index("Lemma")[["Freq(ipm)"]].to_dict()["Freq(ipm)"]
 
 def solver_11_12(task):
@@ -33,36 +33,12 @@ def solver_11_12(task):
                         most_conf_word = word_
                         break
 
-            # key_ = list(task["solution"].keys())[0]
-
-            # print("Our answer: " + str(most_conf_word) + ", " + key_ + ": " + str(task["solution"][key_]))
-
-            # score = task["score"] * (task["solution"][key_] == most_conf_word)
-
-            # print("Score: " + str(score))
-
-            # return score
-
             return most_conf_word
 
-    elif "пропущена одна и та же буква":
+    else:
         ids = []
         for answer_ in task["question"]["choices"]:
-            if len(check_pair(*answer_["text"].split(", "))):
+            if len(check_pair(*answer_["text"].split(", "), big_words_set)):
                 ids.append(answer_['id'])
 
-        # key_ = list(task["solution"].keys())[0]
-
-        # print("Our answer: " + str(ids) + ", " + key_ + ": " + str(task["solution"][key_]))
-
-        # if key_ == "correct":
-        #     score = task["score"] * (task["solution"][key_] == ids)
-        # else:
-        #     score = task["score"] * (ids in task["solution"][key_])
-
-        # print("Score: " + str(score))
-
         return ids
-    else:
-        print("Unknown question type")
-        return None

@@ -3,21 +3,22 @@ import random
 from solvers import solver_11_12
 from flask import Flask, request, jsonify
 
+
 def take_exam(tasks):
     answers = {}
-    
+
     for task in tasks:
         question = task['question']
 
         # FIRST CUSTOM PART OF CODE:
-        if question['id'] in ["11", "12"]:
+        if task['id'] in ["11", "12"]:
             answer = solver_11_12(task)
-        
+
         elif question['type'] == 'choice':
             # pick a random answer
             choice = random.choice(question['choices'])
             answer = choice['id']
-            
+
         elif question['type'] == 'multiple_choice':
             # pick a random number of random choices
             min_choices = question.get('min_choices', 1)
@@ -28,8 +29,8 @@ def take_exam(tasks):
                 choice['id']
                 for choice in question['choices'][:n_choices]
             ]
-            
-            
+
+
         elif question['type'] == 'matching':
             # match choices at random
             random.shuffle(question['choices'])
@@ -37,14 +38,14 @@ def take_exam(tasks):
                 left['id']: choice['id']
                 for left, choice in zip(question['left'], question['choices'])
             }
-            
-            
+
+
         elif question['type'] == 'text':
             if question.get('restriction') == 'word':
                 # pick a random word from the text
                 words = [word for word in task['text'].split() if len(word) > 1]
                 answer = random.choice(words)
-            
+
             else:
                 # random text generated with https://fish-text.ru
                 answer = (
@@ -58,12 +59,12 @@ def take_exam(tasks):
                     'развития однозначно фиксирует необходимость существующих финансовых и '
                     'административных условий.'
                 )
-            
+
         else:
             raise RuntimeError('Unknown question type: {}'.format(question['type']))
-        
+
         answers[task['id']] = answer
-        
+
     return answers
 
 
