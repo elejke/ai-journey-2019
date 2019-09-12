@@ -25,6 +25,7 @@ run:
 		-p 8000:8000 \
 		--memory="16g" \
 		--memory-swap="16g" \
+		--cpus="4" \
 		--name="tester" \
 		${IMAGE} \
 		/bin/bash -c "cd /root/code && ${RUNNER}"
