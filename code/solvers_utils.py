@@ -1,5 +1,6 @@
 import re
 
+
 def remove_additional(word):
     additional_words = re.findall("\([\w\ ]+\)", word)
 
@@ -24,4 +25,3 @@ def check_pair(word_1, word_2, big_words_set):
         if word_2.replace("..", letter_) in big_words_set:
             letters_2.append(letter_)
     return list(set(letters_2).intersection(letters_1))
-
