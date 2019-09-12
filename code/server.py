@@ -71,9 +71,11 @@ def take_exam(tasks):
 
 app = Flask(__name__)
 
+
 @app.route('/ready')
 def http_ready():
     return 'OK'
+
 
 @app.route('/take_exam', methods=['POST'])
 def http_take_exam():
@@ -83,6 +85,7 @@ def http_take_exam():
     return jsonify({
         'answers': answers
     })
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000)
