@@ -15,8 +15,8 @@ def solver_11_12(task):
         letter_list = re.findall("буква [А-Яа-я]", task["text"])
 
         if len(letter_list):
-            bukva = letter_list[-1][-1].lower()
-            words_list = task["text"].replace("..", bukva).split("\n")[1:]
+            letter = letter_list[-1][-1].lower()
+            words_list = task["text"].replace("..", letter).split("\n")[1:]
             conf = 0.
             most_conf_word = None
             for word_ in words_list:
@@ -28,7 +28,7 @@ def solver_11_12(task):
             if conf == 0.:
                 for word_ in words_list:
                     word_ = remove_additional(word_)
-                    words_ = small_words_dict.intersection({word_})
+                    words_ = big_words_set.intersection({word_})
                     if len(words_):
                         most_conf_word = word_
                         break
