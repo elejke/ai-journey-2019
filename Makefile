@@ -48,3 +48,4 @@ submit:
 	then \
 		echo 'THE SUBMISSION IS TOO BIG. IT SHOULD BE LESS THAN 20GB.'; \
 	fi
+	mv submissions/code.zip submissions/$$(date +%s%N | cut -b1-13).zip
