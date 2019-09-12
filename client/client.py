@@ -86,7 +86,7 @@ class Client(object):
         self._readiness_time = readiness_end_time - readiness_start_time
 
     def _is_ready(self):
-        max_wait_time = 600
+        max_wait_time = 120
         current_wait_time = 0
         start_time = time.time()
         while current_wait_time < max_wait_time:
