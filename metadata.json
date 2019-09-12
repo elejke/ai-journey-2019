@@ -1,0 +1,4 @@
+{
+    "image": "sberbank/python",
+    "entry_point": "cd code && python server.py"
+}

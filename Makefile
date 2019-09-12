@@ -8,8 +8,8 @@ DATA_PATH     := ./data/check
 ###### END CHANGABLE ######
 
 ABS_BASE_PATH := $$(realpath .)/${BASE_PATH}
-IMAGE         := $$(jq -r ".image" ${BASE_PATH}/code/metadata.json)
-RUNNER        := $$(jq -r ".entry_point" ${BASE_PATH}/code/metadata.json)
+IMAGE         := $$(jq -r ".image" ${BASE_PATH}/metadata.json)
+RUNNER        := $$(jq -r ".entry_point" ${BASE_PATH}/metadata.json)
 
 all:
 	@echo "Please specify target"
@@ -20,15 +20,15 @@ predict: run test destroy
 run:
 	sudo docker run \
 		-d \
-		-v ${ABS_BASE_PATH}/code:/root/code \
-		-v ${ABS_BASE_PATH}/models:/root/models \
+		-v ${ABS_BASE_PATH}/code:/root/solution/code \
+		-v ${ABS_BASE_PATH}/models:/root/solution/models \
 		-p 8000:8000 \
 		--memory="16g" \
 		--memory-swap="16g" \
 		--cpus="4" \
 		--name="tester" \
 		${IMAGE} \
-		/bin/bash -c "cd /root/code && ${RUNNER}"
+		/bin/bash -c "cd /root/solution && ${RUNNER}"
 
 test:
 	cd client && \
@@ -41,7 +41,7 @@ destroy:
 
 submit:
 	cd ${ABS_BASE_PATH} && \
-	zip -r code.zip * && \
+	zip -r code.zip code models metadata.json -x *__pycache__* && \
 	cd - && \
 	mv ${ABS_BASE_PATH}/code.zip submissions/.
 	@if [ `stat --printf="%s" submissions/code.zip` -gt 21474836480 ]; \
