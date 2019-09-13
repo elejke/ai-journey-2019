@@ -13,8 +13,6 @@ from joblib import Parallel, delayed
 
 def ask_endpoint(file, endpoint) -> dict:
     """ Take the file and send it to the endpoint.
-    Prior to sending to the endpoint the image is converted to the base64 encoded string
-    in accordance with API specs.
     Args:
         file (str or dict): Path to the input file or already loaded json.
         endpoint (str): URL of the endpoint.
@@ -103,7 +101,7 @@ class Client(object):
             raise TimeoutError("Interrupting execution\n'/ready' endpoint is not ready" +
                                "for maximum allowed {:d} seconds!".format(max_wait_time))
 
-    def query(self, save=True, n_jobs=1) -> pd.DataFrame:
+    def query(self, n_jobs=1) -> str:
         """ Queries the endpoint with all the files specified in 'in_dir' folder.
         This method goes over the list of files, sends every of them to the specified endpoint and
         put all the results into one DataFrame.
@@ -111,10 +109,7 @@ class Client(object):
         If the json dict is nested then the values of the cells would be dicts themselves.
         In case of failure in one of the requests the corresponding line would contain all NaN.
         Args:
-            save (bool): Whether to save the results of the query or not.
             n_jobs (int): number of processes to use for querying.
-        Return:
-            Dataframe with the results of the requests for all the images.
         """
 
         def get_one_answer(file):
@@ -131,29 +126,30 @@ class Client(object):
         answers["prediction"] = answers["prediction"].apply(lambda x: json.loads(x))
         answers["path"] = self.filelist
 
-        if save:
-            # create report folder
-            os.makedirs(self._report_path, exist_ok=False)
-            # save raw answers
-            answers.to_csv(os.path.join(self._report_path, "raw_answers.csv"), index=False)
-            # save parsed answers
-            parsed_answers = pd.DataFrame(columns=["question_id", "prediction", "path"])
-            for _, row in answers.iterrows():
-                for k, v in row["prediction"]["answers"].items():
-                    parsed_answers.loc[len(parsed_answers)] = [int(k), v, row["path"]]
-            parsed_answers = parsed_answers.sort_values(by=["path", "question_id"]).reset_index(drop=True)
-            parsed_answers.to_csv(os.path.join(self._report_path, "parsed_answers.csv"), index=False)
-            # save statistics
-            stats = {
-                "readiness_time": self._readiness_time,
-                "query_total_files": len(self.filelist),
-                "query_total_time": query_time,
-                "query_n_jobs": n_jobs,
-                "query_mean_latency": query_time / len(self.filelist) * n_jobs,
-                "query_rps": len(self.filelist) / query_time
-            }
-            with open(os.path.join(self._report_path, "stats.json"), "w") as f:
-                json.dump(stats, f)
+        # create report folder
+        os.makedirs(self._report_path, exist_ok=False)
+        # save raw answers
+        answers.to_csv(os.path.join(self._report_path, "raw_answers.csv"), index=False)
+        # parse answers
+        parsed_answers = pd.DataFrame(columns=["path",
+                                               "question_id",
+                                               "prediction"])
+        for _, row in answers.iterrows():
+            for k, v in row["prediction"]["answers"].items():
+                parsed_answers.loc[len(parsed_answers)] = [row["path"], int(k), v]
+        # save parsed answers
+        parsed_answers = parsed_answers.sort_values(by=["path", "question_id"]).reset_index(drop=True)
+        parsed_answers.to_csv(os.path.join(self._report_path, "parsed_answers.csv"), index=False)
+        # save statistics
+        stats = {
+            "readiness_time": self._readiness_time,
+            "query_total_files": len(self.filelist),
+            "query_total_time": query_time,
+            "query_n_jobs": n_jobs,
+            "query_mean_latency": query_time / len(self.filelist) * n_jobs,
+            "query_rps": len(self.filelist) / query_time
+        }
+        with open(os.path.join(self._report_path, "stats.json"), "w") as f:
+            json.dump(stats, f)
 
-
-        return answers
+        return self._report_path

@@ -1,6 +1,9 @@
+import os
 import argparse
 
 from client import Client
+from utils import answers_enricher
+from metrics import get_all_metrics
 
 
 def parse_args():
@@ -33,4 +36,10 @@ if __name__ == "__main__":
 
     # query the endpoint for the results
     # answers will be saved to the specified path
-    answers = tester.query()
+    answers_folder = tester.query()
+
+    # add ground truth to the predicted data
+    _ = answers_enricher(os.path.join(answers_folder, "parsed_answers.csv"))
+
+    print(os.path.join(answers_folder, "parsed_answers.csv"))
+    _ = get_all_metrics(os.path.join(answers_folder, "parsed_answers.csv"))

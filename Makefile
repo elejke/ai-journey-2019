@@ -14,10 +14,13 @@ RUNNER        := $$(jq -r ".entry_point" ${BASE_PATH}/metadata.json)
 all:
 	@echo "Please specify target"
 
-predict: run test destroy
+predict: create predictor destroy
 	@echo "$@ is done!"
 
-run:
+evaluate: create evaluator destroy
+	@echo "$@ is done!"
+
+create:
 	sudo docker run \
 		-d \
 		-v ${ABS_BASE_PATH}/code:/root/solution/code \
@@ -30,9 +33,14 @@ run:
 		${IMAGE} \
 		/bin/bash -c "cd /root/solution && ${RUNNER}"
 
-test:
+predictor:
 	cd client && \
-	python sender.py --folder-path ../${DATA_PATH} --url http://localhost:8000 && \
+	python predictor.py --folder-path ../${DATA_PATH} --url http://localhost:8000 && \
+	cd ..
+
+evaluator:
+	cd client && \
+	python evaluator.py --folder-path ../${DATA_PATH} --url http://localhost:8000 && \
 	cd ..
 
 destroy:
