@@ -3,6 +3,9 @@ AI Journey 2019
 
 # Algorithm
 
+# Ideas:
+
+1. Автоматическая генерация сочинений: https://github.com/Omrigan/essay-writer
 
 # External data:
 
