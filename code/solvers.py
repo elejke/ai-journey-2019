@@ -17,36 +17,48 @@ small_words_dict = df_dict.set_index("Lemma")[["Freq(ipm)"]].to_dict()["Freq(ipm
 
 def solver_11_12(task):
     if "Выпишите слово" in task["text"]:
+        # find letter, that we need to insert into words
         letter_list = re.findall("буква [А-Яа-я]", task["text"])
-
+        # if no letter found:
         if len(letter_list):
-            letter = letter_list[-1][-1].lower()
+            letter_list = [letter_list[-1][-1].lower()]
+        else:
+            letter_list = list("абвгдеёжзийклмнопрстуфхцчшщъыьэюя")
+
+        conf = 0
+        answer = None
+        for letter in letter_list:
             words_list = task["text"].replace("..", letter).split("\n")[1:]
-            conf = 0.
-            most_conf_word = None
+            # check first dictionary and find the most confident word from the list
             for word_ in words_list:
                 word_ = remove_additional(word_)
                 temp_conf = small_words_dict.get(word_, -1.0)
                 if temp_conf > conf:
                     conf = temp_conf
-                    most_conf_word = word_
+                    answer = word_
+            # if no such form of word in small dictionary, check it in big one:
             if conf == 0.:
                 for word_ in words_list:
                     word_ = remove_additional(word_)
-                    words_ = big_words_set.intersection({word_})
-                    if len(words_):
-                        most_conf_word = word_
+                    if word_ in big_words_set:
+                        conf = 1.
+                        answer = word_
                         break
+        # if no words found in dictionaries, choose random word from list:
+        if not answer:
+            letter_to_insert = letter_list[0] if len(letter_list) == 1 else "и"
+            answer = random.choice(task["text"].replace("..", letter_to_insert).split("\n")[1:])
 
-            return most_conf_word
-
+    elif "пропущена одна и та же буква":
+        answer = []
+        for choices_ in task["question"]["choices"]:
+            if len(check_pair(*choices_["text"].split(", "), big_words_set)):
+                answer.append(choices_['id'])
     else:
-        ids = []
-        for answer_ in task["question"]["choices"]:
-            if len(check_pair(*answer_["text"].split(", "), big_words_set)):
-                ids.append(answer_['id'])
+        # unknown class of task:
+        answer = "слово"
 
-        return ids
+    return answer
 
 
 df_dict_orfoepicheskiy = pd.read_csv("../models/data/dictionaries/orfoepicheckiy_ege2019.txt",
