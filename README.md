@@ -8,6 +8,8 @@ AI Journey 2019
 
 1. Список слов с частотами и частями речи: http://dict.ruslang.ru/Freq2011.zip
 
+2. Список русских слов и их форм (1.5 млн записей): https://github.com/danakt/russian-words/blob/master/russian.txt
+
 # Question taxonomy
 
     1. Прочитайте текст и выберите предложения (2, несколько, ...) отражающих суть текста
