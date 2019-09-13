@@ -41,5 +41,5 @@ if __name__ == "__main__":
     # add ground truth to the predicted data
     _ = answers_enricher(os.path.join(answers_folder, "parsed_answers.csv"))
 
-    print(os.path.join(answers_folder, "parsed_answers.csv"))
+    # compute metrics
     _ = get_all_metrics(os.path.join(answers_folder, "parsed_answers.csv"))

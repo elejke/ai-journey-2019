@@ -16,7 +16,7 @@ def answers_enricher(path):
         with open(file, "r") as f:
             file_data = json.load(f)
         for question in file_data["tasks"]:
-            col_id = (parsed_answers["path"] == file) & (parsed_answers["question_id"] == int(question["id"]))
+            col_id = (parsed_answers["path"] == file) & (parsed_answers["id"] == int(question["id"]))
             parsed_answers.loc[col_id, "type"] = question["question"]["type"]
             parsed_answers.loc[col_id, "source"] = question["meta"]["source"]
             parsed_answers.loc[col_id, "score"] = float(question["score"])
@@ -26,7 +26,7 @@ def answers_enricher(path):
                 parsed_answers.loc[col_id, "gt_variants"] = str(question["solution"]["correct_variants"])
             else:
                 pass
-    parsed_answers = parsed_answers.sort_values(by=["path", "question_id"]).reset_index(drop=True)
+    parsed_answers = parsed_answers.sort_values(by=["path", "id"]).reset_index(drop=True)
     parsed_answers.to_csv(path, index=False)
 
     return parsed_answers

@@ -77,7 +77,7 @@ def eval_row(row):
     elif row["type"] == "matching":
         return eval_matching(row)
     elif row["type"] == "text":
-        if int(row["question_id"]) != 27:
+        if int(row["id"]) != 27:
             return eval_text_word(row)
         else:
             return np.NaN

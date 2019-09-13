@@ -132,13 +132,13 @@ class Client(object):
         answers.to_csv(os.path.join(self._report_path, "raw_answers.csv"), index=False)
         # parse answers
         parsed_answers = pd.DataFrame(columns=["path",
-                                               "question_id",
+                                               "id",
                                                "prediction"])
         for _, row in answers.iterrows():
             for k, v in row["prediction"]["answers"].items():
                 parsed_answers.loc[len(parsed_answers)] = [row["path"], int(k), v]
         # save parsed answers
-        parsed_answers = parsed_answers.sort_values(by=["path", "question_id"]).reset_index(drop=True)
+        parsed_answers = parsed_answers.sort_values(by=["path", "id"]).reset_index(drop=True)
         parsed_answers.to_csv(os.path.join(self._report_path, "parsed_answers.csv"), index=False)
         # save statistics
         stats = {
