@@ -3,12 +3,19 @@ AI Journey 2019
 
 # Algorithm
 
+# Ideas:
+
+1. Автоматическая генерация сочинений: https://github.com/Omrigan/essay-writer
 
 # External data:
 
 1. Список слов с частотами и частями речи: http://dict.ruslang.ru/Freq2011.zip
 
 2. Список русских слов и их форм (1.5 млн записей): https://github.com/danakt/russian-words/blob/master/russian.txt
+
+3. Орфоэпические словари: 
+    * https://bingoschool.ru/news/orfoepicheskij-slovar-dlya-ege-ot-fipi/
+    * https://bingoschool.ru/news/pravilnoe-udarenie-v-slovax/
 
 # Question taxonomy
 
