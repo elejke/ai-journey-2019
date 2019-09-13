@@ -113,6 +113,7 @@ df_dict_orfoepicheskiy = pd.read_csv("../models/data/dictionaries/orfoepicheckiy
                                      header=None,
                                      names=["word"])
 df_dict_orfoepicheskiy.drop_duplicates(inplace=True)
+df_dict_orfoepicheskiy["lowercase"] = df_dict_orfoepicheskiy["word"].str.lower()
 
 
 def solver_4(task):
@@ -125,10 +126,26 @@ def solver_4(task):
         answer = random.choice(words).lower()
     else:
         words = np.array(text[start_index + len(needle):].split("\n")[:5])
-        is_met = np.isin(words, df_dict_orfoepicheskiy)
-        if len(is_met):
-            answer = random.choice(words[~is_met]).split()[0].lower()
-        else:
+        for i in range(len(words)):
+            subwords = words[i].split()
+            subwords = list(filter(lambda x: x.lower() != x, subwords))
+            words[i] = subwords[0]
+        is_met = np.isin(words, df_dict_orfoepicheskiy["word"])
+        # if every word is met
+        if sum(~is_met) == 0:
             # pick a random word from answers
             answer = random.choice(words).split()[0].lower()
+        # if one word is not met
+        elif sum(~is_met) == 1:
+            answer = words[~is_met][0].lower()
+        # if more words are not met
+        else:
+            is_met_in_lowercase = np.isin(list(map(str.lower, words)), df_dict_orfoepicheskiy["lowercase"])
+            wrong_stress = np.logical_xor(is_met, is_met_in_lowercase)
+            # if there are words that are not met in original dict but met in lowercase dict
+            # then it means that these words have wrong stress
+            if sum(wrong_stress) != 0:
+                answer = random.choice(words[wrong_stress]).lower()
+            else:
+                answer = random.choice(words[~is_met]).lower()
     return answer
