@@ -99,6 +99,9 @@ class Client(object):
             except:
                 time.sleep(1)
                 current_wait_time = time.time() - start_time
+        if current_wait_time >= max_wait_time:
+            raise TimeoutError("Interrupting execution\n'/ready' endpoint is not ready" +
+                               "for maximum allowed {:d} seconds!".format(max_wait_time))
 
     def query(self, save=True, n_jobs=1) -> pd.DataFrame:
         """ Queries the endpoint with all the files specified in 'in_dir' folder.
@@ -124,14 +127,22 @@ class Client(object):
         query_time = query_end_time - query_start_time
 
         # put all answers to the dataframe
-        answers = pd.DataFrame(answers, columns=["predictions"])
+        answers = pd.DataFrame(answers, columns=["prediction"])
+        answers["prediction"] = answers["prediction"].apply(lambda x: json.loads(x))
         answers["path"] = self.filelist
 
         if save:
             # create report folder
             os.makedirs(self._report_path, exist_ok=False)
-            # save answers
-            answers.to_csv(os.path.join(self._report_path, "answers.csv"), index=False)
+            # save raw answers
+            answers.to_csv(os.path.join(self._report_path, "raw_answers.csv"), index=False)
+            # save parsed answers
+            parsed_answers = pd.DataFrame(columns=["question_id", "prediction", "path"])
+            for _, row in answers.iterrows():
+                for k, v in row["prediction"]["answers"].items():
+                    parsed_answers.loc[len(parsed_answers)] = [int(k), v, row["path"]]
+            parsed_answers = parsed_answers.sort_values(by=["path", "question_id"]).reset_index(drop=True)
+            parsed_answers.to_csv(os.path.join(self._report_path, "parsed_answers.csv"), index=False)
             # save statistics
             stats = {
                 "readiness_time": self._readiness_time,
