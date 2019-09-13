@@ -10,6 +10,10 @@ AI Journey 2019
 
 2. Список русских слов и их форм (1.5 млн записей): https://github.com/danakt/russian-words/blob/master/russian.txt
 
+3. Орфоэпические словари: 
+    * https://bingoschool.ru/news/orfoepicheskij-slovar-dlya-ege-ot-fipi/
+    * https://bingoschool.ru/news/pravilnoe-udarenie-v-slovax/
+
 # Question taxonomy
 
     1. Прочитайте текст и выберите предложения (2, несколько, ...) отражающих суть текста
