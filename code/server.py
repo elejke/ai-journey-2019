@@ -20,8 +20,6 @@ def take_exam(tasks):
         elif task['id'] in ["15"]:
             answer = solver_15(task)
 
-
-
         elif question['type'] == 'choice':
             # pick a random answer
             choice = random.choice(question['choices'])
