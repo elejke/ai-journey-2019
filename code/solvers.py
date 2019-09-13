@@ -82,5 +82,5 @@ def solver_4(task):
             answer = random.choice(words[~is_met]).split()[0].lower()
         else:
             # pick a random word from answers
-            answer = random.choice(words).lower()
+            answer = random.choice(words).split()[0].lower()
     return answer
