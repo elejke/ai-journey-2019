@@ -67,6 +67,7 @@ class Client(object):
         self.in_dir = in_dir
         self.out_path = out_path
         self.url = url
+        self.max_wait_time_ready = 120
 
         # the name of the folder is the UNIX timestamp of the moment when class instance was created
         self._report_path = os.path.join(out_path, str(int(time.time() * 10 ** 6)))
@@ -84,10 +85,11 @@ class Client(object):
         self._readiness_time = readiness_end_time - readiness_start_time
 
     def _is_ready(self):
-        max_wait_time = 120
+        """ Check that the endpoint is ready to receive income messages.
+        """
         current_wait_time = 0
         start_time = time.time()
-        while current_wait_time < max_wait_time:
+        while current_wait_time < self.max_wait_time_ready:
             try:
                 response = requests.get(os.path.join(self.url, "ready"))
                 if response.status_code == 200:
@@ -97,9 +99,9 @@ class Client(object):
             except:
                 time.sleep(1)
                 current_wait_time = time.time() - start_time
-        if current_wait_time >= max_wait_time:
+        if current_wait_time >= self.max_wait_time_ready:
             raise TimeoutError("Interrupting execution\n'/ready' endpoint is not ready" +
-                               "for maximum allowed {:d} seconds!".format(max_wait_time))
+                               "for maximum allowed {:d} seconds!".format(self.max_wait_time_ready))
 
     def query(self, n_jobs=1) -> str:
         """ Queries the endpoint with all the files specified in 'in_dir' folder.
