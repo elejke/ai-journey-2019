@@ -81,7 +81,6 @@ def solver_4(task):
         if len(is_met):
             answer = random.choice(words[~is_met]).split()[0].lower()
         else:
-            # pick a random word from the text
-            words = [word for word in text.split() if len(word) > 1]
+            # pick a random word from answers
             answer = random.choice(words).lower()
     return answer
