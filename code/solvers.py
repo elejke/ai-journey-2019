@@ -16,7 +16,8 @@ small_words_dict = df_dict.set_index("Lemma")[["Freq(ipm)"]].to_dict()["Freq(ipm
 
 
 def solver_11_12(task):
-    if "Выпишите слово" in task["text"]:
+    #     if "Выпишите слово" in task["text"]:
+    if not task["question"]["type"] == "multiple_choice":
         # find letter, that we need to insert into words
         letter_list = re.findall("буква [А-Яа-я]", task["text"])
         # if no letter found:
@@ -49,14 +50,11 @@ def solver_11_12(task):
             letter_to_insert = letter_list[0] if len(letter_list) == 1 else "и"
             answer = random.choice(task["text"].replace("..", letter_to_insert).split("\n")[1:])
 
-    elif "пропущена одна и та же буква":
+    else:
         answer = []
         for choices_ in task["question"]["choices"]:
             if len(check_pair(*choices_["text"].split(", "), big_words_set)):
                 answer.append(choices_['id'])
-    else:
-        # unknown class of task:
-        answer = "слово"
 
     return answer
 
