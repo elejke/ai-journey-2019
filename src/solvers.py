@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 from solvers_utils import remove_additional, check_pair, repair_words, split_task_and_text
-from src.bert_embedder import get_features
+from bert_embedder import get_features
 from sklearn.metrics import pairwise_distances
 
 

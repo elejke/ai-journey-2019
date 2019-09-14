@@ -4,12 +4,12 @@ from __future__ import print_function
 import collections
 import numpy as np
 import tensorflow as tf
-from src.bert import modeling
-from src.bert import tokenization
+from bert import modeling
+from bert import tokenization
 import logging
 logging.getLogger("tf").setLevel(logging.ERROR)
 
-BERT_PRETRAINED_DIR = '/home/anzo/Yandex.Disk/DataScience/sdsj2019/rubert_cased_L-12_H-768_A-12_v2'
+BERT_PRETRAINED_DIR = 'models/data/rubert_cased_L-12_H-768_A-12_v2'
 TPU_ADDRESS = ''
 LAYERS = [-1, -2]
 NUM_TPU_CORES = 8
