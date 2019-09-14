@@ -13,8 +13,6 @@ from joblib import Parallel, delayed
 
 def ask_endpoint(file, endpoint) -> dict:
     """ Take the file and send it to the endpoint.
-    Prior to sending to the endpoint the image is converted to the base64 encoded string
-    in accordance with API specs.
     Args:
         file (str or dict): Path to the input file or already loaded json.
         endpoint (str): URL of the endpoint.
@@ -69,9 +67,10 @@ class Client(object):
         self.in_dir = in_dir
         self.out_path = out_path
         self.url = url
+        self.max_wait_time_ready = 120
 
         # the name of the folder is the UNIX timestamp of the moment when class instance was created
-        self._report_path = os.path.join(out_path, str(int(time.time() * 10 ** 6)))
+        self._report_path = os.path.join(out_path, str(int(time.time() * 10 ** 6)) + "_" + self.in_dir.split("/")[-1])
 
         # read input files
         if os.path.isdir(in_dir):
@@ -86,10 +85,11 @@ class Client(object):
         self._readiness_time = readiness_end_time - readiness_start_time
 
     def _is_ready(self):
-        max_wait_time = 120
+        """ Check that the endpoint is ready to receive income messages.
+        """
         current_wait_time = 0
         start_time = time.time()
-        while current_wait_time < max_wait_time:
+        while current_wait_time < self.max_wait_time_ready:
             try:
                 response = requests.get(os.path.join(self.url, "ready"))
                 if response.status_code == 200:
@@ -99,8 +99,11 @@ class Client(object):
             except:
                 time.sleep(1)
                 current_wait_time = time.time() - start_time
+        if current_wait_time >= self.max_wait_time_ready:
+            raise TimeoutError("Interrupting execution\n'/ready' endpoint is not ready" +
+                               "for maximum allowed {:d} seconds!".format(self.max_wait_time_ready))
 
-    def query(self, save=True, n_jobs=1) -> pd.DataFrame:
+    def query(self, n_jobs=1) -> str:
         """ Queries the endpoint with all the files specified in 'in_dir' folder.
         This method goes over the list of files, sends every of them to the specified endpoint and
         put all the results into one DataFrame.
@@ -108,10 +111,7 @@ class Client(object):
         If the json dict is nested then the values of the cells would be dicts themselves.
         In case of failure in one of the requests the corresponding line would contain all NaN.
         Args:
-            save (bool): Whether to save the results of the query or not.
             n_jobs (int): number of processes to use for querying.
-        Return:
-            Dataframe with the results of the requests for all the images.
         """
 
         def get_one_answer(file):
@@ -124,25 +124,34 @@ class Client(object):
         query_time = query_end_time - query_start_time
 
         # put all answers to the dataframe
-        answers = pd.DataFrame(answers, columns=["predictions"])
+        answers = pd.DataFrame(answers, columns=["prediction"])
+        answers["prediction"] = answers["prediction"].apply(lambda x: json.loads(x))
         answers["path"] = self.filelist
 
-        if save:
-            # create report folder
-            os.makedirs(self._report_path, exist_ok=False)
-            # save answers
-            answers.to_csv(os.path.join(self._report_path, "answers.csv"), index=False)
-            # save statistics
-            stats = {
-                "readiness_time": self._readiness_time,
-                "query_total_files": len(self.filelist),
-                "query_total_time": query_time,
-                "query_n_jobs": n_jobs,
-                "query_mean_latency": query_time / len(self.filelist) * n_jobs,
-                "query_rps": len(self.filelist) / query_time
-            }
-            with open(os.path.join(self._report_path, "stats.json"), "w") as f:
-                json.dump(stats, f)
+        # create report folder
+        os.makedirs(self._report_path, exist_ok=False)
+        # save raw answers
+        answers.to_csv(os.path.join(self._report_path, "raw_answers.csv"), index=False)
+        # parse answers
+        parsed_answers = pd.DataFrame(columns=["path",
+                                               "id",
+                                               "prediction"])
+        for _, row in answers.iterrows():
+            for k, v in row["prediction"]["answers"].items():
+                parsed_answers.loc[len(parsed_answers)] = [row["path"], int(k), v]
+        # save parsed answers
+        parsed_answers = parsed_answers.sort_values(by=["path", "id"]).reset_index(drop=True)
+        parsed_answers.to_csv(os.path.join(self._report_path, "parsed_answers.csv"), index=False)
+        # save statistics
+        stats = {
+            "readiness_time": self._readiness_time,
+            "query_total_files": len(self.filelist),
+            "query_total_time": query_time,
+            "query_n_jobs": n_jobs,
+            "query_mean_latency": query_time / len(self.filelist) * n_jobs,
+            "query_rps": len(self.filelist) / query_time
+        }
+        with open(os.path.join(self._report_path, "stats.json"), "w") as f:
+            json.dump(stats, f)
 
-
-        return answers
+        return self._report_path

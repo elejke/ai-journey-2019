@@ -1,6 +1,6 @@
 import random
 
-from solvers import solver_11_12
+from solvers import solver_11_12, solver_4, solver_10, solver_15
 from flask import Flask, request, jsonify
 
 
@@ -10,9 +10,16 @@ def take_exam(tasks):
     for task in tasks:
         question = task['question']
 
-        # FIRST CUSTOM PART OF CODE:
         if task['id'] in ["11", "12"]:
             answer = solver_11_12(task)
+        elif task['id'] in ["4"]:
+            answer = solver_4(task)
+        elif task['id'] in ["10"]:
+            answer = solver_10(task)
+        elif task['id'] in ["11", "12"]:
+            answer = solver_11_12(task)
+        elif task['id'] in ["15"]:
+            answer = solver_15(task)
 
         elif question['type'] == 'choice':
             # pick a random answer
@@ -30,7 +37,6 @@ def take_exam(tasks):
                 for choice in question['choices'][:n_choices]
             ]
 
-
         elif question['type'] == 'matching':
             # match choices at random
             random.shuffle(question['choices'])
@@ -38,7 +44,6 @@ def take_exam(tasks):
                 left['id']: choice['id']
                 for left, choice in zip(question['left'], question['choices'])
             }
-
 
         elif question['type'] == 'text':
             if question.get('restriction') == 'word':
@@ -70,9 +75,11 @@ def take_exam(tasks):
 
 app = Flask(__name__)
 
+
 @app.route('/ready')
 def http_ready():
     return 'OK'
+
 
 @app.route('/take_exam', methods=['POST'])
 def http_take_exam():
@@ -82,6 +89,7 @@ def http_take_exam():
     return jsonify({
         'answers': answers
     })
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000)
