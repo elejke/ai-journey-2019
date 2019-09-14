@@ -13,7 +13,6 @@ def take_exam(tasks):
         # FIRST CUSTOM PART OF CODE:
         if task['id'] in ["11", "12"]:
             answer = solver_11_12(task)
-
         elif task['id'] in ["10"]:
             answer = solver_10(task)
         elif task['id'] in ["4"]:

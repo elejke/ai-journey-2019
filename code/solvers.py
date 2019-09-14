@@ -24,12 +24,12 @@ def solver_10(task):
         for choice_ in task["question"]["choices"]:
             if ";" in choice_["text"]:
                 sep = "; "
-            elif "." in choice_["text"].replace("..", "@").replace("...", "@"):
+            elif "." in choice_["text"].replace("..", "@").replace("...", "@").replace(".. ", "@"):
                 sep = ". "
             else:
                 sep = ", "
 
-            if len(repair_words(choice_["text"].replace("..", "@").replace("...", "@").split(sep),
+            if len(repair_words(choice_["text"].replace("..", "@").replace(".. ", "@").replace("...", "@").split(sep),
                                 big_words_set, False)):
                 answers.append(choice_["id"])
 
@@ -39,12 +39,13 @@ def solver_10(task):
         for choice_ in task["text"].split("\n")[1:]:
             if ";" in choice_:
                 sep = "; "
-            elif "." in choice_.replace("..", "@").replace("...", "@"):
+            elif "." in choice_.replace("..", "@").replace("...", "@").replace(".. ", "@"):
                 sep = ". "
             else:
                 sep = ", "
 
-            letters = repair_words(choice_.replace("..", "@").replace("...", "@").split(sep), big_words_set, False)
+            letters = repair_words(choice_.replace("..", "@").replace("...", "@").replace(".. ", "@").split(sep),
+                                   big_words_set, False)
             #             print(letters)
             if len(letters):
                 letter_ = random.choice(letters)
@@ -54,7 +55,7 @@ def solver_10(task):
                 return answer
 
         letter_ = random.choice(list("абвгдеёжзийклмнопрстуфхцчшщъыьэюя"))
-        answer = "".join(choice_.replace("..", letter_).replace("...", letter_).split(sep))
+        answer = "".join(choice_.replace("..", letter_).replace("...", letter_).replace(".. ", letter_).split(sep))
         return answer
 
 
