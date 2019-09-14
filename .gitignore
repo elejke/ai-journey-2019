@@ -2,7 +2,10 @@
 .idea
 .DS_Store
 
-models/
+models/*
+!models/data/
+models/data/*
+!models/data/dictionaries/
 submissions/
 
 # Byte-compiled / optimized / DLL files
