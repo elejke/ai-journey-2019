@@ -23,7 +23,7 @@ evaluate: create evaluator destroy
 create:
 	sudo docker run \
 		-d \
-		-v ${ABS_BASE_PATH}/code:/root/solution/code \
+		-v ${ABS_BASE_PATH}/src:/root/solution/src \
 		-v ${ABS_BASE_PATH}/models:/root/solution/models \
 		-p 8000:8000 \
 		--memory="16g" \
@@ -49,11 +49,11 @@ destroy:
 
 submit:
 	cd ${ABS_BASE_PATH} && \
-	zip -r code.zip code models metadata.json -x *__pycache__* && \
+	zip -r src.zip code models metadata.json -x *__pycache__* && \
 	cd - && \
-	mv ${ABS_BASE_PATH}/code.zip submissions/.
-	@if [ `stat --printf="%s" submissions/code.zip` -gt 21474836480 ]; \
+	mv ${ABS_BASE_PATH}/src.zip submissions/.
+	@if [ `stat --printf="%s" submissions/src.zip` -gt 21474836480 ]; \
 	then \
 		echo 'THE SUBMISSION IS TOO BIG. IT SHOULD BE LESS THAN 20GB.'; \
 	fi
-	mv submissions/code.zip submissions/$$(date +%s%N | cut -b1-13).zip
+	mv submissions/src.zip submissions/$$(date +%s%N | cut -b1-13).zip
