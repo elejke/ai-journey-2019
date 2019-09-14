@@ -1,6 +1,6 @@
 FROM kaggle/python
 
-RUN pip install tqdm pymystem3
+RUN pip install tqdm pymystem3 tensorflow
 RUN pip install dawg https://github.com/kmike/pymorphy2/archive/master.zip pymorphy2-dicts-ru
 RUN pip install -U pymorphy2-dicts-ru
 

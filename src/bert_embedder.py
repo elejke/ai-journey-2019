@@ -9,7 +9,7 @@ from bert import tokenization
 import logging
 logging.getLogger("tf").setLevel(logging.ERROR)
 
-BERT_PRETRAINED_DIR = 'models/data/rubert_cased_L-12_H-768_A-12_v2'
+BERT_PRETRAINED_DIR = '../models/data/rubert_cased_L-12_H-768_A-12_v2'
 TPU_ADDRESS = ''
 LAYERS = [-1, -2]
 NUM_TPU_CORES = 8
