@@ -1,11 +1,13 @@
-import re
+import re, sys, logging
 import random
 import string
 
 import numpy as np
 import pandas as pd
 
-from solvers_utils import remove_additional, check_pair, repair_words
+from solvers_utils import remove_additional, check_pair, repair_words, split_task_and_text
+from src.bert_embedder import get_features
+from sklearn.metrics import pairwise_distances
 
 
 df_dict_full = pd.read_csv("../models/data/dictionaries/russian_1.5kk_words.txt", encoding="windows-1251", header=None)
@@ -14,6 +16,33 @@ big_words_set = frozenset(df_dict_full["Lemma"].values)
 
 df_dict = pd.read_table("../models/data/dictionaries/freqrnc2011.csv")
 small_words_dict = df_dict.set_index("Lemma")[["Freq(ipm)"]].to_dict()["Freq(ipm)"]
+
+
+def solver_1(task, emb_size=100, metric='cosine'):
+    question, text = split_task_and_text(task['text'])
+
+    if 'кажите два предложения' in question:
+        n_answers = 2
+    else:
+        n_answers = 1
+    logging.debug('N answers: {}'.format(n_answers))
+
+    logging.disable(sys.maxsize)
+    text_emb = get_features([text], emb_size)
+    text_emb = np.mean(list(text_emb.values()), axis=0)
+
+    answers_emb = [get_features([choice['text']], emb_size)
+                   for choice in task['question']['choices']]
+    answers_emb = np.array([np.mean(list(answer_emb.values()), axis=0)
+                            for answer_emb in answers_emb])
+    logging.disable(logging.NOTSET)
+
+    dist = pairwise_distances([text_emb], answers_emb, metric)[0]
+    logging.debug('Distances: {}'.format(dist))
+
+    answer = np.argsort(dist)[:n_answers] + 1
+
+    return answer.astype(str).tolist()
 
 
 def solver_10(task):

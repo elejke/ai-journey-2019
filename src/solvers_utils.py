@@ -73,3 +73,37 @@ def repair_words(words, big_words_set, return_repaired=True):
 
     else:
         return letters
+
+
+def split_task_and_text(task_text):
+    """Split initial task text to the question and actual text fragment. Using texts' sentence counters - (k).
+    For example, passing the next text:
+
+        Прочитайте текст и выполните следующее задание.(1) В некоторых моделях современных автомобилей раскрытие подушек
+        безопасности при непристёгнутых ремнях автоматически блокируется.(2) Дело в том, что срабатывание подушек,
+        происходящее с огромной скоростью, сродни сильному удару.
+
+    Split it to:
+
+        Прочитайте текст и выполните следующее задание. Укажите два предложения, в которых верно передана главная
+        информация, содержащаяся в тексте.Запишите номера этих предложений.
+
+    and
+
+        (1) В некоторых моделях современных автомобилей раскрытие подушек
+        безопасности при непристёгнутых ремнях автоматически блокируется.(2) Дело в том, что срабатывание подушек,
+        происходящее с огромной скоростью, сродни сильному удару.
+
+    :param task_text: Input text
+    :return : tuple(Task formulation, Referenced text of the task)
+    """
+
+    formulation = []
+    text = []
+    for sentence in task_text.split('.'):
+        if re.match(r'^\s*\(\d+\)', sentence):
+            text.append(sentence)
+        else:
+            formulation.append(sentence)
+
+    return '.'.join(formulation), '.'.join(text)
