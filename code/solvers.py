@@ -1,5 +1,6 @@
 import re
 import random
+import string
 
 import numpy as np
 import pandas as pd
@@ -110,9 +111,39 @@ def solver_11_12(task):
     return answer
 
 
-df_dict_orfoepicheskiy = pd.read_csv("../models/data/dictionaries/orfoepicheckiy_ege2019.txt",
-                                     header=None,
-                                     names=["word"])
+def solver_15(task):
+    text = task["text"]
+    questions, options = text.split("\n")
+    if re.match("^.*\sН[^нН]*$", questions):
+        missed_str = "н"
+    else:
+        missed_str = "нн"
+
+    options = options.translate(str.maketrans('', '', string.punctuation[:7] + string.punctuation[9:])).split()
+
+    possible_answers = {}
+    for option in options:
+        if re.match("^[а-яА-ЯёЁ]*\(\d+\)[а-яА-ЯёЁ]*$", option):
+            number = option.split("(")[1].split(")")[0]
+            variants = (option.split("(")[0] + missed_str + option.split(")")[1]).lower()
+            possible_answers[number] = variants
+
+    answers = []
+    for k in possible_answers:
+        if possible_answers[k] in big_words_set:
+            answers.append(k)
+
+    return answers
+
+
+df_dict_orfoepicheskiy = pd.concat([
+    pd.read_csv("../models/data/dictionaries/orfoepicheckiy_ege2019.txt",
+                header=None,
+                names=["word"]),
+    pd.read_csv("../models/data/dictionaries/orfoepicheckiy_automatic_povtoru.txt",
+                header=None,
+                names=["word"])
+], ignore_index=True)
 df_dict_orfoepicheskiy.drop_duplicates(inplace=True)
 df_dict_orfoepicheskiy["lowercase"] = df_dict_orfoepicheskiy["word"].str.lower()
 

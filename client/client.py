@@ -70,7 +70,7 @@ class Client(object):
         self.max_wait_time_ready = 120
 
         # the name of the folder is the UNIX timestamp of the moment when class instance was created
-        self._report_path = os.path.join(out_path, str(int(time.time() * 10 ** 6)))
+        self._report_path = os.path.join(out_path, str(int(time.time() * 10 ** 6)) + "_" + self.in_dir.split("/")[-1])
 
         # read input files
         if os.path.isdir(in_dir):
