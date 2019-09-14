@@ -6,6 +6,7 @@ AI Journey 2019
 # Ideas:
 
 1. Автоматическая генерация сочинений: https://github.com/Omrigan/essay-writer
+2. Список возможных проблем для сочинения разделенных по темам: http://ege-soch.ru/temy-sochinenij-ege-po-russkomu-yazy-ku/
 
 # External data:
 
