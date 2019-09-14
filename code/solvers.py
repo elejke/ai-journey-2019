@@ -113,7 +113,8 @@ def solver_11_12(task):
 
 def solver_15(task):
     text = task["text"]
-    questions, options = text.split("\n")
+    _splits = text.split("\n")
+    questions, options = _splits[0], _splits[1]
     if re.match("^.*\sН[^нН]*$", questions):
         missed_str = "н"
     else:
@@ -132,7 +133,8 @@ def solver_15(task):
     for k in possible_answers:
         if possible_answers[k] in big_words_set:
             answers.append(k)
-
+    if len(answers) == 0:
+        answers.append(random.choice(list(possible_answers.keys())))
     return answers
 
 
