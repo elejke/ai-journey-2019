@@ -1,6 +1,9 @@
-import re, sys, logging
+import re
+import sys
+import regex
 import random
 import string
+import logging
 
 import numpy as np
 import pandas as pd
@@ -211,4 +214,30 @@ def solver_4(task):
                 answer = random.choice(words[wrong_stress]).lower()
             else:
                 answer = random.choice(words[~is_met]).lower()
+    return answer
+
+
+def solver_25(task):
+    text = task["text"]
+    boundaries = regex.search("\s\d+[\p{Pd}−]\d+", text)
+    if boundaries:
+        boundaries = re.split("\D", boundaries.group().strip())
+        start_sentence_num = int(boundaries[0])
+        end_sentence_num = int(boundaries[1])
+        min_choices = task["question"].get("min_choices", 1)
+        max_choices = task["question"].get("max_choices", end_sentence_num - start_sentence_num + 1)
+        n_choices = random.randint(min_choices, max_choices)
+        answer = np.random.choice(list(range(start_sentence_num, end_sentence_num + 1)),
+                                  replace=False,
+                                  size=n_choices).astype(str).tolist()
+    else:
+        choices = task["question"]["choices"]
+        min_choices = task["question"].get("min_choices", 1)
+        max_choices = task["question"].get("max_choices", len(choices))
+        n_choices = random.randint(min_choices, max_choices)
+        random.shuffle(choices)
+        answer = [
+            choice["id"]
+            for choice in choices[:n_choices]
+        ]
     return answer
