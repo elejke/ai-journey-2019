@@ -3,7 +3,7 @@ import argparse
 
 from client import Client
 from utils import answers_enricher
-from metrics import get_all_metrics
+from metrics import get_all_metrics, get_aggregative_metrics
 
 
 def parse_args():
@@ -41,5 +41,8 @@ if __name__ == "__main__":
     # add ground truth to the predicted data
     _ = answers_enricher(os.path.join(answers_folder, "parsed_answers.csv"))
 
-    # compute metrics
+    # compute row-wise metrics
     _ = get_all_metrics(os.path.join(answers_folder, "parsed_answers.csv"))
+
+    # compute aggregative metrics
+    _ = get_aggregative_metrics(answers_folder)
