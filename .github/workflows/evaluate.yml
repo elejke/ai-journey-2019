@@ -1,8 +1,6 @@
 name: Quality tester
 
-on:
-  release:
-    types: [published, edited, prereleased]
+on: [push]
 
 jobs:
   evaluate:
