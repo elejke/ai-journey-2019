@@ -43,7 +43,6 @@ predictor:
 
 evaluator:
 	sudo docker run \
-		-it \
 		-v ${ABS_BASE_PATH}/client:/root/solution/client \
 		-v ${ABS_BASE_PATH}/data:/root/solution/data \
 		--rm \
