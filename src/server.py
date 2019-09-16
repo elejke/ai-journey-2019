@@ -9,7 +9,7 @@ def take_exam(tasks):
     for task in tasks:
         question = task['question']
 
-        # FIRST CUSTOM PART OF CODE:
+        # choose solver
         if task['id'] in ["4"]:
             answer = solver_4(task)
         elif task['id'] in ["10"]:
