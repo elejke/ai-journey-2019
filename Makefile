@@ -42,9 +42,17 @@ predictor:
 	cd ..
 
 evaluator:
-	cd client && \
-	python3 evaluator.py --folder-path ../${DATA_PATH} --url http://localhost:8000 && \
-	cd ..
+	sudo docker run \
+		-it \
+		-v ${ABS_BASE_PATH}/client:/root/solution/client \
+		-v ${ABS_BASE_PATH}/data:/root/solution/data \
+		--rm \
+		--net="host" \
+		--name="querier" \
+		${IMAGE} \
+		/bin/bash -c "cd /root/solution/client && python3 evaluator.py \
+															--folder-path ../${DATA_PATH} \
+															--url http://localhost:8000"
 
 destroy:
 	sudo docker stop tester
