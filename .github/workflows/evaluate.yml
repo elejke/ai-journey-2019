@@ -1,6 +1,10 @@
 name: Quality tester
 
-on: [push]
+on:
+  push:
+    commits:
+      message:
+        - '*DO EVAL*'
 
 jobs:
   evaluate:
@@ -9,8 +13,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v1
-    - name: Evaluation
-      run: make evaluate
+#    - name: Evaluation
+#      run: make evaluate
     - name: Metrics by ID
       run: cat client/reports/$(ls -1 client/reports/ | tail -n 1)/metrics_by_id.csv
     - name: Metrics by Exam
