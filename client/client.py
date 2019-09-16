@@ -102,7 +102,7 @@ class Client(object):
                 time.sleep(1)
                 current_wait_time = time.time() - start_time
         if current_wait_time >= self.max_wait_time_ready:
-            raise TimeoutError("Interrupting execution\n'/ready' endpoint is not ready" +
+            raise TimeoutError("Interrupting execution\n'/ready' endpoint is not ready " +
                                "for maximum allowed {:d} seconds!".format(self.max_wait_time_ready))
 
     def query(self, n_jobs=1) -> str:
