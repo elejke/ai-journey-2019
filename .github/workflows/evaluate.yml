@@ -1,0 +1,19 @@
+name: Quality tester
+
+on: [push]
+
+jobs:
+  evaluate:
+
+    runs-on: ubuntu-18.04
+    
+    steps:
+    - uses: actions/checkout@v1
+    - name: Greetings
+      run: echo "Hello!"
+    - name: Run evaluation
+      run: make evaluate
+    - name: Metrics by ID
+      run: cat client/reports/$(ls -1 client/reports/ | tail -n 1)/metrics_by_id.csv
+    - name: Metrics by Exam
+      run: cat client/reports/$(ls -1 client/reports/ | tail -n 1)/metrics_by_exam.csv
