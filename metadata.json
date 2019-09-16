@@ -1,4 +1,4 @@
 {
-    "image": "sberbank/python",
+    "image": "vovacher/aij:latest",
     "entry_point": "cd src && python server.py"
 }
