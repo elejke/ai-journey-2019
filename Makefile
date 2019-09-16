@@ -21,6 +21,9 @@ evaluate: create evaluator destroy
 	@echo "$@ is done!"
 
 create:
+	AVAILABLE_CORES=$$(cat /proc/cpuinfo | grep processor | wc -l); \
+	DESIRABLE_CORES=4; \
+	CPUS_LIMIT=$$((AVAILABLE_CORES > DESIRABLE_CORES ? DESIRABLE_CORES : AVAILABLE_CORES)); \
 	sudo docker run \
 		-d \
 		-v ${ABS_BASE_PATH}/src:/root/solution/src \
@@ -28,7 +31,7 @@ create:
 		-p 8000:8000 \
 		--memory="16g" \
 		--memory-swap="16g" \
-		--cpus="4" \
+		--cpus=$${CPUS_LIMIT} \
 		--name="tester" \
 		${IMAGE} \
 		/bin/bash -c "cd /root/solution && ${RUNNER}"
