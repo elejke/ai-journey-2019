@@ -38,12 +38,12 @@ create:
 
 predictor:
 	cd client && \
-	python predictor.py --folder-path ../${DATA_PATH} --url http://localhost:8000 && \
+	python3 predictor.py --folder-path ../${DATA_PATH} --url http://localhost:8000 && \
 	cd ..
 
 evaluator:
 	cd client && \
-	python evaluator.py --folder-path ../${DATA_PATH} --url http://localhost:8000 && \
+	python3 evaluator.py --folder-path ../${DATA_PATH} --url http://localhost:8000 && \
 	cd ..
 
 destroy:
