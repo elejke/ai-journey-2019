@@ -9,16 +9,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v1
-    - name: Greetings
-      run: echo "Hello!"
-    - name: Create server
-      run: make create
-    - name: Look at logs
-      run: make logs
-    - name: Evaluate
-      run: make evaluator
-    - name: Destroy
-      run: make destroy
+    - name: Evaluation
+      run: make evaluate
     - name: Metrics by ID
       run: cat client/reports/$(ls -1 client/reports/ | tail -n 1)/metrics_by_id.csv
     - name: Metrics by Exam

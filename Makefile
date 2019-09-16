@@ -41,10 +41,6 @@ predictor:
 	python3 predictor.py --folder-path ../${DATA_PATH} --url http://localhost:8000 && \
 	cd ..
 
-logs:
-	sleep 5
-	sudo docker logs tester
-
 evaluator:
 	sudo docker run \
 		-v ${ABS_BASE_PATH}/client:/root/solution/client \
