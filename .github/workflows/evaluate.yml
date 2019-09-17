@@ -9,6 +9,8 @@ on:
       - 'metadata.json'
       - 'Makefile'
       - 'models/*'
+      - 'models/data/*'
+      - 'models/data/dictionaries/*'
 
 jobs:
   evaluate:
