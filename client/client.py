@@ -77,7 +77,7 @@ class Client(object):
         # read input files
         if os.path.isdir(in_dir):
             # find all the files in the folder and its subfolders
-            self.filelist = glob.glob(os.path.join(self.in_dir, "**/*.json"), recursive=True)
+            self.filelist = sorted(glob.glob(os.path.join(self.in_dir, "**/*.json"), recursive=True))
         else:
             raise ValueError("'in_dir' should be a directory!")
 
