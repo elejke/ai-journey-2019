@@ -6,7 +6,15 @@ import pandas as pd
 from utils import read_str
 
 
-def eval_choice(row):
+def eval_choice(row) -> float:
+    """ Calculates binary metric for 1-of-n type of tasks.
+
+    Args:
+        row (dict or pd.Series): row with predictions and correct answers.
+
+    Return:
+        float: value of metric; either 0 or 1.
+    """
     if not pd.isnull(row["gt_unique"]):
         correct_answers = read_str(row["gt_unique"])
     elif not pd.isnull(row["gt_variants"]):
