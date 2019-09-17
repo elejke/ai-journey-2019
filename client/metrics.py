@@ -108,6 +108,7 @@ def get_all_metrics(inp):
 def get_aggregative_metrics(folder):
 
     conversion_from_primary_to_secondary = {
+        0: 0,
         1: 3,
         2: 5,
         3: 8,
