@@ -3,7 +3,7 @@ import sys
 import regex
 import random
 import string
-# import logging
+import logging
 
 import numpy as np
 import pandas as pd
@@ -219,17 +219,138 @@ def solver_4(task):
 
 def solver_25(task):
     text = task["text"]
+    text_lowered = text.lower()
     boundaries = regex.search("\s\d+[\p{Pd}−]\d+", text)
     if boundaries:
         boundaries = re.split("\D", boundaries.group().strip())
         start_sentence_num = int(boundaries[0])
         end_sentence_num = int(boundaries[1])
-        min_choices = task["question"].get("min_choices", 1)
-        max_choices = task["question"].get("max_choices", end_sentence_num - start_sentence_num + 1)
-        n_choices = random.randint(min_choices, max_choices)
-        answer = np.random.choice(list(range(start_sentence_num, end_sentence_num + 1)),
-                                  replace=False,
-                                  size=n_choices).astype(str).tolist()
+
+        sentences = []
+        numbers = []
+        r = re.compile(r"[^а-яА-ЯёЁ\s]")
+        for sentence in re.split("[(.]", text):
+            if ")" in sentence:
+                sentence_split = sentence.split(")")
+                if sentence_split[0].isdigit():
+                    if (int(sentence_split[0]) >= start_sentence_num) and \
+                            (int(sentence_split[0]) <= end_sentence_num):
+                        sentences.append(r.sub("", sentence_split[1].strip()))
+                        numbers.append(sentence_split[0])
+        numbers = np.array(numbers)
+
+        sentences_set = []
+        for s in sentences:
+            temp = s.lower().split()
+            if len(temp) > 20:
+                sentences_set.append(frozenset(temp[-10:] + temp[:10]))
+            else:
+                sentences_set.append(frozenset(temp))
+
+        russian_stopwords = frozenset({
+            'и', 'в', 'во', 'не', 'на', 'с', 'со', 'но',
+            'к', 'у', 'же', 'за', 'бы', 'по', 'от', 'о',
+            'из', 'ну', 'ли', 'или', 'ни', 'до',
+            'нибудь', 'уж', 'для', 'без', 'под',
+            'ж', 'при', 'об', 'над', 'про', 'перед'
+        })
+
+        personal_pronouns = frozenset({
+            'вами', 'она', 'оно', 'ними', 'я', 'вас',
+            'неё', 'ими', 'мы', 'они', 'нами', 'меня',
+            'он', 'ему', 'им', 'вам', 'нему', 'ней',
+            'мне', 'вы', 'его', 'тобою', 'него', 'мною',
+            'ты', 'нее', 'нас', 'ей', 'её', 'тебя', 'ею',
+            'них', 'нею', 'тобой', 'ним', 'ее', 'мной',
+            'их', 'нам', 'тебе'
+        })
+
+        possessive_pronouns = frozenset({
+            'наших', 'ваших', 'мою', 'моих', 'свои', 'твоих',
+            'мое', 'моё', 'нашей', 'ваше', 'моего', 'своих', 'моему',
+            'ваши', 'нашу', 'твоими', 'вашими', 'мой', 'твою',
+            'нашими', 'твоей', 'твоя', 'твоему', 'вашем', 'наш',
+            'своем', 'своём', 'вашему', 'твоего', 'моими', 'своя', 'свой',
+            'вашего', 'нашим', 'моим', 'твоим', 'наши', 'моя',
+            'вашу', 'моей', 'моем', 'моём', 'нашем', 'наша', 'своему',
+            'своим', 'вашим', 'твое', 'твоё', 'нашего', 'свою', 'ваш',
+            'твой', 'свое', 'своё', 'твоем', 'твоём', 'мои', 'ваша', 'наше', 'твои',
+            'своего', 'нашему', 'своими', 'своей', 'вашей', 'его', 'ее', 'её', 'их'
+        })
+
+        demonstrative_pronouns = frozenset({
+            'тот', 'таком', 'этою', 'этой', 'эта', 'такова',
+            'такая', 'такому', 'свои', 'таких', 'таким',
+            'такое', 'таков', 'этот', 'ту', 'такого', 'того',
+            'том', 'такою', 'таково', 'той', 'стольких',
+            'этому', 'такой', 'теми', 'столькими', 'эти',
+            'стольким', 'тех', 'тою', 'таковы', 'тем', 'те',
+            'такими', 'та', 'то', 'это', 'этого', 'этом',
+            'этих', 'этим', 'такую', 'столько', 'такие',
+            'эту', 'тому'
+        })
+
+        conjunctions = frozenset({
+            'сиречь', 'даже', 'коль', 'пока', 'поскольку',
+            'аж', 'словно', 'ли', 'а', 'пускай', 'разве',
+            'но', 'зато', 'ровно', 'чтобы', 'как', 'коли',
+            'и', 'дабы', 'что', 'лишь', 'ибо', 'пусть',
+            'благо', 'или', 'вроде', 'если', 'ежели', 'также',
+            'же', 'так', 'покамест', 'чисто', 'якобы', 'хотя',
+            'только', 'когда', 'чтоб', 'нежели', 'покуда',
+            'буде', 'точно', 'хоть', 'притом', 'едва', 'ан',
+            'будто', 'кабы', 'итак', 'абы', 'либо', 'тоже',
+            'затем', 'причем', 'да', 'чем', 'раз', 'чуть',
+            'однако'
+        })
+
+        task_find_borders = [
+            re.search("\(1\)", text_lowered).start(),
+            re.search("\(" +
+                      str(max([int(el["link"][1:-1]) for el in task["question"]["choices"]])) +
+                      "\).*[!.?\n]+", text_lowered).end()
+        ]
+        text_to_find_task = text_lowered[:task_find_borders[0]] + " " + text_lowered[task_find_borders[1]:]
+        conditions = [
+            regex.search("лексическ\w+\s+повтор", text_to_find_task),
+            regex.search("лично\w+\s+местоимени", text_to_find_task),
+            regex.search("указательн\w+\s+местоимени", text_to_find_task),
+            regex.search("\s+союз", text_to_find_task),
+            regex.search("притяжательн\w+\s+местоимени", text_to_find_task),
+        ]
+        for num_cond, cond in enumerate(conditions):
+            if cond:
+                conditions[num_cond] = True
+            else:
+                conditions[num_cond] = False
+
+        conditional_answers = [set() for _ in range(len(conditions))]
+        for i in range(1, len(sentences_set)):
+            if len(sentences_set[i] & sentences_set[i - 1] - russian_stopwords) != 0:
+                conditional_answers[0].add(numbers[i])
+            if len(sentences_set[i] & personal_pronouns) != 0:
+                conditional_answers[1].add(numbers[i])
+            if len(sentences_set[i] & demonstrative_pronouns) != 0:
+                conditional_answers[2].add(numbers[i])
+            if len(set(sentences[i].lower().split()[:1]) & conjunctions) != 0:
+                conditional_answers[3].add(numbers[i])
+            if len(sentences_set[i] & possessive_pronouns) != 0:
+                conditional_answers[4].add(numbers[i])
+
+        if sum(conditions) > 0:
+            answer = set(numbers)
+            for num_cond, cond in enumerate(conditions):
+                if cond:
+                    answer = answer & conditional_answers[num_cond]
+            answer = list(map(str, answer))
+        else:
+            min_choices = task["question"].get("min_choices", 1)
+            max_choices = task["question"].get("max_choices", end_sentence_num - start_sentence_num + 1)
+            n_choices = random.randint(min_choices, max_choices)
+            answer = np.random.choice(list(range(start_sentence_num, end_sentence_num + 1)),
+                                      replace=False,
+                                      size=n_choices).astype(str).tolist()
+            logging.debug("RANDOM")
     else:
         choices = task["question"]["choices"]
         min_choices = task["question"].get("min_choices", 1)
