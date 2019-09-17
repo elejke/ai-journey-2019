@@ -13,7 +13,7 @@ def eval_choice(row) -> float:
         row (dict or pd.Series): row with predictions and correct answers.
 
     Return:
-        value of binary metric; either 0 or 1.
+        value of binary metric (either 0 or 1) multiplied by the point score of the question.
     """
     if not pd.isnull(row["gt_unique"]):
         correct_answers = read_str(row["gt_unique"])
