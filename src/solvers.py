@@ -350,7 +350,6 @@ def solver_25(task):
             answer = np.random.choice(list(range(start_sentence_num, end_sentence_num + 1)),
                                       replace=False,
                                       size=n_choices).astype(str).tolist()
-            logging.debug("RANDOM")
     else:
         choices = task["question"]["choices"]
         min_choices = task["question"].get("min_choices", 1)
