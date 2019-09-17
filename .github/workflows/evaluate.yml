@@ -30,4 +30,4 @@ jobs:
         DASH_SSH_KEY: ${{ secrets.DASH_SSH_KEY }}
       run: |
         echo "$DASH_SSH_KEY" > ~/id_rsa_dash
-        scp -i ~/id_rsa_dash client/reports/$(ls -1 client/reports/ | tail -n 1)/metrics_by_id.csv cloud-user@23.111.106.99:/home/cloud-user/shared/ai-journey-2019/scores_dir/test.csv
+        scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ~/id_rsa_dash client/reports/$(ls -1 client/reports/ | tail -n 1)/metrics_by_id.csv cloud-user@23.111.106.99:/home/cloud-user/shared/ai-journey-2019/scores_dir/test.csv
