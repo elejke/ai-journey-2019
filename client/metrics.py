@@ -87,6 +87,16 @@ def eval_matching(row) -> float:
 
 
 def eval_text_word(row):
+    """ Calculates binary metric for plain text word type of questions.
+    The metric equals to the indicator function of answer correctness
+    (whether the predicted string fully matches the target).
+
+    Args:
+        row (dict or pd.Series): row with predictions and correct answers.
+
+    Return:
+        value of binary metric (either 0 or 1) multiplied by the point score of the question.
+    """
     if not pd.isnull(row["gt_unique"]):
         correct_answers = [row["gt_unique"]]
     elif not pd.isnull(row["gt_variants"]):
