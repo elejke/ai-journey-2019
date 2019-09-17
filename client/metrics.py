@@ -52,7 +52,17 @@ def eval_multiple_choice(row):
     return len(correct_answers & my_answers) / len(correct_answers | my_answers) * row["score"]
 
 
-def eval_matching(row):
+def eval_matching(row) -> float:
+    """ Calculates percentage metric for matching type of questions.
+
+    The metric equals to the fraction of correctly matched symbols.
+
+    Args:
+        row (dict or pd.Series): row with predictions and correct answers.
+
+    Return:
+        value of percentage metric (from 0 to 1) multiplied by the point score of the question.
+    """
     if not pd.isnull(row["gt_unique"]):
         correct_answers = read_str(row["gt_unique"])
     elif not pd.isnull(row["gt_variants"]):
