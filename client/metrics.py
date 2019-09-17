@@ -8,6 +8,7 @@ from utils import read_str
 
 def eval_choice(row) -> float:
     """ Calculates binary metric for 1-of-n type of questions.
+    The metric equals to the indicator function of answer correctness.
 
     Args:
         row (dict or pd.Series): row with predictions and correct answers.
@@ -54,7 +55,6 @@ def eval_multiple_choice(row) -> float:
 
 def eval_matching(row) -> float:
     """ Calculates percentage metric for matching type of questions.
-
     The metric equals to the fraction of correctly matched symbols.
 
     Args:
