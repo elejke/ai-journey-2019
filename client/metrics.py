@@ -28,14 +28,14 @@ def eval_choice(row) -> float:
         return 0.
 
 
-def eval_multiple_choice(row):
+def eval_multiple_choice(row) -> float:
     """ Calculates IoU metric for m-of-n type of questions.
 
     Args:
         row (dict or pd.Series): row with predictions and correct answers.
 
     Return:
-        value of IoU metric; from 0 to 1.
+        value of IoU metric (from 0 to 1) multiplied by the point score of the question.
     """
     if not pd.isnull(row["gt_unique"]):
         correct_answers = set(read_str(row["gt_unique"]))
