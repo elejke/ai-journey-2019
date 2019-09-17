@@ -6,7 +6,16 @@ import pandas as pd
 from utils import read_str
 
 
-def eval_choice(row):
+def eval_choice(row) -> float:
+    """ Calculates binary metric for 1-of-n type of questions.
+    The metric equals to the indicator function of answer correctness.
+
+    Args:
+        row (dict or pd.Series): row with predictions and correct answers.
+
+    Return:
+        value of binary metric (either 0 or 1) multiplied by the point score of the question.
+    """
     if not pd.isnull(row["gt_unique"]):
         correct_answers = read_str(row["gt_unique"])
     elif not pd.isnull(row["gt_variants"]):
@@ -20,7 +29,18 @@ def eval_choice(row):
         return 0.
 
 
-def eval_multiple_choice(row):
+def eval_multiple_choice(row) -> float:
+    """ Calculates IoU metric for m-of-n type of questions.
+    The metric equals to the number of elements in intersection
+    between predictions and correct answers divided by the number
+    of elements in union of predictions and correct answers.
+
+    Args:
+        row (dict or pd.Series): row with predictions and correct answers.
+
+    Return:
+        value of IoU metric (from 0 to 1) multiplied by the point score of the question.
+    """
     if not pd.isnull(row["gt_unique"]):
         correct_answers = set(read_str(row["gt_unique"]))
     elif not pd.isnull(row["gt_variants"]):
@@ -36,7 +56,16 @@ def eval_multiple_choice(row):
     return len(correct_answers & my_answers) / len(correct_answers | my_answers) * row["score"]
 
 
-def eval_matching(row):
+def eval_matching(row) -> float:
+    """ Calculates percentage metric for matching type of questions.
+    The metric equals to the fraction of correctly matched symbols.
+
+    Args:
+        row (dict or pd.Series): row with predictions and correct answers.
+
+    Return:
+        value of percentage metric (from 0 to 1) multiplied by the point score of the question.
+    """
     if not pd.isnull(row["gt_unique"]):
         correct_answers = read_str(row["gt_unique"])
     elif not pd.isnull(row["gt_variants"]):
@@ -57,7 +86,17 @@ def eval_matching(row):
     return correct_matches / total_matches * row["score"]
 
 
-def eval_text_word(row):
+def eval_text_word(row) -> float:
+    """ Calculates binary metric for plain text word type of questions.
+    The metric equals to the indicator function of answer correctness
+    (whether the predicted string fully matches the target).
+
+    Args:
+        row (dict or pd.Series): row with predictions and correct answers.
+
+    Return:
+        value of binary metric (either 0 or 1) multiplied by the point score of the question.
+    """
     if not pd.isnull(row["gt_unique"]):
         correct_answers = [row["gt_unique"]]
     elif not pd.isnull(row["gt_variants"]):
