@@ -31,6 +31,9 @@ def eval_choice(row) -> float:
 
 def eval_multiple_choice(row) -> float:
     """ Calculates IoU metric for m-of-n type of questions.
+    The metric equals to the number of elements in intersection
+    between predictions and correct answers divided by the number
+    of elements in union of predictions and correct answers.
 
     Args:
         row (dict or pd.Series): row with predictions and correct answers.
