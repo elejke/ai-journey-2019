@@ -2,7 +2,7 @@ import os
 import glob
 import dash
 import pathlib
-
+import collections
 import pandas as pd
 import dash_html_components as html
 
@@ -12,8 +12,8 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 df_scores = pd.read_csv(os.path.join(SCORES_DIR, "scores.csv"))[["id", "score"]]
 
-df_list = []
-model_list = []
+df_list = collections.deque(maxlen=5)
+full_model_list = []
 
 def generate_table(max_rows=29):
 
@@ -23,13 +23,13 @@ def generate_table(max_rows=29):
     for df_path in df_path_list:
         if "scores.csv" not in df_path:
             model_id = pathlib.Path(df_path).name.strip(".csv")
-            if model_id not in model_list:
+            if model_id not in full_model_list:
                 df_temp = pd.read_csv(df_path)[["metric"]]
                 df_temp.columns = ["model_" + model_id]
+                full_model_list.append(model_id)
                 df_list.append(df_temp)
-                model_list.append(model_id)
 
-    df = pd.concat([df_scores[["id", "score"]]] + df_list[-5:], axis=1).round(2)
+    df = pd.concat([df_scores[["id", "score"]]] + list(df_list), axis=1).round(2)
 
     return html.Table(
         # Header
