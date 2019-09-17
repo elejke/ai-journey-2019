@@ -86,7 +86,7 @@ def eval_matching(row) -> float:
     return correct_matches / total_matches * row["score"]
 
 
-def eval_text_word(row):
+def eval_text_word(row) -> float:
     """ Calculates binary metric for plain text word type of questions.
     The metric equals to the indicator function of answer correctness
     (whether the predicted string fully matches the target).
