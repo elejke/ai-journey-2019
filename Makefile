@@ -67,3 +67,8 @@ submit:
 		echo 'THE SUBMISSION IS TOO BIG. IT SHOULD BE LESS THAN 20GB.'; \
 	fi
 	mv submissions/src.zip submissions/$$(date +%s%N | cut -b1-13).zip
+
+build:
+	cp dockers/aij/.dockerignore .
+	sudo docker build -f dockers/aij/Dockerfile -t aij .
+	rm .dockerignore
