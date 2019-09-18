@@ -1,34 +1,34 @@
-name: Quality tester
-
-on:
-  push:
-    paths:
-      - 'src/*'
-      - 'client/*'
-      - 'data/check/*'
-      - 'metadata.json'
-      - 'Makefile'
-      - 'models/*'
-      - 'models/data/*'
-      - 'models/data/dictionaries/*'
-
-jobs:
-  evaluate:
-
-    runs-on: ubuntu-18.04
-    
-    steps:
-    - uses: actions/checkout@v1
-    - name: Evaluation
-      run: make evaluate
-    - name: Metrics by ID
-      run: cat client/reports/$(ls -1 client/reports/ | tail -n 1)/metrics_by_id.csv
-    - name: Metrics by Exam
-      run: cat client/reports/$(ls -1 client/reports/ | tail -n 1)/metrics_by_exam.csv
-    - name: Upload Artifacts to Storage
-      env:
-        DASH_SSH_KEY: ${{ secrets.DASH_SSH_KEY }}
-      run: |
-        echo "$DASH_SSH_KEY" > ~/id_rsa_dash
-        chmod 400 ~/id_rsa_dash
-        scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ~/id_rsa_dash client/reports/$(ls -1 client/reports/ | tail -n 1)/metrics_by_id.csv cloud-user@23.111.106.99:/home/cloud-user/shared/ai-journey-2019/scores_dir/$(git rev-parse HEAD | cut -c1-7).csv
+#name: Quality tester
+#
+#on:
+#  push:
+#    paths:
+#      - 'src/*'
+#      - 'client/*'
+#      - 'data/check/*'
+#      - 'metadata.json'
+#      - 'Makefile'
+#      - 'models/*'
+#      - 'models/data/*'
+#      - 'models/data/dictionaries/*'
+#
+#jobs:
+#  evaluate:
+#
+#    runs-on: ubuntu-18.04
+#
+#    steps:
+#    - uses: actions/checkout@v1
+#    - name: Evaluation
+#      run: make evaluate
+#    - name: Metrics by ID
+#      run: cat client/reports/$(ls -1 client/reports/ | tail -n 1)/metrics_by_id.csv
+#    - name: Metrics by Exam
+#      run: cat client/reports/$(ls -1 client/reports/ | tail -n 1)/metrics_by_exam.csv
+#    - name: Upload Artifacts to Storage
+#      env:
+#        DASH_SSH_KEY: ${{ secrets.DASH_SSH_KEY }}
+#      run: |
+#        echo "$DASH_SSH_KEY" > ~/id_rsa_dash
+#        chmod 400 ~/id_rsa_dash
+#        scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ~/id_rsa_dash client/reports/$(ls -1 client/reports/ | tail -n 1)/metrics_by_id.csv cloud-user@23.111.106.99:/home/cloud-user/shared/ai-journey-2019/scores_dir/$(git rev-parse HEAD | cut -c1-7).csv
