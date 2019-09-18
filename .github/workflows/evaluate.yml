@@ -2,15 +2,15 @@ name: Quality tester
 
 on:
   push:
-    paths:
-      - 'src/*'
-      - 'client/*'
-      - 'data/check/*'
-      - 'metadata.json'
-      - 'Makefile'
-      - 'models/*'
-      - 'models/data/*'
-      - 'models/data/dictionaries/*'
+#    paths:
+#      - 'src/*'
+#      - 'client/*'
+#      - 'data/check/*'
+#      - 'metadata.json'
+#      - 'Makefile'
+#      - 'models/*'
+#      - 'models/data/*'
+#      - 'models/data/dictionaries/*'
 
 jobs:
   evaluate:
