@@ -27,7 +27,7 @@ jobs:
       run: |
         echo "$EVAL_SSH_KEY" > ~/id_rsa_eval
         chmod 400 ~/id_rsa_eval
-        scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ~/id_rsa_eval code.tar.gz cloud-user@23.111.106.99:/home/cloud-user/eval_server/${GITHUB_SHA}.tar.gz
+        scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ~/id_rsa_eval ../code.tar.gz cloud-user@23.111.106.99:/home/cloud-user/eval_server/${GITHUB_SHA}.tar.gz
     - name: Evaluate
       run: ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ~/id_rsa_eval cloud-user@23.111.106.99 "echo 'test' > test_file"
     - name: Copy results back
