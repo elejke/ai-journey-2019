@@ -18,6 +18,11 @@ AI Journey 2019
 3. Орфоэпические словари: 
     * https://bingoschool.ru/news/orfoepicheskij-slovar-dlya-ege-ot-fipi/
     * https://bingoschool.ru/news/pravilnoe-udarenie-v-slovax/
+    * https://где-ударение.рф
+
+4. Паронимы
+    * https://paronymonline.ru
+    * https://paronymonline.ru/ege.html
 
 # Question taxonomy
 
