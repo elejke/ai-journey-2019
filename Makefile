@@ -29,8 +29,8 @@ create:
 		-v ${ABS_BASE_PATH}/src:/root/solution/src \
 		-v ${ABS_BASE_PATH}/models:/root/solution/models \
 		-p 8000:8000 \
-		--memory="6g" \
-		--memory-swap="10g" \
+		--memory="16g" \
+		--memory-swap="16g" \
 		--cpus=$${CPUS_LIMIT} \
 		--name="tester" \
 		${IMAGE} \
