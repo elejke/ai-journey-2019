@@ -419,3 +419,45 @@ def solver_5(task):
     if ans_formed is not None:
         return ans_formed.word
     return ans.word
+
+
+with open("../models/dictionaries/freq_dict_ruscorpora.json") as f:
+    freq_dict = json.load(f)
+
+
+def solver_24(task):
+    morph = pymorphy2.MorphAnalyzer()
+
+    text = task["text"]
+    boundaries = regex.search("\s\d+[\p{Pd}−]\d+", text)
+    if boundaries:
+        boundaries = re.split("\D", boundaries.group().strip())
+        start_sentence_num = int(boundaries[0])
+        end_sentence_num = int(boundaries[1])
+
+        sentences = []
+        r = re.compile(r"[^а-яА-ЯёЁ\s]")
+        for sentence in re.split("[(.]", text):
+            if ")" in sentence:
+                sentence_split = sentence.split(")")
+                if sentence_split[0].isdigit():
+                    if (int(sentence_split[0]) >= start_sentence_num) and \
+                            (int(sentence_split[0]) <= end_sentence_num):
+                        sentences.append(r.sub("", sentence_split[1].strip()))
+        already_met_words = set()
+        min_freq = 1000000000
+        min_freq_word = ""
+        for sent in sentences:
+            for word in sent.lower().split(" "):
+                if len(word) > 2:
+                    word_normal_form = morph.parse(word)[0].normal_form
+                    if word_normal_form not in already_met_words:
+                        already_met_words.add(word_normal_form)
+                        _count = freq_dict.get(word_normal_form, 0)
+                        if _count < min_freq:
+                            min_freq = _count
+                            min_freq_word = word
+        return min_freq_word
+    else:
+        words = [word for word in text.lower().split() if len(word) > 1]
+        return random.choice(words)
