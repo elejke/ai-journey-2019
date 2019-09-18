@@ -408,13 +408,14 @@ def solver_5(task):
 
     initial = morph.parse(words[max_dist_indices[0]])[0]
     ans = morph.parse(word_paronyms[max_dist_indices[0]][max_dist_indices[1]])[0]
-    try:
-        return ans.inflect(initial.tag.grammemes).word
-    except:
-        try:
-            return ans.inflect({initial.tag.POS,
-                                initial.tag.gender,
-                                initial.tag.number,
-                                initial.tag.case} - {None}).word
-        except:
-            return ans.word
+
+    ans_formed = ans.inflect(initial.tag.grammemes)
+    if ans_formed is not None:
+        return ans_formed.word
+    ans_formed = ans.inflect({initial.tag.POS,
+                              initial.tag.gender,
+                              initial.tag.number,
+                              initial.tag.case} - {None})
+    if ans_formed is not None:
+        return ans_formed.word
+    return ans.word
