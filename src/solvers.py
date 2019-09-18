@@ -338,8 +338,10 @@ def solver_25(task):
     return answer
 
 
-with open("../models/dictionaries/paronyms.json") as f:
-    paronyms = json.load(f)
+with open("../models/dictionaries/paronyms_ege.json") as f:
+    paronyms_ege = json.load(f)
+with open("../models/dictionaries/paronyms_all.json") as f:
+    paronyms_all = json.load(f)
 if os.path.exists("/misc/models/fasttext/cc.ru.300.bin"):
     model = fasttext.load_model("/misc/models/fasttext/cc.ru.300.bin")
 else:
@@ -372,7 +374,12 @@ def solver_5(task):
             sent_end = sentences[-1][match.end():]
             contexts.append(sent_begin.strip().lower().split()[-2:] + sent_end.strip().lower().split()[:2])
 
-    word_paronyms = [paronyms.get(word, []) for word in normalized_words]
+    word_paronyms = []
+    for word in normalized_words:
+        par = paronyms_ege.get(word, [])
+        if len(par) == 0:
+            par = paronyms_all.get(word, [])
+        word_paronyms.append(par)
 
     context_vectors = []
     for c in contexts:
@@ -404,4 +411,10 @@ def solver_5(task):
     try:
         return ans.inflect(initial.tag.grammemes).word
     except:
-        return ans.word
+        try:
+            return ans.inflect({initial.tag.POS,
+                                initial.tag.gender,
+                                initial.tag.number,
+                                initial.tag.case} - {None}).word
+        except:
+            return ans.word
