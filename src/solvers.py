@@ -1,51 +1,26 @@
+import os
 import re
-import sys
+import json
 import regex
 import random
 import string
-import logging
 
 import numpy as np
 import pandas as pd
 
-from solvers_utils import remove_additional, check_pair, repair_words#, split_task_and_text
-# from bert_embedder import get_features
-# from sklearn.metrics import pairwise_distances
+import fasttext
+
+import pymorphy2
+
+from solvers_utils import remove_additional, check_pair, repair_words
 
 
-df_dict_full = pd.read_csv("../models/data/dictionaries/russian_1.5kk_words.txt", encoding="windows-1251", header=None)
+df_dict_full = pd.read_csv("../models/dictionaries/russian_1.5kk_words.txt", encoding="windows-1251", header=None)
 df_dict_full.columns = ["Lemma"]
 big_words_set = frozenset(df_dict_full["Lemma"].values)
 
-df_dict = pd.read_table("../models/data/dictionaries/freqrnc2011.csv")
+df_dict = pd.read_table("../models/dictionaries/freqrnc2011.csv")
 small_words_dict = df_dict.set_index("Lemma")[["Freq(ipm)"]].to_dict()["Freq(ipm)"]
-
-
-# def solver_1(task, emb_size=100, metric='cosine'):
-#     question, text = split_task_and_text(task['text'])
-#
-#     if 'кажите два предложения' in question:
-#         n_answers = 2
-#     else:
-#         n_answers = 1
-#     logging.debug('N answers: {}'.format(n_answers))
-#
-#     logging.disable(sys.maxsize)
-#     text_emb = get_features([text], emb_size)
-#     text_emb = np.mean(list(text_emb.values()), axis=0)
-#
-#     answers_emb = [get_features([choice['text']], emb_size)
-#                    for choice in task['question']['choices']]
-#     answers_emb = np.array([np.mean(list(answer_emb.values()), axis=0)
-#                             for answer_emb in answers_emb])
-#     logging.disable(logging.NOTSET)
-#
-#     dist = pairwise_distances([text_emb], answers_emb, metric)[0]
-#     logging.debug('Distances: {}'.format(dist))
-#
-#     answer = np.argsort(dist)[:n_answers] + 1
-#
-#     return answer.astype(str).tolist()
 
 
 def solver_10(task):
@@ -171,10 +146,10 @@ def solver_15(task):
 
 
 df_dict_orfoepicheskiy = pd.concat([
-    pd.read_csv("../models/data/dictionaries/orfoepicheckiy_ege2019.txt",
+    pd.read_csv("../models/dictionaries/orfoepicheckiy_ege2019.txt",
                 header=None,
                 names=["word"]),
-    pd.read_csv("../models/data/dictionaries/orfoepicheckiy_automatic_povtoru.txt",
+    pd.read_csv("../models/dictionaries/orfoepicheckiy_automatic_povtoru.txt",
                 header=None,
                 names=["word"])
 ], ignore_index=True)
@@ -361,3 +336,72 @@ def solver_25(task):
             for choice in choices[:n_choices]
         ]
     return answer
+
+
+with open("../models/dictionaries/paronyms.json") as f:
+    paronyms = json.load(f)
+if os.path.exists("/misc/models/fasttext/cc.ru.300.bin"):
+    model = fasttext.load_model("/misc/models/fasttext/cc.ru.300.bin")
+else:
+    model = fasttext.load_model("../models/fasttext/cc.ru.300.bin")
+
+
+def solver_5(task):
+
+    morph = pymorphy2.MorphAnalyzer()
+
+    text = task["text"]
+
+    sentences = []
+    words = []
+    normalized_words = []
+    contexts = []
+
+    for sent in text.split("\n")[1:]:
+
+        sent = sent.translate(str.maketrans('', '', string.punctuation))
+
+        match = regex.search("[А-ЯЁ]{2,}", sent)
+        if match is not None:
+            sentences.append(sent)
+
+            words.append(match.group())
+            normalized_words.append(morph.parse(match.group())[0].normal_form)
+
+            sent_begin = sentences[-1][:match.start()]
+            sent_end = sentences[-1][match.end():]
+            contexts.append(sent_begin.strip().lower().split()[-2:] + sent_end.strip().lower().split()[:2])
+
+    word_paronyms = [paronyms.get(word, []) for word in normalized_words]
+
+    context_vectors = []
+    for c in contexts:
+        v = np.zeros(model.get_dimension())
+        for word in c:
+            temp = model[word]
+            temp /= np.linalg.norm(temp, ord=2)
+            v += temp
+        v /= np.linalg.norm(v, ord=2)
+        context_vectors.append(v)
+
+    max_dist = -1000
+    max_dist_indices = (-1, -1)
+    for i in range(len(normalized_words)):
+        base_vector = model[normalized_words[i]]
+        base_vector /= np.linalg.norm(base_vector, ord=2)
+        dist_base_to_context = np.linalg.norm(context_vectors[i] - base_vector, ord=2)
+        for j in range(len(word_paronyms[i])):
+            query_vector = model[word_paronyms[i][j]]
+            query_vector /= np.linalg.norm(query_vector, ord=2)
+            dist_query_to_context = np.linalg.norm(context_vectors[i] - query_vector, ord=2)
+            dist_diff = dist_base_to_context - dist_query_to_context
+            if dist_diff > max_dist:
+                max_dist = dist_diff
+                max_dist_indices = (i, j)
+
+    initial = morph.parse(words[max_dist_indices[0]])[0]
+    ans = morph.parse(word_paronyms[max_dist_indices[0]][max_dist_indices[1]])[0]
+    try:
+        return ans.inflect(initial.tag.grammemes).word
+    except:
+        return ans.word
