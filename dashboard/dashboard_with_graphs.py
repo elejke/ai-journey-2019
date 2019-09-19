@@ -170,7 +170,7 @@ def update_map(value):
 def display_page(pathname):
     if pathname == '/graph':
         return serve_graph_layout()
-    elif regex.search("\/graph\/\d+", str(pathname)):
+    elif regex.search("\/graph\/[\d\w]+", str(pathname)):
         return serve_graph_layout(str(pathname).split("/")[-1])
     elif pathname == '/dashboard':
         return serve_dashboard_layout()
