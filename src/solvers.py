@@ -463,6 +463,7 @@ def solver_24(task):
         words = [word for word in text.lower().split() if len(word) > 1]
         return random.choice(words)
 
+
 with open("../models/task_16/task_16_clf.pkl", 'rb') as file:
     clf_task_16 = pickle.load(file)
 
@@ -472,9 +473,10 @@ with open("../models/task_16/task_16_vectorizer_words.pkl", 'rb') as file:
 with open("../models/task_16/task_16_vectorizer_pos.pkl", 'rb') as file:
     vectorizer_pos_task_16 = pickle.load(file)
 
-morph = pymorphy2.MorphAnalyzer()
 
 def solver_16(task):
+
+    morph = pymorphy2.MorphAnalyzer()
 
     def _embedder(sentence):
 
@@ -505,7 +507,6 @@ def solver_16(task):
 
         return _get_2_sentences(sent_probas)
 
-    sentences = list(map(lambda x: x['text'], task['question']['choices']))
+    sentences = list(map(lambda x: x["text"], task["question"]["choices"]))
 
     return np.array(_predict_sentences(sentences)).astype(str).tolist()
-
