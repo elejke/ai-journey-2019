@@ -463,8 +463,6 @@ def solver_24(task):
         words = [word for word in text.lower().split() if len(word) > 1]
         return random.choice(words)
 
-
-
 with open("../models/task_16/task_16_clf.pkl", 'rb') as file:
     clf_task_16 = pickle.load(file)
 
