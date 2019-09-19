@@ -31,3 +31,6 @@ RUN pip install fasttext
 
 # add custom models to the docker
 COPY ./models/fasttext/cc.ru.300.bin /misc/models/fasttext/cc.ru.300.bin
+
+# load NLTK corpus
+RUN python -c "import nltk; nltk.download('stopwords')"
