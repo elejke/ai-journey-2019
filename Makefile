@@ -11,6 +11,8 @@ ABS_BASE_PATH := $$(realpath .)/${BASE_PATH}
 IMAGE         := $$(jq -r ".image" ${BASE_PATH}/metadata.json)
 RUNNER        := $$(jq -r ".entry_point" ${BASE_PATH}/metadata.json)
 
+TIMESTAMP     := $(shell date +%s%N | cut -b1-13)
+
 all:
 	@echo "Please specify target"
 
@@ -33,7 +35,7 @@ create:
 		--memory="16g" \
 		--memory-swap="16g" \
 		--cpus=$${CPUS_LIMIT} \
-		--name="tester" \
+		--name="tester-${TIMESTAMP}" \
 		${IMAGE} \
 		/bin/bash -c "cd /root/solution && ${RUNNER}"
 
@@ -55,8 +57,12 @@ evaluator:
 															--url http://localhost:8000"
 
 destroy:
-	sudo docker stop tester
-	sudo docker rm tester
+	sudo docker stop tester-${TIMESTAMP}
+	sudo docker rm tester-${TIMESTAMP}
+
+destroy_all:
+	sudo docker stop $$(sudo docker ps -aq --filter="name=tester-*")
+	sudo docker rm $$(sudo docker ps -aq --filter="name=tester-*")
 
 submit:
 	cd ${ABS_BASE_PATH} && \
