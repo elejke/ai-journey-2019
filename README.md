@@ -1,14 +1,6 @@
 # ai-journey-2019
 AI Journey 2019
 
-# Algorithm
-
-# Ideas:
-
-2. Список возможных проблем для сочинения разделенных по темам: 
-3. Скачанные задачи https://github.com/fredikey/prege/tree/master/src/json
-
-
 # СОЧИНЕНИЕ:
 
 ## Аргументы и темы:
