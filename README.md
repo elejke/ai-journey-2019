@@ -23,6 +23,13 @@ AI Journey 2019
 4. Паронимы
     * https://paronymonline.ru
     * https://paronymonline.ru/ege.html
+    
+5. Ресурсы с задачами:
+   * https://yandex.ru/tutor/subject/?subject_id=3
+   * https://rus-ege.sdamgia.ru
+   * https://github.com/fredikey/prege/tree/master/src/json
+   * https://annprot.github.io (в репозитории лежат задачи)
+   * https://iq2u.ru/tests/201?level=13 (варианты, нужно тыкать)
 
 # Question taxonomy
 
