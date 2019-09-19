@@ -4,6 +4,7 @@
 
 models/*
 !models/dictionaries/
+!models/task_16/
 submissions/
 
 # Byte-compiled / optimized / DLL files
