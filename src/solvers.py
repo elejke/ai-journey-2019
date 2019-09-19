@@ -508,3 +508,12 @@ def solver_16(task):
     sentences = list(map(lambda x: x["text"], task["question"]["choices"]))
 
     return np.array(_predict_sentences(sentences)).astype(str).tolist()
+
+
+def solver_1(task):
+
+    lens = [len(choice["text"]) for choice in task["question"]["choices"]]
+    argsorted = np.argsort(lens)
+    ans = [task["question"]["choices"][argsorted[-1]]["id"], task["question"]["choices"][argsorted[-2]]["id"]]
+
+    return ans
