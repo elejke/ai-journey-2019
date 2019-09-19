@@ -2,6 +2,7 @@ import os
 import re
 import json
 import regex
+import pickle
 import random
 import string
 
@@ -461,3 +462,52 @@ def solver_24(task):
     else:
         words = [word for word in text.lower().split() if len(word) > 1]
         return random.choice(words)
+
+
+
+with open("../models/task_16/task_16_clf.pkl", 'rb') as file:
+    clf_task_16 = pickle.load(file)
+
+with open("../models/task_16/task_16_vectorizer_words.pkl", 'rb') as file:
+    vectorizer_words_task_16 = pickle.load(file)
+
+with open("../models/task_16/task_16_vectorizer_pos.pkl", 'rb') as file:
+    vectorizer_pos_task_16 = pickle.load(file)
+
+morph = pymorphy2.MorphAnalyzer()
+
+def solver_16(task):
+
+    def _embedder(sentence):
+
+        pos_sentence = " ".join(list(filter(lambda _x: _x,
+                                            [morph.parse(word_)[0].tag.POS for word_ in sentence.strip(".").split()])))
+
+        x_pos = vectorizer_pos_task_16.transform([pos_sentence])
+        x_word = vectorizer_words_task_16.transform([str(sentence)])
+
+        x = np.concatenate([x_pos.toarray(), x_word.toarray()], axis=1)
+
+        return x
+
+    def _get_2_sentences(probas):
+        probas_positions = np.argsort(probas) + 1
+        return list(probas_positions[:2])
+
+    def _predict_sentences(list_of_sentences):
+
+        probas = []
+
+        for sent_ in list_of_sentences:
+            x = _embedder(sent_)
+            proba = clf_task_16.predict_proba(x)
+            probas.append(proba)
+
+        sent_probas = np.concatenate(probas)[:, 0]
+
+        return _get_2_sentences(sent_probas)
+
+    sentences = list(map(lambda x: x['text'], task['question']['choices']))
+
+    return np.array(_predict_sentences(sentences)).astype(str).tolist()
+
