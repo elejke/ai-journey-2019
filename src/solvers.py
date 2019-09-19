@@ -42,7 +42,6 @@ def solver_10(task):
                                 big_words_set, False)):
                 answers.append(choice_["id"])
 
-        #         print(answers)
         return answers
     else:
         for choice_ in task["text"].split("\n")[1:]:
@@ -55,7 +54,6 @@ def solver_10(task):
 
             letters = repair_words(choice_.replace("..", "@").replace("...", "@").replace(".. ", "@").split(sep),
                                    big_words_set, False)
-            #             print(letters)
             if len(letters):
                 letter_ = random.choice(letters)
                 words = choice_.replace("..", letter_).replace("...", letter_).split(sep)
