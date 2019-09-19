@@ -34,7 +34,7 @@ jobs:
     - name: Copy results back
       run: |
         ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ~/id_rsa_eval cloud-user@23.111.106.99 "cd /home/cloud-user/eval_server/${GITHUB_SHA}/ai-journey-2019/client/reports/ && cd * && pwd" > results_path
-        scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ~/id_rsa_eval cloud-user@23.111.106.99:$(cat ressults_path)/metrics_by_id.csv .
+        scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ~/id_rsa_eval cloud-user@23.111.106.99:$(cat results_path)/metrics_by_id.csv .
     - name: Metrics by ID
       run: cat metrics_by_id.csv
     - name: Upload Artifacts to Storage
