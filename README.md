@@ -9,6 +9,12 @@ AI Journey 2019
 2. Список возможных проблем для сочинения разделенных по темам: http://ege-soch.ru/temy-sochinenij-ege-po-russkomu-yazy-ku/
 3. Скачанные задачи https://github.com/fredikey/prege/tree/master/src/json
 
+
+# СОЧИНЕНИЕ:
+
+## Аргументы:
+1. Аргументы к сочинениям (большой список) https://rumozg.ru/sochineniya/kak-pisat-sochinenie/argumenty-k-sochineniju-egje.html
+
 # External data:
 
 1. Список слов с частотами и частями речи: http://dict.ruslang.ru/Freq2011.zip
