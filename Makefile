@@ -21,6 +21,7 @@ evaluate: create evaluator destroy
 	@echo "$@ is done!"
 
 create:
+	sudo docker pull ${IMAGE}
 	AVAILABLE_CORES=$$(cat /proc/cpuinfo | grep processor | wc -l); \
 	DESIRABLE_CORES=4; \
 	CPUS_LIMIT=$$((AVAILABLE_CORES > DESIRABLE_CORES ? DESIRABLE_CORES : AVAILABLE_CORES)); \
