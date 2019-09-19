@@ -5,15 +5,18 @@ AI Journey 2019
 
 # Ideas:
 
-1. Автоматическая генерация сочинений: https://github.com/Omrigan/essay-writer
-2. Список возможных проблем для сочинения разделенных по темам: http://ege-soch.ru/temy-sochinenij-ege-po-russkomu-yazy-ku/
+2. Список возможных проблем для сочинения разделенных по темам: 
 3. Скачанные задачи https://github.com/fredikey/prege/tree/master/src/json
 
 
 # СОЧИНЕНИЕ:
 
-## Аргументы:
+## Аргументы и темы:
 1. Аргументы к сочинениям (большой список) https://rumozg.ru/sochineniya/kak-pisat-sochinenie/argumenty-k-sochineniju-egje.html
+2. Темы сочинений: http://ege-soch.ru/temy-sochinenij-ege-po-russkomu-yazy-ku/
+
+## Framework (генерация сочинения):
+1. Автоматическая генерация сочинений: https://github.com/Omrigan/essay-writer
 
 # External data:
 
