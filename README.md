@@ -32,6 +32,13 @@ AI Journey 2019
    * https://annprot.github.io (в репозитории лежат задачи)
    * https://iq2u.ru/tests/201?level=13 (варианты, нужно тыкать)
 
+6. Разговорные модели
+   * https://forums.fast.ai/t/ulmfit-russian/36312
+
+7. Пунктуация
+   * https://github.com/ottokart/punctuator2
+   * https://github.com/bedapudi6788/deepcorrect
+
 # Question taxonomy
 
     1. Прочитайте текст и выберите предложения (2, несколько, ...) отражающих суть текста
