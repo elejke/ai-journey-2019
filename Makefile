@@ -66,7 +66,7 @@ destroy_all:
 
 submit:
 	cd ${ABS_BASE_PATH} && \
-	zip -r src.zip src models/dictionaries metadata.json -x *__pycache__* && \
+	zip -r src.zip src models/dictionaries models/task_16 metadata.json -x *__pycache__* && \
 	cd - && \
 	mv ${ABS_BASE_PATH}/src.zip submissions/.
 	@if [ `stat --printf="%s" submissions/src.zip` -gt 21474836480 ]; \
