@@ -11,6 +11,7 @@ on:
       - 'models/*'
       - 'models/data/*'
       - 'models/data/dictionaries/*'
+      - 'models/data/task_16/*'
 
 jobs:
   evaluate:
