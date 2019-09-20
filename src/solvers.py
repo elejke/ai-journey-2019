@@ -554,13 +554,14 @@ def solver_6(task):
 
     dist = np.linalg.norm(np.diff(vectors, axis=0), ord=2, axis=1)
 
-    for i in range(len(words)):
-        if (words[i] in nltk_stopwords) or (normalized_words[i] in nltk_stopwords):
-            if i < len(dist):
-                dist[i] = 100000
-            if i - 1 >= 0:
-                dist[i - 1] = 100000
-        if (i + 1 < len(pos)) and (pos[i] == pos[i + 1]):
+    for i in range(len(words) - 1):
+        if {pos[i], pos[i + 1]} == {"ADJF", "NOUN"}:
+            if (words[i] in nltk_stopwords) or (normalized_words[i] in nltk_stopwords):
+                if i < len(dist):
+                    dist[i] = 100000
+                if i - 1 >= 0:
+                    dist[i - 1] = 100000
+        else:
             dist[i] = 100000
     dist[np.isnan(dist)] = 100000
 
