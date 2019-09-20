@@ -5,6 +5,9 @@ import regex
 import pickle
 import random
 import string
+import sys
+
+import nltk.corpus
 
 import numpy as np
 import pandas as pd
@@ -342,9 +345,9 @@ with open("../models/dictionaries/paronyms_ege.json") as f:
 with open("../models/dictionaries/paronyms_all.json") as f:
     paronyms_all = json.load(f)
 if os.path.exists("/misc/models/fasttext/cc.ru.300.bin"):
-    model = fasttext.load_model("/misc/models/fasttext/cc.ru.300.bin")
+    model_fasttext = fasttext.load_model("/misc/models/fasttext/cc.ru.300.bin")
 else:
-    model = fasttext.load_model("../models/fasttext/cc.ru.300.bin")
+    model_fasttext = fasttext.load_model("../models/fasttext/cc.ru.300.bin")
 
 
 def solver_5(task):
@@ -382,9 +385,9 @@ def solver_5(task):
 
     context_vectors = []
     for c in contexts:
-        v = np.zeros(model.get_dimension())
+        v = np.zeros(model_fasttext.get_dimension())
         for word in c:
-            temp = model[word]
+            temp = model_fasttext[word]
             temp /= np.linalg.norm(temp, ord=2)
             v += temp
         v /= np.linalg.norm(v, ord=2)
@@ -393,11 +396,11 @@ def solver_5(task):
     max_dist = -1000
     max_dist_indices = (-1, -1)
     for i in range(len(normalized_words)):
-        base_vector = model[normalized_words[i]]
+        base_vector = model_fasttext[normalized_words[i]]
         base_vector /= np.linalg.norm(base_vector, ord=2)
         dist_base_to_context = np.linalg.norm(context_vectors[i] - base_vector, ord=2)
         for j in range(len(word_paronyms[i])):
-            query_vector = model[word_paronyms[i][j]]
+            query_vector = model_fasttext[word_paronyms[i][j]]
             query_vector /= np.linalg.norm(query_vector, ord=2)
             dist_query_to_context = np.linalg.norm(context_vectors[i] - query_vector, ord=2)
             dist_diff = dist_base_to_context - dist_query_to_context
@@ -464,10 +467,8 @@ def solver_24(task):
 
 with open("../models/task_16/task_16_clf.pkl", 'rb') as file:
     clf_task_16 = pickle.load(file)
-
 with open("../models/task_16/task_16_vectorizer_words.pkl", 'rb') as file:
     vectorizer_words_task_16 = pickle.load(file)
-
 with open("../models/task_16/task_16_vectorizer_pos.pkl", 'rb') as file:
     vectorizer_pos_task_16 = pickle.load(file)
 
@@ -517,3 +518,60 @@ def solver_1(task):
     ans = [task["question"]["choices"][argsorted[-1]]["id"], task["question"]["choices"][argsorted[-2]]["id"]]
 
     return ans
+
+
+nltk_stopwords = frozenset(nltk.corpus.stopwords.words("russian"))
+
+
+def solver_6(task):
+
+    morph = pymorphy2.MorphAnalyzer()
+
+    text = task["text"]
+
+    words = text.split("\n")[1].lower().translate(str.maketrans('', '', string.punctuation)).split()
+
+    pos_mapping = {
+        "ADJS": "ADJF",
+        "INFN": "VERB",
+        "PRTS": "PRTF",
+        "GRND": "PRTF"
+    }
+
+    pos = []
+    normalized_words = []
+    for w in words:
+        w_morph = morph.parse(w)[0]
+        normalized_words.append(w_morph.normal_form)
+        pos.append(pos_mapping.get(w_morph.tag.POS, w_morph.tag.POS))
+
+    vectors = []
+    for w in normalized_words:
+        temp = model_fasttext[w]
+        temp /= np.linalg.norm(temp, ord=2)
+        vectors.append(temp)
+    vectors = np.array(vectors)
+
+    dist = np.linalg.norm(np.diff(vectors, axis=0), ord=2, axis=1)
+
+    for i in range(len(words)):
+        if (words[i] in nltk_stopwords) or (normalized_words[i] in nltk_stopwords):
+            if i < len(dist):
+                dist[i] = 100000
+            if i - 1 >= 0:
+                dist[i - 1] = 100000
+        if (i + 1 < len(pos)) and (pos[i] == pos[i + 1]):
+            dist[i] = 100000
+    dist[np.isnan(dist)] = 100000
+
+    argmin = np.argmin(dist)
+
+    pos_to_choose_from = pos[argmin:argmin + 2]
+    if pos_to_choose_from == ["ADJF", "NOUN"]:
+        answer = words[argmin]
+    elif pos_to_choose_from == ["NOUN", "ADJF"]:
+        answer = words[argmin + 1]
+    else:
+        answer = words[argmin]
+
+    return answer
