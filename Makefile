@@ -45,7 +45,7 @@ predictor:
 	cd ..
 
 evaluator:
-	sudo docker run \
+	- sudo docker run \
 		-v ${ABS_BASE_PATH}/client:/root/solution/client \
 		-v ${ABS_BASE_PATH}/data:/root/solution/data \
 		--rm \
