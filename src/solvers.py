@@ -1,11 +1,11 @@
 import os
 import re
 import json
+import copy
 import regex
 import pickle
 import random
 import string
-import sys
 
 import nltk.corpus
 
@@ -576,3 +576,176 @@ def solver_6(task):
         answer = words[argmin]
 
     return answer
+
+
+def solver_8(task):
+
+    problems_mapping = {
+        0: "другое",
+        1: "ошибка в построении предложения с деепричастным оборотом",
+        2: "ошибка в построении предложения с причастным оборотом",
+        3: "ошибка связи между подлежащим и сказуемым",
+        4: "неправильное употребление падежной формы существительного с предлогом",
+        5: "ошибка в построении предложения с косвенной речью",
+        6: "ошибка в построении предложения с несогласованным приложением",
+        7: "ошибка в построении предложения с однородными членами",
+        8: "ошибка в построении сложного предложения",
+        9: "ошибка в построении сложноподчинённого предложения",
+        10: "ошибка в употреблении имени числительного",
+        11: "ошибка видовременной соотнесённости глагольных форм"
+    }
+
+    def question_classifier(question):
+        if regex.search("деепричаст", question):
+            return 1
+        elif regex.search(" причаст", question):
+            return 2
+        elif regex.search("сказуем", question) and regex.search("подлежащ", question):
+            return 3
+        elif regex.search("предло", question) and regex.search("падеж", question):
+            return 4
+        elif regex.search("косвен", question) and regex.search("реч", question):
+            return 5
+        elif regex.search("несогласован", question) and regex.search("приложени", question):
+            return 6
+        elif regex.search("однородн", question) and regex.search("член", question):
+            return 7
+        elif regex.search("сложного", question) or regex.search("сложное", question):
+            return 8
+        elif regex.search("сложноподчин", question):
+            return 9
+        elif regex.search("числительн", question):
+            return 10
+        elif regex.search("глагол", question) and regex.search("врем", question):
+            return 11
+        else:
+            return 0
+
+    morph = pymorphy2.MorphAnalyzer()
+
+    questions = task["question"]["left"]
+    choices = task["question"]["choices"]
+
+    # preprocessed_choices = [wordpunct_tokenize(choice["text"].lower()) for choice in choices]
+    preprocessed_choices = [regex.findall(r"\w+|[^\w\s]", choice["text"].lower()) for choice in choices]
+
+    pos_choices = []
+    tag_choices = []
+    for choice in preprocessed_choices:
+        pos_choices.append([])
+        tag_choices.append([])
+        for word in choice:
+            morph_word = morph.parse(word)[0]
+            tag_choices[-1].append(morph_word.tag)
+            if str(morph_word.tag) == "PNCT":
+                pos_choices[-1].append("PNCT")
+            else:
+                pos_choices[-1].append(str(morph_word.tag.POS))
+        tag_choices[-1] = np.array(tag_choices[-1])
+        pos_choices[-1] = np.array(pos_choices[-1])
+    pos_choices_joined = np.array([" ".join(ch) for ch in pos_choices])
+    tag_choices = np.array(tag_choices)
+    pos_choices = np.array(pos_choices)
+
+    question_classes = []
+    for question in questions:
+        cls = question_classifier(question["text"].lower().translate(str.maketrans('', '', string.punctuation)))
+        question_classes.append(cls)
+
+    possible_answers = []
+    for question_num in range(len(questions)):
+        possible_answers.append(set())
+        if question_classes[question_num] == 1:
+            for pos_choice_joined_num in range(len(pos_choices_joined)):
+                if "GRND" in pos_choices_joined[pos_choice_joined_num]:
+                    possible_answers[-1].add(pos_choice_joined_num)
+        elif question_classes[question_num] == 2:
+            for pos_choice_joined_num in range(len(pos_choices_joined)):
+                if ("PRTF" in pos_choices_joined[pos_choice_joined_num]) or \
+                        ("PRTS" in pos_choices_joined[pos_choice_joined_num]):
+                    possible_answers[-1].add(pos_choice_joined_num)
+        elif question_classes[question_num] == 10:
+            for pos_choice_joined_num in range(len(pos_choices_joined)):
+                if "NUMR" in pos_choices_joined[pos_choice_joined_num]:
+                    possible_answers[-1].add(pos_choice_joined_num)
+        elif question_classes[question_num] == 4:
+            for pos_choice_joined_num in range(len(pos_choices_joined)):
+                if "PREP NOUN" in pos_choices_joined[pos_choice_joined_num]:
+                    possible_answers[-1].add(pos_choice_joined_num)
+        elif question_classes[question_num] == 11:
+            for tag_choice_num in range(len(tag_choices)):
+                all_verbs = tag_choices[tag_choice_num][pos_choices[tag_choice_num] == "VERB"]
+                if len(all_verbs) >= 2:
+                    forms = set()
+                    tenses = set()
+                    for verb in all_verbs:
+                        forms.add(verb.aspect)
+                        tenses.add(verb.tense)
+                    forms -= {None}
+                    tenses -= {None}
+                    if (len(forms) > 1) or (len(tenses) > 1):
+                        possible_answers[-1].add(tag_choice_num)
+        elif question_classes[question_num] == 6:
+            for preprocessed_choice_num in range(len(preprocessed_choices)):
+                if ("«" in preprocessed_choices[preprocessed_choice_num]) and \
+                        ("»" in preprocessed_choices[preprocessed_choice_num]):
+                    possible_answers[-1].add(preprocessed_choice_num)
+        elif (question_classes[question_num] == 8) or (question_classes[question_num] == 9):
+            for preprocessed_choice_num in range(len(preprocessed_choices)):
+                if "," in preprocessed_choices[preprocessed_choice_num]:
+                    possible_answers[-1].add(preprocessed_choice_num)
+        elif question_classes[question_num] == 5:
+            for tag_choice_num in range(len(tag_choices)):
+                all_nouns = tag_choices[tag_choice_num][np.isin(pos_choices[tag_choice_num], ["NPRO", "NOUN"])]
+                if len(all_nouns) >= 2:
+                    persons = set()
+                    for noun in all_nouns:
+                        if noun.person is not None:
+                            persons.add(noun.person)
+                        elif "Name" in str(noun):
+                            persons.add("NAME")
+                        elif noun.animacy == "anim":
+                            persons.add("anim")
+                        else:
+                            pass
+                    persons -= {None}
+                    if len(persons) > 1:
+                        possible_answers[-1].add(tag_choice_num)
+        else:
+            possible_answers[-1].update(range(len(choices)))
+
+    answers = {}
+    question_num = 0
+    is_solved = [False] * len(questions)
+    available_answers = set(range(len(choices)))
+    while question_num < len(questions):
+        if not is_solved[question_num]:
+            if len(possible_answers[question_num]) == 0:
+                possible_answers[question_num] = copy.deepcopy(available_answers)
+            elif len(possible_answers[question_num]) == 1:
+                is_solved[question_num] = True
+                correct_choice_num = list(possible_answers[question_num])[0]
+                answers[questions[question_num]["id"]] = int(choices[correct_choice_num]["id"])
+                for i in range(len(questions)):
+                    possible_answers[i] -= {correct_choice_num}
+                available_answers -= {correct_choice_num}
+                question_num = 0
+            else:
+                question_num += 1
+        else:
+            question_num += 1
+
+    question_num = 0
+    while question_num < len(questions):
+        if not is_solved[question_num]:
+            if len(possible_answers[question_num]) == 0:
+                possible_answers[question_num] = copy.deepcopy(available_answers)
+            is_solved[question_num] = True
+            correct_choice_num = random.choice(list(possible_answers[question_num]))
+            answers[questions[question_num]["id"]] = int(choices[correct_choice_num]["id"])
+            for i in range(len(questions)):
+                possible_answers[i] -= {correct_choice_num}
+            available_answers -= {correct_choice_num}
+        question_num += 1
+
+    return answers
