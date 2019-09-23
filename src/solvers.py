@@ -739,6 +739,10 @@ def solver_8(task):
                     persons -= {None}
                     if len(persons) > 1:
                         possible_answers[-1].add(tag_choice_num)
+        elif question_classes[question_num] == 7:
+            for choice_num in range(len(choices)):
+                if "не только" in choices[choice_num]["text"].lower():
+                    possible_answers[-1].add(choice_num)
         else:
             possible_answers[-1].update(range(len(choices)))
 
