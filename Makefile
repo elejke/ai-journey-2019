@@ -50,7 +50,7 @@ evaluator:
 		-v ${ABS_BASE_PATH}/data:/root/solution/data \
 		--rm \
 		--net="host" \
-		--name="querier" \
+		--name="querier-${TIMESTAMP}" \
 		${IMAGE} \
 		/bin/bash -c "cd /root/solution/client && python3 evaluator.py \
 															--folder-path ../${DATA_PATH} \
