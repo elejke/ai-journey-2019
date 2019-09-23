@@ -621,6 +621,20 @@ def solver_8(task):
         else:
             return 0
 
+    prepositions_by_case = {
+        "nomn": frozenset(),
+        "gent": frozenset(["с", "у", "от", "до", "из", "без", "для", "вокруг", "около", "возле", "кроме"]),
+        "datv": frozenset(["к", "по", "благодаря", "вопреки", "согласно"]),
+        "accs": frozenset(["под", "за", "про", "через", "в", "на", "во"]),
+        "ablt": frozenset(["с", "со", "за", "над", "под", "между", "перед"]),
+        "loct": frozenset(["в", "о", "об", "на", "при", "по"]),
+        "voct": frozenset([]),
+    }
+    prepositions_by_case["gen2"] = prepositions_by_case["gent"]
+    prepositions_by_case["acc2"] = prepositions_by_case["accs"]
+    prepositions_by_case["loc2"] = prepositions_by_case["loct"]
+    all_prepositions = frozenset([item for sublist in prepositions_by_case.values() for item in sublist])
+
     morph = pymorphy2.MorphAnalyzer()
 
     questions = task["question"]["left"]
@@ -669,9 +683,23 @@ def solver_8(task):
                 if "NUMR" in pos_choices_joined[pos_choice_joined_num]:
                     possible_answers[-1].add(pos_choice_joined_num)
         elif question_classes[question_num] == 4:
-            for pos_choice_joined_num in range(len(pos_choices_joined)):
-                if "PREP NOUN" in pos_choices_joined[pos_choice_joined_num]:
-                    possible_answers[-1].add(pos_choice_joined_num)
+            is_finalized = False
+            for tag_choice_num in range(len(tag_choices)):
+                for word_num in range(len(tag_choices[tag_choice_num]) - 1):
+                    if (pos_choices[tag_choice_num][word_num] == "PREP") and \
+                            (pos_choices[tag_choice_num][word_num + 1] == "NOUN"):
+                        if (preprocessed_choices[tag_choice_num][word_num] == "по") and \
+                                (preprocessed_choices[tag_choice_num][word_num + 1].endswith("ию")):
+                            possible_answers[-1] = {tag_choice_num}
+                            is_finalized = True
+                            break
+                        elif preprocessed_choices[tag_choice_num][word_num] not in \
+                                prepositions_by_case[tag_choices[tag_choice_num][word_num + 1].case]:
+                            possible_answers[-1].add(tag_choice_num)
+                        else:
+                            pass
+                if is_finalized:
+                    break
         elif question_classes[question_num] == 11:
             for tag_choice_num in range(len(tag_choices)):
                 all_verbs = tag_choices[tag_choice_num][pos_choices[tag_choice_num] == "VERB"]
