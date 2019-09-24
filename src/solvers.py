@@ -621,6 +621,12 @@ def solver_8(task):
         else:
             return 0
 
+    def check_morph_tag_similarity(a, b):
+        if (a.POS == b.POS) and (a.gender == b.gender) and (a.number == b.number) and (a.tense == b.tense):
+            return True
+        else:
+            return False
+
     prepositions_by_case = {
         "nomn": frozenset(),
         "gent": frozenset(["с", "у", "от", "до", "из", "без", "для", "вокруг", "около", "возле", "кроме"]),
@@ -743,6 +749,14 @@ def solver_8(task):
             for choice_num in range(len(choices)):
                 if "не только" in choices[choice_num]["text"].lower():
                     possible_answers[-1].add(choice_num)
+                    continue
+                for pos_num in range(len(pos_choices[choice_num]) - 2):
+                    if (preprocessed_choices[choice_num][pos_num + 1] == "и") and \
+                            (pos_choices[choice_num][pos_num] != "PNCT") and \
+                            check_morph_tag_similarity(tag_choices[choice_num][pos_num],
+                                                       tag_choices[choice_num][pos_num + 2]):
+                        possible_answers[-1].add(choice_num)
+                        break
         else:
             possible_answers[-1].update(range(len(choices)))
 
