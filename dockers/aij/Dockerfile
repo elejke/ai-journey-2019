@@ -34,3 +34,7 @@ COPY ./models/fasttext/cc.ru.300.bin /misc/models/fasttext/cc.ru.300.bin
 
 # load NLTK corpus
 RUN python -c "import nltk; nltk.download('stopwords')"
+
+# StanfordNLP
+RUN pip install stanfordnlp
+RUN python -c "import stanfordnlp; stanfordnlp.download('ru', force=True); nlp = stanfordnlp.Pipeline(lang='ru')"
