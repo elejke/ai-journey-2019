@@ -77,5 +77,5 @@ submit:
 
 build:
 	cp dockers/aij/.dockerignore .
-	sudo docker build -f dockers/aij/Dockerfile -t aij .
+	sudo docker build -f dockers/aij/Dockerfile -t vovacher/aij:latest .
 	rm .dockerignore
