@@ -781,6 +781,25 @@ def solver_8(task):
                                                        primary_tag_choices[choice_num][pos_num + 2]):
                         possible_answers[-1].add(choice_num)
                         break
+        elif question_classes[question_num] == 3:
+            for choice_num in range(len(preprocessed_choices)):
+                main_predicate_index = np.argmax([word.governor == 0
+                                                  for word in synt_choices.sentences[choice_num].words]) + 1
+                predicate_morph = all_tag_choices[choice_num][main_predicate_index - 1][0]
+                for word_num in range(len(preprocessed_choices[choice_num])):
+                    if synt_choices.sentences[choice_num].words[word_num].governor == main_predicate_index:
+                        top1_proba = all_tag_choices[choice_num][word_num][0].score
+                        for form in all_tag_choices[choice_num][word_num]:
+                            if form.score < top1_proba:
+                                break
+                            if form.tag.POS in {"NOUN", "NUMR", "NPRO", "ADJF", "ADJS"} and (form.tag.case == "nomn"):
+                                grammemes = {form.tag.number, form.tag.gender} - {None}
+                                casted = predicate_morph.inflect(grammemes)
+                                if casted is None:
+                                    casted = form.inflect(grammemes - {form.tag.gender})
+                                if casted.word != predicate_morph.word:
+                                    possible_answers[-1].add(choice_num)
+                                    break
         else:
             possible_answers[-1].update(range(len(choices)))
 
