@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 
 import fasttext
+import stanfordnlp
 
 import pymorphy2
 
@@ -25,6 +26,11 @@ big_words_set = frozenset(df_dict_full["Lemma"].values)
 
 df_dict = pd.read_table("../models/dictionaries/freqrnc2011.csv")
 small_words_dict = df_dict.set_index("Lemma")[["Freq(ipm)"]].to_dict()["Freq(ipm)"]
+
+morph = pymorphy2.MorphAnalyzer()
+
+synt = stanfordnlp.Pipeline(lang="ru")
+synt.processors["tokenize"].config["pretokenized"] = True
 
 
 def solver_10(task):
@@ -352,8 +358,6 @@ else:
 
 def solver_5(task):
 
-    morph = pymorphy2.MorphAnalyzer()
-
     text = task["text"]
 
     sentences = []
@@ -428,7 +432,6 @@ with open("../models/dictionaries/freq_dict_ruscorpora.json") as f:
 
 
 def solver_24(task):
-    morph = pymorphy2.MorphAnalyzer()
 
     text = task["text"]
     boundaries = regex.search("\s\d+[\p{Pd}−]\d+", text)
@@ -474,8 +477,6 @@ with open("../models/task_16/task_16_vectorizer_pos.pkl", 'rb') as file:
 
 
 def solver_16(task):
-
-    morph = pymorphy2.MorphAnalyzer()
 
     def _embedder(sentence):
 
@@ -524,8 +525,6 @@ nltk_stopwords = frozenset(nltk.corpus.stopwords.words("russian"))
 
 
 def solver_6(task):
-
-    morph = pymorphy2.MorphAnalyzer()
 
     text = task["text"]
 
@@ -641,31 +640,33 @@ def solver_8(task):
     prepositions_by_case["loc2"] = prepositions_by_case["loct"]
     all_prepositions = frozenset([item for sublist in prepositions_by_case.values() for item in sublist])
 
-    morph = pymorphy2.MorphAnalyzer()
-
     questions = task["question"]["left"]
     choices = task["question"]["choices"]
 
-    # preprocessed_choices = [wordpunct_tokenize(choice["text"].lower()) for choice in choices]
     preprocessed_choices = [regex.findall(r"\w+|[^\w\s]", choice["text"].lower()) for choice in choices]
 
-    pos_choices = []
-    tag_choices = []
+    primary_pos_choices = []
+    primary_tag_choices = []
+    all_tag_choices = []
     for choice in preprocessed_choices:
-        pos_choices.append([])
-        tag_choices.append([])
+        primary_pos_choices.append([])
+        primary_tag_choices.append([])
+        all_tag_choices.append([])
         for word in choice:
-            morph_word = morph.parse(word)[0]
-            tag_choices[-1].append(morph_word.tag)
-            if str(morph_word.tag) == "PNCT":
-                pos_choices[-1].append("PNCT")
+            morph_word = morph.parse(word)
+            primary_tag_choices[-1].append(morph_word[0].tag)
+            all_tag_choices[-1].append(morph_word)
+            if str(morph_word[0].tag) == "PNCT":
+                primary_pos_choices[-1].append("PNCT")
             else:
-                pos_choices[-1].append(str(morph_word.tag.POS))
-        tag_choices[-1] = np.array(tag_choices[-1])
-        pos_choices[-1] = np.array(pos_choices[-1])
-    pos_choices_joined = np.array([" ".join(ch) for ch in pos_choices])
-    tag_choices = np.array(tag_choices)
-    pos_choices = np.array(pos_choices)
+                primary_pos_choices[-1].append(str(morph_word[0].tag.POS))
+        primary_tag_choices[-1] = np.array(primary_tag_choices[-1])
+        primary_pos_choices[-1] = np.array(primary_pos_choices[-1])
+        all_tag_choices[-1] = np.array(all_tag_choices[-1])
+    primary_tag_choices = np.array(primary_tag_choices)
+    primary_pos_choices = np.array(primary_pos_choices)
+    all_tag_choices = np.array(all_tag_choices)
+    synt_choices = synt(preprocessed_choices)
 
     question_classes = []
     for question in questions:
@@ -676,39 +677,62 @@ def solver_8(task):
     for question_num in range(len(questions)):
         possible_answers.append(set())
         if question_classes[question_num] == 1:
-            for pos_choice_joined_num in range(len(pos_choices_joined)):
-                if "GRND" in pos_choices_joined[pos_choice_joined_num]:
-                    possible_answers[-1].add(pos_choice_joined_num)
+            for choice_num in range(len(primary_pos_choices)):
+                if "GRND" in primary_pos_choices[choice_num]:
+                    possible_answers[-1].add(choice_num)
         elif question_classes[question_num] == 2:
-            for pos_choice_joined_num in range(len(pos_choices_joined)):
-                if ("PRTF" in pos_choices_joined[pos_choice_joined_num]) or \
-                        ("PRTS" in pos_choices_joined[pos_choice_joined_num]):
-                    possible_answers[-1].add(pos_choice_joined_num)
+            is_finalized = False
+            for choice_num in range(len(preprocessed_choices)):
+                for word_num in range(len(preprocessed_choices[choice_num])):
+                    for form in all_tag_choices[choice_num][word_num]:
+                        if (form.tag.POS == "PRTF") or (form.tag.POS == "PRTS"):
+                            parent_index = synt_choices.sentences[choice_num].words[word_num].governor
+                            if parent_index != 0:
+                                parent_form = all_tag_choices[choice_num][parent_index - 1][0]
+                                grammemes = {parent_form.tag.case,
+                                             parent_form.tag.number,
+                                             parent_form.tag.gender} - {None}
+                                casted_form = form.inflect(grammemes)
+                                if casted_form is None:
+                                    casted_form = form.inflect(grammemes - {parent_form.tag.gender})
+                                if (parent_form.tag.POS in {"NOUN", "NUMR", "NPRO"}) and \
+                                        (casted_form.word != form.word):
+                                    possible_answers[-1] = {choice_num}
+                                    is_finalized = True
+                                    break
+                                else:
+                                    possible_answers[-1].add(choice_num)
+                            else:
+                                possible_answers[-1].add(choice_num)
+                    if is_finalized:
+                        break
+                if is_finalized:
+                    break
         elif question_classes[question_num] == 10:
-            for pos_choice_joined_num in range(len(pos_choices_joined)):
-                if "NUMR" in pos_choices_joined[pos_choice_joined_num]:
-                    possible_answers[-1].add(pos_choice_joined_num)
+            for choice_num in range(len(primary_pos_choices)):
+                if "NUMR" in primary_pos_choices[choice_num]:
+                    possible_answers[-1].add(choice_num)
         elif question_classes[question_num] == 4:
             is_finalized = False
-            for tag_choice_num in range(len(tag_choices)):
-                for word_num in range(len(tag_choices[tag_choice_num]) - 1):
-                    if (pos_choices[tag_choice_num][word_num] == "PREP") and \
-                            (pos_choices[tag_choice_num][word_num + 1] == "NOUN"):
-                        if (preprocessed_choices[tag_choice_num][word_num] == "по") and \
-                                (preprocessed_choices[tag_choice_num][word_num + 1].endswith("ию")):
-                            possible_answers[-1] = {tag_choice_num}
+            for choice_num in range(len(primary_tag_choices)):
+                for word_num in range(len(primary_tag_choices[choice_num]) - 1):
+                    if (primary_pos_choices[choice_num][word_num] == "PREP") and \
+                            (primary_pos_choices[choice_num][word_num + 1] == "NOUN"):
+                        if (preprocessed_choices[choice_num][word_num] == "по") and \
+                                (preprocessed_choices[choice_num][word_num + 1].endswith("ию")):
+                            possible_answers[-1] = {choice_num}
                             is_finalized = True
                             break
-                        elif preprocessed_choices[tag_choice_num][word_num] not in \
-                                prepositions_by_case[tag_choices[tag_choice_num][word_num + 1].case]:
-                            possible_answers[-1].add(tag_choice_num)
+                        elif preprocessed_choices[choice_num][word_num] not in \
+                                prepositions_by_case[primary_tag_choices[choice_num][word_num + 1].case]:
+                            possible_answers[-1].add(choice_num)
                         else:
                             pass
                 if is_finalized:
                     break
         elif question_classes[question_num] == 11:
-            for tag_choice_num in range(len(tag_choices)):
-                all_verbs = tag_choices[tag_choice_num][pos_choices[tag_choice_num] == "VERB"]
+            for choice_num in range(len(primary_tag_choices)):
+                all_verbs = primary_tag_choices[choice_num][primary_pos_choices[choice_num] == "VERB"]
                 if len(all_verbs) >= 2:
                     forms = set()
                     tenses = set()
@@ -718,19 +742,19 @@ def solver_8(task):
                     forms -= {None}
                     tenses -= {None}
                     if (len(forms) > 1) or (len(tenses) > 1):
-                        possible_answers[-1].add(tag_choice_num)
+                        possible_answers[-1].add(choice_num)
         elif question_classes[question_num] == 6:
-            for preprocessed_choice_num in range(len(preprocessed_choices)):
-                if ("«" in preprocessed_choices[preprocessed_choice_num]) and \
-                        ("»" in preprocessed_choices[preprocessed_choice_num]):
-                    possible_answers[-1].add(preprocessed_choice_num)
+            for choice_num in range(len(preprocessed_choices)):
+                if ("«" in preprocessed_choices[choice_num]) and \
+                        ("»" in preprocessed_choices[choice_num]):
+                    possible_answers[-1].add(choice_num)
         elif (question_classes[question_num] == 8) or (question_classes[question_num] == 9):
-            for preprocessed_choice_num in range(len(preprocessed_choices)):
-                if "," in preprocessed_choices[preprocessed_choice_num]:
-                    possible_answers[-1].add(preprocessed_choice_num)
+            for choice_num in range(len(preprocessed_choices)):
+                if "," in preprocessed_choices[choice_num]:
+                    possible_answers[-1].add(choice_num)
         elif question_classes[question_num] == 5:
-            for tag_choice_num in range(len(tag_choices)):
-                all_nouns = tag_choices[tag_choice_num][np.isin(pos_choices[tag_choice_num], ["NPRO", "NOUN"])]
+            for choice_num in range(len(primary_tag_choices)):
+                all_nouns = primary_tag_choices[choice_num][np.isin(primary_pos_choices[choice_num], ["NPRO", "NOUN"])]
                 if len(all_nouns) >= 2:
                     persons = set()
                     for noun in all_nouns:
@@ -744,17 +768,17 @@ def solver_8(task):
                             pass
                     persons -= {None}
                     if len(persons) > 1:
-                        possible_answers[-1].add(tag_choice_num)
+                        possible_answers[-1].add(choice_num)
         elif question_classes[question_num] == 7:
             for choice_num in range(len(choices)):
                 if "не только" in choices[choice_num]["text"].lower():
                     possible_answers[-1].add(choice_num)
                     continue
-                for pos_num in range(len(pos_choices[choice_num]) - 2):
+                for pos_num in range(len(primary_pos_choices[choice_num]) - 2):
                     if (preprocessed_choices[choice_num][pos_num + 1] == "и") and \
-                            (pos_choices[choice_num][pos_num] != "PNCT") and \
-                            check_morph_tag_similarity(tag_choices[choice_num][pos_num],
-                                                       tag_choices[choice_num][pos_num + 2]):
+                            (primary_pos_choices[choice_num][pos_num] != "PNCT") and \
+                            check_morph_tag_similarity(primary_tag_choices[choice_num][pos_num],
+                                                       primary_tag_choices[choice_num][pos_num + 2]):
                         possible_answers[-1].add(choice_num)
                         break
         else:
