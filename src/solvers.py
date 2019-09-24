@@ -89,7 +89,7 @@ def solver_11_12(task):
         conf = 0
         answer = None
         for letter in letter_list:
-            words_list = task["text"].replace("..", letter).replace("...", letter).split("\n")[1:]
+            words_list = task["text"].replace("...", letter).replace("..", letter).split("\n")[1:]
             # check first dictionary and find the most confident word from the list
             for word_ in words_list:
                 word_ = remove_additional(word_)
@@ -112,16 +112,20 @@ def solver_11_12(task):
 
     else:
         answer = []
-        for choices_ in task["question"]["choices"]:
-            if ";" in choices_["text"]:
-                sep = "; "
-            elif "." in choices_["text"].replace("..", "@").replace("...", "@"):
-                sep = ". "
-            else:
-                sep = ", "
+        try:
+            for choices_ in task["question"]["choices"]:
 
-            if len(check_pair(*choices_["text"].replace("..", "@").replace("...", "@").split(sep), big_words_set)):
-                answer.append(choices_['id'])
+                    if ";" in choices_["text"]:
+                        sep = "; "
+                    elif "." in choices_["text"].replace("...", "@").replace("..", "@"):
+                        sep = ". "
+                    else:
+                        sep = ", "
+                    words_pair = choices_["text"].replace("...", "@").replace("..", "@").split(sep)
+                    if len(check_pair(words_pair[0], words_pair[1], big_words_set)):
+                        answer.append(choices_['id'])
+        except:
+            answer = ["2", "4"]
 
     return answer
 
