@@ -163,10 +163,13 @@ df_dict_orfoepicheskiy = pd.concat([
                 names=["word"]),
     pd.read_csv("../models/dictionaries/orfoepicheckiy_automatic_povtoru.txt",
                 header=None,
+                names=["word"]),
+    pd.read_csv("../models/dictionaries/orfoepicheskiy_automatic_gde_udarenie_rf.txt",
+                header=None,
                 names=["word"])
 ], ignore_index=True)
-df_dict_orfoepicheskiy.drop_duplicates(inplace=True)
-df_dict_orfoepicheskiy["lowercase"] = df_dict_orfoepicheskiy["word"].str.lower()
+df_dict_orfoepicheskiy_lowercase = frozenset(df_dict_orfoepicheskiy["word"].str.lower())
+df_dict_orfoepicheskiy = frozenset(df_dict_orfoepicheskiy["word"])
 
 
 def solver_4(task):
@@ -179,11 +182,19 @@ def solver_4(task):
         answer = random.choice(words).lower()
     else:
         words = np.array(text[start_index + len(needle):].split("\n")[:5])
-        for i in range(len(words)):
-            subwords = words[i].split()
+        for word_num in range(len(words)):
+            subwords = words[word_num].split()
             subwords = list(filter(lambda x: x.lower() != x, subwords))
-            words[i] = subwords[0]
-        is_met = np.isin(words, df_dict_orfoepicheskiy["word"])
+            words[word_num] = subwords[0]
+        is_met = []
+        for word_num in range(len(words)):
+            if len(regex.findall("[аеёиоуыэюяАЕЁИОУЫЭЮЯ]", words[word_num])) == 1:
+                is_met.append(True)
+            elif words[word_num] in df_dict_orfoepicheskiy:
+                is_met.append(True)
+            else:
+                is_met.append(False)
+        is_met = np.array(is_met)
         # if every word is met
         if sum(~is_met) == 0:
             # pick a random word from answers
@@ -193,7 +204,16 @@ def solver_4(task):
             answer = words[~is_met][0].lower()
         # if more words are not met
         else:
-            is_met_in_lowercase = np.isin(list(map(str.lower, words)), df_dict_orfoepicheskiy["lowercase"])
+            is_met_in_lowercase = []
+            for word_num in range(len(words)):
+                word_to_look_for = words[word_num].lower()
+                if len(regex.findall("[аеёиоуыэюяАЕЁИОУЫЭЮЯ]", word_to_look_for)) == 1:
+                    is_met_in_lowercase.append(True)
+                elif word_to_look_for in df_dict_orfoepicheskiy_lowercase:
+                    is_met_in_lowercase.append(True)
+                else:
+                    is_met_in_lowercase.append(False)
+            is_met_in_lowercase = np.array(is_met_in_lowercase)
             wrong_stress = np.logical_xor(is_met, is_met_in_lowercase)
             # if there are words that are not met in original dict but met in lowercase dict
             # then it means that these words have wrong stress
