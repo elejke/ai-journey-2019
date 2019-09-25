@@ -260,7 +260,7 @@ def solver_25(task):
             'ж', 'при', 'об', 'над', 'про', 'перед'
         })
 
-        personal_pronouns = frozenset({
+        lichniye_mestoimeniya = frozenset({
             'вами', 'она', 'оно', 'ними', 'я', 'вас',
             'неё', 'ими', 'мы', 'они', 'нами', 'меня',
             'он', 'ему', 'им', 'вам', 'нему', 'ней',
@@ -270,7 +270,7 @@ def solver_25(task):
             'их', 'нам', 'тебе'
         })
 
-        possessive_pronouns = frozenset({
+        prityazatelniye_mestoimeniya = frozenset({
             'наших', 'ваших', 'мою', 'моих', 'свои', 'твоих',
             'мое', 'моё', 'нашей', 'ваше', 'моего', 'своих', 'моему',
             'ваши', 'нашу', 'твоими', 'вашими', 'мой', 'твою',
@@ -283,7 +283,7 @@ def solver_25(task):
             'своего', 'нашему', 'своими', 'своей', 'вашей', 'его', 'ее', 'её', 'их'
         })
 
-        demonstrative_pronouns = frozenset({
+        ukazatelniye_mestoimeniya = frozenset({
             'тот', 'таком', 'этою', 'этой', 'эта', 'такова',
             'такая', 'такому', 'свои', 'таких', 'таким',
             'такое', 'таков', 'этот', 'ту', 'такого', 'того',
@@ -295,7 +295,7 @@ def solver_25(task):
             'эту', 'тому'
         })
 
-        conjunctions = frozenset({
+        soyuzy = frozenset({
             'сиречь', 'даже', 'коль', 'пока', 'поскольку',
             'аж', 'словно', 'ли', 'а', 'пускай', 'разве',
             'но', 'зато', 'ровно', 'чтобы', 'как', 'коли',
@@ -307,6 +307,16 @@ def solver_25(task):
             'будто', 'кабы', 'итак', 'абы', 'либо', 'тоже',
             'затем', 'причем', 'да', 'чем', 'раз', 'чуть',
             'однако'
+        })
+
+        protivitelniye_soyuzy = frozenset({
+            'но', 'зато', 'однако же', 'однако ж', 'да', 'а'
+        })
+
+        ukazatelniye_narechiya = frozenset({
+            'здесь', 'тут', 'там', 'туда', 'оттуда', 'так',
+            'тогда', 'затем', 'оттого', 'потому', 'поэтому',
+            'сюда', 'отсюда', 'сейчас', 'теперь', 'дотуда'
         })
 
         task_find_borders = [
@@ -322,6 +332,8 @@ def solver_25(task):
             regex.search("указательн\w+\s+местоимени", text_to_find_task),
             regex.search("\s+союз", text_to_find_task),
             regex.search("притяжательн\w+\s+местоимени", text_to_find_task),
+            regex.search("противительн", text_to_find_task),
+            regex.search("указательн\w+\s+наречи", text_to_find_task)
         ]
         for num_cond, cond in enumerate(conditions):
             if cond:
@@ -333,14 +345,18 @@ def solver_25(task):
         for i in range(1, len(sentences_set)):
             if len(sentences_set[i] & sentences_set[i - 1] - russian_stopwords) != 0:
                 conditional_answers[0].add(numbers[i])
-            if len(sentences_set[i] & personal_pronouns) != 0:
+            if len(sentences_set[i] & lichniye_mestoimeniya) != 0:
                 conditional_answers[1].add(numbers[i])
-            if len(sentences_set[i] & demonstrative_pronouns) != 0:
+            if len(sentences_set[i] & ukazatelniye_mestoimeniya) != 0:
                 conditional_answers[2].add(numbers[i])
-            if len(set(sentences[i].lower().split()[:1]) & conjunctions) != 0:
+            if len(set(sentences[i].lower().split()[:1]) & soyuzy) != 0:
                 conditional_answers[3].add(numbers[i])
-            if len(sentences_set[i] & possessive_pronouns) != 0:
+            if len(sentences_set[i] & prityazatelniye_mestoimeniya) != 0:
                 conditional_answers[4].add(numbers[i])
+            if len(sentences_set[i] & protivitelniye_soyuzy) != 0:
+                conditional_answers[5].add(numbers[i])
+            if len(sentences_set[i] & ukazatelniye_narechiya) != 0:
+                conditional_answers[6].add(numbers[i])
 
         if sum(conditions) > 0:
             answer = set(numbers)
