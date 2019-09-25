@@ -124,8 +124,9 @@ def solver_11_12(task):
                         answer.append(str(choices_['id']))
         except:
             answer = ["2", "4"]
+        answer = sorted(answer, key=lambda x: int(x))
 
-    return sorted(answer, key=lambda x: int(x))
+    return answer
 
 
 def solver_15(task):
