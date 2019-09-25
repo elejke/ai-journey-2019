@@ -48,7 +48,7 @@ def solver_10(task):
 
             if len(repair_words(choice_["text"].replace("...", "@").replace(".. ", "@").split(sep),
                                 big_words_set, False)):
-                answers.append(choice_["id"])
+                answers.append(str(choice_["id"]))
 
         return sorted(answers, key=lambda x: int(x))
     else:
@@ -71,7 +71,7 @@ def solver_10(task):
 
         letter_ = random.choice(list("абвгдеёжзийклмнопрстуфхцчшщъыьэюя"))
         answer = "".join(choice_.replace("...", letter_).replace(".. ", letter_).split(sep))
-        return sorted(answer, key=lambda x: int(x))
+        return answer
 
 
 def solver_11_12(task):
