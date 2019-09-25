@@ -18,7 +18,10 @@ def answers_enricher(path):
         for question in file_data["tasks"]:
             col_id = (parsed_answers["path"] == file) & (parsed_answers["id"] == int(question["id"]))
             parsed_answers.loc[col_id, "type"] = question["question"]["type"]
-            parsed_answers.loc[col_id, "source"] = question["meta"]["source"]
+            try:
+                parsed_answers.loc[col_id, "source"] = question["meta"]["source"]
+            except:
+                parsed_answers.loc[col_id, "source"] = None
             parsed_answers.loc[col_id, "score"] = float(question["score"])
             if "correct" in question["solution"]:
                 parsed_answers.loc[col_id, "gt_unique"] = str(question["solution"]["correct"])
