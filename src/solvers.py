@@ -34,7 +34,6 @@ synt.processors["tokenize"].config["pretokenized"] = True
 
 
 def solver_10(task):
-    #     if "Выпишите слово" in task["text"]:
 
     if task["question"]["type"] == "multiple_choice":
 
@@ -76,7 +75,6 @@ def solver_10(task):
 
 
 def solver_11_12(task):
-    #     if "Выпишите слово" in task["text"]:
     if task["question"]["type"] != "multiple_choice":
         # find letter, that we need to insert into words
         letter_list = re.findall("буква [А-Яа-я]", task["text"])
