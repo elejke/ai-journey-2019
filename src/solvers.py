@@ -259,12 +259,17 @@ def solver_25(task):
         numbers = np.array(numbers)
 
         sentences_set = []
+        normalized_sentences_set = []
         for s in sentences:
             temp = s.lower().split()
             if len(temp) > 20:
                 sentences_set.append(frozenset(temp[-10:] + temp[:10]))
+                normalized_sentences_set.append(frozenset([morph.parse(word)[0].normal_form
+                                                           for word in temp[-10:] + temp[:10]]))
             else:
                 sentences_set.append(frozenset(temp))
+                normalized_sentences_set.append(frozenset([morph.parse(word)[0].normal_form
+                                                           for word in temp]))
 
         russian_stopwords = frozenset({
             'и', 'в', 'во', 'не', 'на', 'с', 'со', 'но',
@@ -347,7 +352,8 @@ def solver_25(task):
             regex.search("\s+союз", text_to_find_task),
             regex.search("притяжательн\w+\s+местоимени", text_to_find_task),
             regex.search("противительн", text_to_find_task),
-            regex.search("указательн\w+\s+наречи", text_to_find_task)
+            regex.search("указательн\w+\s+наречи", text_to_find_task),
+            regex.search("форм\w*\s+слов", text_to_find_task)
         ]
         for num_cond, cond in enumerate(conditions):
             if cond:
@@ -367,10 +373,14 @@ def solver_25(task):
                 conditional_answers[3].add(numbers[i])
             if len(sentences_set[i] & prityazatelniye_mestoimeniya) != 0:
                 conditional_answers[4].add(numbers[i])
-            if len(sentences_set[i] & protivitelniye_soyuzy) != 0:
+            if len(set(sentences[i].lower().split()[:1]) & protivitelniye_soyuzy) != 0:
                 conditional_answers[5].add(numbers[i])
             if len(sentences_set[i] & ukazatelniye_narechiya) != 0:
                 conditional_answers[6].add(numbers[i])
+            if len((normalized_sentences_set[i] & normalized_sentences_set[i - 1]) -
+                   russian_stopwords - lichniye_mestoimeniya -
+                   (sentences_set[i] & sentences_set[i - 1])) != 0:
+                conditional_answers[7].add(numbers[i])
 
         if sum(conditions) > 0:
             answer = set(numbers)
