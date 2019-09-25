@@ -17,13 +17,16 @@ def eval_choice(row) -> float:
         value of binary metric (either 0 or 1) multiplied by the point score of the question.
     """
     if not pd.isnull(row["gt_unique"]):
-        correct_answers = read_str(row["gt_unique"])
+        correct_answers = [read_str(row["gt_unique"])]
     elif not pd.isnull(row["gt_variants"]):
         correct_answers = read_str(row["gt_variants"])
     else:
         return np.NaN
 
-    if str(row["prediction"]) in correct_answers:
+    my_answers = read_str(row["prediction"])
+    if not isinstance(my_answers, list):
+        return np.NaN
+    if my_answers in correct_answers:
         return float(row["score"])
     else:
         return 0.
