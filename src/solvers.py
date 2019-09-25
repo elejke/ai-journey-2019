@@ -52,7 +52,7 @@ def solver_10(task):
 
         return answers
     else:
-        for choice_ in task["text"].split("\n")[1:]:
+        for choice_ in regex.split("[\n\xa0]", task["text"])[1:]:
             if ";" in choice_:
                 sep = "; "
             elif "." in choice_.replace("..", "@").replace("...", "@").replace(".. ", "@"):
@@ -87,7 +87,7 @@ def solver_11_12(task):
         conf = 0
         answer = None
         for letter in letter_list:
-            words_list = task["text"].replace("...", letter).replace("..", letter).split("\n")[1:]
+            words_list = regex.split("[\n\xa0]", task["text"].replace("...", letter).replace("..", letter))[1:]
             # check first dictionary and find the most confident word from the list
             for word_ in words_list:
                 word_ = remove_additional(word_)
@@ -106,7 +106,7 @@ def solver_11_12(task):
         # if no words found in dictionaries, choose random word from list:
         if not answer:
             letter_to_insert = letter_list[0] if len(letter_list) == 1 else "и"
-            answer = random.choice(task["text"].replace("..", letter_to_insert).split("\n")[1:])
+            answer = random.choice(regex.split("[\n\xa0]", task["text"].replace("..", letter_to_insert))[1:])
 
     else:
         answer = []
@@ -130,8 +130,12 @@ def solver_11_12(task):
 
 def solver_15(task):
     text = task["text"]
-    _splits = text.split("\n")
-    questions, options = _splits[0], _splits[1]
+    _splits = regex.split("[\n\xa0]", text)
+    questions = _splits[0]
+    for split in _splits:
+        if regex.search("\(\d+\)", split) is not None:
+            options = split
+            break
     if re.match("^.*\sН[^нН]*$", questions):
         missed_str = "н"
     else:
@@ -179,7 +183,15 @@ def solver_4(task):
         words = [word for word in text.split() if len(word) > 1]
         answer = random.choice(words).lower()
     else:
-        words = np.array(text[start_index + len(needle):].split("\n")[:5])
+        word_count = 0
+        words = []
+        for word in text[start_index + len(needle):].split("\n"):
+            if regex.search("\w+", word) is not None:
+                words.append(word)
+                word_count += 1
+            if word_count == 5:
+                break
+        words = np.array(words)
         for word_num in range(len(words)):
             subwords = words[word_num].split()
             subwords = list(filter(lambda x: x.lower() != x, subwords))
@@ -224,12 +236,14 @@ def solver_4(task):
 
 def solver_25(task):
     text = task["text"]
-    text_lowered = text.lower()
     boundaries = regex.search("\s\d+[\p{Pd}−]\d+", text)
     if boundaries:
         boundaries = re.split("\D", boundaries.group().strip())
         start_sentence_num = int(boundaries[0])
         end_sentence_num = int(boundaries[1])
+
+        text = regex.sub("(\d)\)\s*[\.\p{Pd}−]+", "\g<1>)", text)
+        text_lowered = text.lower()
 
         sentences = []
         numbers = []
@@ -310,7 +324,7 @@ def solver_25(task):
         })
 
         protivitelniye_soyuzy = frozenset({
-            'но', 'зато', 'однако же', 'однако ж', 'да', 'а'
+            'но', 'зато', 'однако', 'да', 'а'
         })
 
         ukazatelniye_narechiya = frozenset({
@@ -343,7 +357,7 @@ def solver_25(task):
 
         conditional_answers = [set() for _ in range(len(conditions))]
         for i in range(1, len(sentences_set)):
-            if len(sentences_set[i] & sentences_set[i - 1] - russian_stopwords) != 0:
+            if len((sentences_set[i] & sentences_set[i - 1]) - russian_stopwords) != 0:
                 conditional_answers[0].add(numbers[i])
             if len(sentences_set[i] & lichniye_mestoimeniya) != 0:
                 conditional_answers[1].add(numbers[i])
@@ -403,7 +417,7 @@ def solver_5(task):
     normalized_words = []
     contexts = []
 
-    for sent in text.split("\n")[1:]:
+    for sent in regex.split("[\n\xa0\.]", text)[1:]:
 
         sent = sent.translate(str.maketrans('', '', string.punctuation))
 
@@ -566,7 +580,7 @@ def solver_6(task):
 
     text = task["text"]
 
-    words = text.split("\n")[1].lower().translate(str.maketrans('', '', string.punctuation)).split()
+    words = regex.split("[\n\xa0]", text)[1].lower().translate(str.maketrans('', '', string.punctuation)).split()
 
     pos_mapping = {
         "ADJS": "ADJF",
