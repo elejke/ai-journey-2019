@@ -38,6 +38,10 @@ AI Journey 2019
 7. Пунктуация
    * https://github.com/ottokart/punctuator2
    * https://github.com/bedapudi6788/deepcorrect
+ 
+8. Синтаксис
+   * https://stanfordnlp.github.io/stanfordnlp/
+   * https://universaldependencies.org/u/dep/index.html
 
 # Question taxonomy
 
