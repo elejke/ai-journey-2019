@@ -50,7 +50,7 @@ def solver_10(task):
                                 big_words_set, False)):
                 answers.append(choice_["id"])
 
-        return answers
+        return sorted(answers, key=lambda x: int(x))
     else:
         for choice_ in regex.split("[\n\xa0]", task["text"])[1:]:
             if ";" in choice_:
@@ -71,7 +71,7 @@ def solver_10(task):
 
         letter_ = random.choice(list("абвгдеёжзийклмнопрстуфхцчшщъыьэюя"))
         answer = "".join(choice_.replace("..", letter_).replace("...", letter_).replace(".. ", letter_).split(sep))
-        return answer
+        return sorted(answer, key=lambda x: int(x))
 
 
 def solver_11_12(task):
@@ -121,11 +121,11 @@ def solver_11_12(task):
                         sep = ", "
                     words_pair = choices_["text"].replace("...", "@").replace("..", "@").split(sep)
                     if len(check_pair(words_pair[0], words_pair[1], big_words_set)):
-                        answer.append(choices_['id'])
+                        answer.append(str(choices_['id']))
         except:
             answer = ["2", "4"]
 
-    return answer
+    return sorted(answer, key=lambda x: int(x))
 
 
 def solver_15(task):
@@ -153,10 +153,10 @@ def solver_15(task):
     answers = []
     for k in possible_answers:
         if possible_answers[k] in big_words_set:
-            answers.append(k)
+            answers.append(str(k))
     if len(answers) == 0:
-        answers.append(random.choice(list(possible_answers.keys())))
-    return answers
+        answers.append(str(random.choice(list(possible_answers.keys()))))
+    return sorted(answers, key=lambda x: int(x))
 
 
 df_dict_orfoepicheskiy = pd.concat([
@@ -402,10 +402,10 @@ def solver_25(task):
         n_choices = random.randint(min_choices, max_choices)
         random.shuffle(choices)
         answer = [
-            choice["id"]
+            str(choice["id"])
             for choice in choices[:n_choices]
         ]
-    return answer
+    return sorted(answer, key=lambda x: int(x))
 
 
 with open("../models/dictionaries/paronyms_ege.json") as f:
@@ -571,16 +571,17 @@ def solver_16(task):
 
     sentences = list(map(lambda x: x["text"], task["question"]["choices"]))
 
-    return np.array(_predict_sentences(sentences)).astype(str).tolist()
+    return sorted(np.array(_predict_sentences(sentences)).astype(str).tolist(), key=lambda x: int(x))
 
 
 def solver_1(task):
 
     lens = [len(choice["text"]) for choice in task["question"]["choices"]]
     argsorted = np.argsort(lens)
-    ans = [task["question"]["choices"][argsorted[-1]]["id"], task["question"]["choices"][argsorted[-2]]["id"]]
+    ans = [str(task["question"]["choices"][argsorted[-1]]["id"]),
+           str(task["question"]["choices"][argsorted[-2]]["id"])]
 
-    return ans
+    return sorted(ans, key=lambda x: int(x))
 
 
 nltk_stopwords = frozenset(nltk.corpus.stopwords.words("russian"))
@@ -876,7 +877,7 @@ def solver_8(task):
             elif len(possible_answers[question_num]) == 1:
                 is_solved[question_num] = True
                 correct_choice_num = list(possible_answers[question_num])[0]
-                answers[questions[question_num]["id"]] = int(choices[correct_choice_num]["id"])
+                answers[str(questions[question_num]["id"])] = str(choices[correct_choice_num]["id"])
                 for i in range(len(questions)):
                     possible_answers[i] -= {correct_choice_num}
                 available_answers -= {correct_choice_num}
@@ -893,7 +894,7 @@ def solver_8(task):
                 possible_answers[question_num] = copy.deepcopy(available_answers)
             is_solved[question_num] = True
             correct_choice_num = random.choice(list(possible_answers[question_num]))
-            answers[questions[question_num]["id"]] = int(choices[correct_choice_num]["id"])
+            answers[str(questions[question_num]["id"])] = str(choices[correct_choice_num]["id"])
             for i in range(len(questions)):
                 possible_answers[i] -= {correct_choice_num}
             available_answers -= {correct_choice_num}

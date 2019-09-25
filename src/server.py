@@ -32,12 +32,15 @@ def take_exam(tasks):
         elif task['id'] in ["24"]:
             answer = solver_24(task)
         elif task['id'] in ["25"]:
-            answer = solver_25(task)
+            try:
+                answer = solver_25(task)
+            except:
+                answer = ["8"]
 
         elif question['type'] == 'choice':
             # pick a random answer
             choice = random.choice(question['choices'])
-            answer = choice['id']
+            answer = [str(choice['id'])]
 
         elif question['type'] == 'multiple_choice':
             # pick a random number of random choices
@@ -45,16 +48,16 @@ def take_exam(tasks):
             max_choices = question.get('max_choices', len(question['choices']))
             n_choices = random.randint(min_choices, max_choices)
             random.shuffle(question['choices'])
-            answer = [
-                choice['id']
+            answer = sorted([
+                str(choice['id'])
                 for choice in question['choices'][:n_choices]
-            ]
+            ], key=lambda x: int(x))
 
         elif question['type'] == 'matching':
             # match choices at random
             random.shuffle(question['choices'])
             answer = {
-                left['id']: choice['id']
+                str(left['id']): str(choice['id'])
                 for left, choice in zip(question['left'], question['choices'])
             }
 
