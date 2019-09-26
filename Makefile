@@ -12,6 +12,7 @@ IMAGE         := $$(jq -r ".image" ${BASE_PATH}/metadata.json)
 RUNNER        := $$(jq -r ".entry_point" ${BASE_PATH}/metadata.json)
 
 TIMESTAMP     := $(shell date +%s%N | cut -b1-13)
+PORT          := 8$$(echo ${TIMESTAMP} | rev | cut -c -3 | rev)
 
 all:
 	@echo "Please specify target"
@@ -31,7 +32,7 @@ create:
 		-d \
 		-v ${ABS_BASE_PATH}/src:/root/solution/src \
 		-v ${ABS_BASE_PATH}/models:/root/solution/models \
-		-p 8000:8000 \
+		-p ${PORT}:8000 \
 		--memory="16g" \
 		--memory-swap="16g" \
 		--cpus=$${CPUS_LIMIT} \
@@ -41,7 +42,7 @@ create:
 
 predictor:
 	cd client && \
-	python3 predictor.py --folder-path ../${DATA_PATH} --url http://localhost:8000 && \
+	python3 predictor.py --folder-path ../${DATA_PATH} --url http://localhost:${PORT} && \
 	cd ..
 
 evaluator:
@@ -54,7 +55,7 @@ evaluator:
 		${IMAGE} \
 		/bin/bash -c "cd /root/solution/client && python3 evaluator.py \
 															--folder-path ../${DATA_PATH} \
-															--url http://localhost:8000"
+															--url http://localhost:${PORT}"
 
 destroy:
 	mkdir -p logs
