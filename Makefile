@@ -57,6 +57,12 @@ evaluator:
 															--url http://localhost:8000"
 
 destroy:
+	mkdir -p logs
+	sudo docker logs tester-${TIMESTAMP} > logs/logs-${TIMESTAMP} 2>&1
+	@if [ `cat logs-${TIMESTAMP} | grep '500 -' | wc -l` -gt 0 ]; \
+	then \
+		cat logs/logs-${TIMESTAMP}; \
+	fi
 	sudo docker stop tester-${TIMESTAMP}
 	sudo docker rm tester-${TIMESTAMP}
 
