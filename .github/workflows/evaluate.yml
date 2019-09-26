@@ -11,6 +11,8 @@ on:
       - 'models/*'
       - 'models/dictionaries/*'
       - 'models/task_16/*'
+    branches:
+      - master
 
 jobs:
   evaluate:
