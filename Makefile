@@ -64,6 +64,10 @@ destroy:
 	then \
 		cat logs/logs-${TIMESTAMP}; \
 	fi
+	@if [ `sudo docker ps -a --filter name=tester-${TIMESTAMP} --filter status=exited | wc -l` -gt 1 ]; \
+	then \
+		cat logs/logs-${TIMESTAMP}; \
+	fi
 	sudo docker stop tester-${TIMESTAMP}
 	sudo docker rm tester-${TIMESTAMP}
 
