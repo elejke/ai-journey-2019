@@ -1,6 +1,7 @@
 import random
 from solvers import solver_11_12, solver_4, solver_10, solver_15, solver_25, solver_5, \
     solver_24, solver_16, solver_1, solver_6, solver_8, solver_9
+from solver_26 import solver_26
 from flask import Flask, request, jsonify
 
 
@@ -38,6 +39,8 @@ def take_exam(tasks):
                 answer = solver_25(task)
             except:
                 answer = ["8"]
+        elif task['id'] in ["26"]:
+            answer = solver_26(task)
 
         elif question['type'] == 'choice':
             # pick a random answer
