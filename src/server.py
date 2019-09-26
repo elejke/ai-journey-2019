@@ -1,6 +1,6 @@
 import random
 from solvers import solver_11_12, solver_4, solver_10, solver_15, solver_25, solver_5, \
-    solver_24, solver_16, solver_1, solver_6, solver_8
+    solver_24, solver_16, solver_1, solver_6, solver_8, solver_9
 from flask import Flask, request, jsonify
 
 
@@ -21,6 +21,8 @@ def take_exam(tasks):
             answer = solver_6(task)
         elif task['id'] in ["8"]:
             answer = solver_8(task)
+        elif task['id'] in ["9"]:
+            answer = solver_9(task)
         elif task['id'] in ["10"]:
             answer = solver_10(task)
         elif task['id'] in ["11", "12"]:
