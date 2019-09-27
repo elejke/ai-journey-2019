@@ -591,8 +591,10 @@ def solver_1(task):
         vec = np.zeros(model_fasttext.get_dimension())
         for word in sent:
             temp = model_fasttext[word]
-            temp /= np.linalg.norm(temp, ord=2)
-            vec += temp
+            norm = np.linalg.norm(temp, ord=2)
+            if norm != 0:
+                temp /= np.linalg.norm(temp, ord=2)
+                vec += temp
         vec /= np.linalg.norm(vec, ord=2)
         sent_vectors.append(vec)
     sent_vectors = np.array(sent_vectors)
