@@ -1084,3 +1084,88 @@ def solver_9(task, testing=False):
     answer_numbers += 1
     answer_numbers = [str(t) for t in answer_numbers]
     return answer_numbers
+
+
+def solver_2(task):
+
+    podchinitelniye_soyuzy = ["что", "потомучто"]
+    sochinitelniye_soyuzy = ["но", "однако"]
+    protivitelniye_soyuzy = ["но", "однако"]
+    narechiya = ["потому", "поэтому", "настолько", "сначала", "сейчас", "сегодня"]
+    chastizy = ["только", "даже", "и", "именно", "ведь"]
+    soyuzniye_slova = ["которых", "который", "которым", "которому", "которой", "которые", "которыми"]
+    ukazatelniye_mestoimeniya = [
+        'это', 'этот', 'такой', 'эти'
+    ]
+    otnositelniye_mestoimeniya = soyuzniye_slova
+    vvodniye_slova = ["например", "такимобразом"]
+    mestoimeniya = ukazatelniye_mestoimeniya
+
+    text = task["text"]
+    text = regex.sub("\<[\.…]+\>", "@", text)
+
+    if regex.search("противительн\w+\s*союз", task["text"]) is not None:
+        target_set = protivitelniye_soyuzy
+    elif regex.search("сочинит\w+\s*союз", task["text"]) is not None:
+        target_set = sochinitelniye_soyuzy
+    elif regex.search("подчинит\w+\s*союз", task["text"]) is not None:
+        target_set = podchinitelniye_soyuzy
+    elif regex.search("наречи", task["text"]) is not None:
+        target_set = narechiya
+    elif regex.search("частиц", task["text"]) is not None:
+        target_set = chastizy
+    elif regex.search("союзн\w+\s*слов", task["text"]) is None:
+        target_set = soyuzniye_slova
+    elif regex.search("указательн\w+\s*местоимен", task["text"]) is not None:
+        target_set = ukazatelniye_mestoimeniya
+    elif regex.search("относительн\w+\s*местоимен", task["text"]) is not None:
+        target_set = otnositelniye_mestoimeniya
+    elif regex.search("вводн\w+\s*слов", task["text"]) is not None:
+        target_set = vvodniye_slova
+    elif regex.search("местоимен", task["text"]) is not None:
+        target_set = mestoimeniya
+    else:
+        target_set = ["кто"]
+
+    target_sentence = None
+    for sentence in re.split("[(.]", text):
+        if ")" in sentence:
+            sentence_split = sentence.split(")")
+            if sentence_split[0].isdigit():
+                if "@" in sentence_split[1]:
+                    target_sentence = sentence_split[1].strip()
+                    break
+    if target_sentence is None:
+        return random.choice(target_set)
+
+    words_split = regex.findall(r"\w+|[^\w\s]", target_sentence.lower())
+
+    replace_index = -1
+    for i in range(len(words_split)):
+        if words_split[i] == "@":
+            replace_index = i
+            break
+    context = words_split[max(replace_index - 5, 0):replace_index] + words_split[replace_index + 1:replace_index + 6]
+
+    context_vector = np.zeros(model_fasttext.get_dimension())
+    for word in context:
+        temp = model_fasttext[word]
+        norm = np.linalg.norm(temp, ord=2)
+        if norm != 0:
+            temp /= np.linalg.norm(temp, ord=2)
+            context_vector += temp
+    norm = np.linalg.norm(context_vector, ord=2)
+    if norm != 0:
+        context_vector /= norm
+
+    target_vectors = []
+    for word in target_set:
+        temp = model_fasttext[word]
+        temp /= np.linalg.norm(temp, ord=2)
+        target_vectors.append(temp)
+    target_vectors = np.array(target_vectors)
+
+    dist = np.linalg.norm(target_vectors - context_vector, axis=1, ord=2)
+    order = np.argsort(dist)
+
+    return target_set[order[0]]
