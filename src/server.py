@@ -1,7 +1,7 @@
 import random
 from solvers import solver_11_12, solver_4, solver_10, solver_15, solver_25, solver_5, \
     solver_24, solver_16, solver_1, solver_6, solver_8, solver_9
-from solver_26 import solver_26
+from solver26 import solver_26
 from flask import Flask, request, jsonify
 
 
