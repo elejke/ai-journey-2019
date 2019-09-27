@@ -1,5 +1,5 @@
 import random
-from solvers import solver_11, solver_12, solver_4, solver_10, solver_15, solver_25, solver_5, \
+from solvers import solver_4, solver_10, solver_15, solver_25, solver_5, \
     solver_24, solver_16, solver_1, solver_6, solver_8, solver_9, solver_2
 
 from solver11 import solver_11
