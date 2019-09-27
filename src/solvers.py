@@ -582,8 +582,24 @@ def solver_1(task):
 
     lens = [len(choice["text"]) for choice in task["question"]["choices"]]
     argsorted = np.argsort(lens)
-    ans = [str(task["question"]["choices"][argsorted[-1]]["id"]),
-           str(task["question"]["choices"][argsorted[-2]]["id"])]
+    words_split = [regex.findall(r"\w+|[^\w\s]",
+                                 choice["text"].lower().translate(str.maketrans('', '', string.punctuation)))
+                   for choice in task["question"]["choices"]]
+
+    sent_vectors = []
+    for sent in words_split:
+        vec = np.zeros(model_fasttext.get_dimension())
+        for word in sent:
+            temp = model_fasttext[word]
+            temp /= np.linalg.norm(temp, ord=2)
+            vec += temp
+        vec /= np.linalg.norm(vec, ord=2)
+        sent_vectors.append(vec)
+    sent_vectors = np.array(sent_vectors)
+
+    dist = np.linalg.norm(sent_vectors - sent_vectors[argsorted[-1]], ord=2, axis=1)
+
+    ans = [str(np.argsort(dist)[0] + 1), str(np.argsort(dist)[1] + 1)]
 
     return sorted(ans, key=lambda x: int(x))
 
