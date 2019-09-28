@@ -1,13 +1,10 @@
 import random
-from solvers import solver_4, solver_10, solver_15, solver_25, solver_5, \
+from solvers import solver_4, solver_10_11_12, solver_15, solver_25, solver_5, \
     solver_24, solver_16, solver_1, solver_6, solver_8, solver_9, solver_2
 
-from solver11 import solver_11
-from solver12 import solver_12
 from solver26 import solver_26
 
 from flask import Flask, request, jsonify
-
 
 def take_exam(tasks):
     answers = {}
@@ -30,12 +27,12 @@ def take_exam(tasks):
             answer = solver_8(task)
         # elif task['id'] in ["9"]:
         #     answer = solver_9(task)
-        elif task['id'] in ["10"]:
-            answer = solver_10(task)
-        elif task['id'] in ["11"]:
-            answer = solver_11(task)
-        elif task['id'] in ["12"]:
-            answer = solver_12(task)
+        elif task['id'] in ["10", "11", "12"]:
+            answer = solver_10_11_12(task)
+        # elif task['id'] in ["11"]:
+        #     answer = solver_11(task)
+        # elif task['id'] in ["12"]:
+        #     answer = solver_12(task)
         elif task['id'] in ["15"]:
             answer = solver_15(task)
         elif task['id'] in ["16"]:
