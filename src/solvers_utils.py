@@ -1,4 +1,5 @@
 import re
+import copy
 import random
 
 
@@ -107,3 +108,32 @@ def split_task_and_text(task_text):
             formulation.append(sentence)
 
     return '.'.join(formulation), '.'.join(text)
+
+
+def standardize_task(task):
+    if task["id"] in ["10", "11", "12"]:
+        task = copy.deepcopy(task)
+        if len(task["text"].split("\xa0")) > 1:
+            task["text"] = task["text"].replace("о́", "о").split("\xa0")[0]
+        if "choices" not in task:
+            if "question" in task and "choices" in task["question"]:
+                task["choices"] = task["question"]["choices"]
+            else:
+                parts = task["text"].replace("о́", "о").split("\n")
+                task["text"] = parts[0].strip()
+                task["choices"] = []
+                for i in range(1, len(parts)):
+                    task["choices"].append({"id": str(i), "text": parts[i]})
+
+        for i in range(len(task["choices"])):
+            choices_text = task["choices"][i]["text"].replace("...", "@").replace("..", "@").replace("о́", "о")
+            sep = re.findall("[\;\.\,]", choices_text)
+            sep = "," if not len(sep) else sep[0]
+            choices_text = re.split("[1-9]\)", choices_text)
+            choices_text = choices_text[0] if len(choices_text) == 1 else choices_text[1]
+            task["choices"][i]["text"] = choices_text.replace("@", "..").strip()
+            parts = [x.strip().replace("@", "..") for x in choices_text.split(sep)]
+            task["choices"][i]["parts"] = parts
+        if 'choices' in task['question'].keys():
+            task['question'].pop('choices')
+    return task
