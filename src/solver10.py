@@ -24,7 +24,7 @@ class Solver(object):
         result_ids, result_parts, task = dict(), [], standardize_task(task)
 
         # parse task to find the list of letters to check:
-        match = re.search(r'буква ([ЭОУАЫЕЁЮЯИ])', task["text"])
+        match = re.search(r'буква ([ЭОУАЫЕЁЮЯИэоуаыеёюяи])', task["text"])
         if match:
             letters = [match.group(1).lower()]
         elif "же букв" in task["text"]:
