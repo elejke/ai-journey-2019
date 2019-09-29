@@ -101,10 +101,13 @@ def solver_4(task):
             if word_count == 5:
                 break
         words = np.array(words)
+        words_new = []
         for word_num in range(len(words)):
             subwords = words[word_num].split()
             subwords = list(filter(lambda x: x.lower() != x, subwords))
-            words[word_num] = subwords[0]
+            if len(subwords) != 0:
+                words_new.append(subwords[0])
+        words = np.array(words_new)
         is_met = []
         for word_num in range(len(words)):
             if len(regex.findall("[аеёиоуыэюяАЕЁИОУЫЭЮЯ]", words[word_num])) == 1:
