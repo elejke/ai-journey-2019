@@ -13,7 +13,6 @@ if "USE_CUSTOM_SOLVERS" in os.environ:
     from src.solvers import solver_1, solver_4, solver_5, solver_6, solver_8, \
         solver_10_11_12, solver_15, solver_16, solver_24, solver_25
 
-
     custom_solvers = {
         1: solver_1,
         4: solver_4,
