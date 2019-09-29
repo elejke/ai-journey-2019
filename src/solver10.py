@@ -12,7 +12,7 @@ class Solver(object):
 
     def __init__(self, vocabulary=None, morph=None, seed=42):
         super(Solver, self).__init__()
-        self.exceptions = ["проигровать", "проигровать", "ехай", "едь", "правевший"]
+        self.exceptions = ["проигровать", "проигрователь", "ехай", "едь", "правевший"]
         self.prefixes = ["супер", "ультра", "экстра", "гипер", "сверх"]
         self.seed = seed
         self.init_seed()
