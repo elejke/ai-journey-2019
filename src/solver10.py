@@ -12,20 +12,22 @@ class Solver(object):
 
     def __init__(self, vocabulary=None, morph=None, seed=42):
         super(Solver, self).__init__()
-        self.exceptions = ["проигровать", "проигрователь", "ехай", "едь", "правевший"]
+        self.exceptions = ["проигровать", "проигровать", "ехай", "едь", "правевший"]
         self.prefixes = ["супер", "ультра", "экстра", "гипер", "сверх"]
         self.seed = seed
         self.init_seed()
         self.vocab = vocabulary
-        self.morph = morph if morph else pymorphy2.MorphAnalyzer()
         self.remove_prefix = lambda text, prefix: text[len(prefix):] if text.startswith(prefix) else text
+        self.morph = morph if morph else pymorphy2.MorphAnalyzer()
         self.word_is_known = lambda word: (any(self.remove_prefix(word, p) in self.vocab for p in self.prefixes) or
                                            word in self.vocab) and word not in self.exceptions
+        # self.word_is_known =  self.morph.word_is_known(word)
 
     def init_seed(self):
         return random.seed(self.seed)
 
     def predict_from_model(self, task):
+        #         result_ids, result_parts, task = dict(), [], standardize_task(task)
         result_ids, result_parts, task = [], [], standardize_task(task)
 
         # parse task to find the list of letters to check:
@@ -56,7 +58,7 @@ class Solver(object):
             return all_agreed
 
         def check_agreed(part):
-            # IMPLEMENTED ONLY FOR VERBS + NOUNS:
+            # IMPLEMENTED ONLY FOR VERBS AND NOUNS:
             # initial word parsing
             initial_word = re.sub(r"^\d\) ?| ?\(.*?\) ?", "", part)
             initial = self.morph.parse(initial_word)[0]
@@ -73,6 +75,8 @@ class Solver(object):
                     ans_formed = initial.normalized.inflect({context.tag.number,
                                                              initial.tag.person,
                                                              initial.tag.tense} - {None})
+                    if str(ans_formed.methods_stack[0][0]) == "FakeDictionary()":
+                        return False
                     return initial.word.replace("ё", "е") == ans_formed.word.replace("ё", "е")
 
             return True
@@ -101,7 +105,6 @@ class Solver(object):
             result_ids = result_ids[chosen_id: chosen_id + 1]
         return result_ids, result_parts
 
-
     def sort_parts_by_confidence(self, parts_list):
         # TODO: using dicts or something else
         return np.random.permutation(parts_list)
@@ -117,6 +120,3 @@ class Solver(object):
 
     def fit(self, path=""):
         pass
-
-    def __call__(self, task):
-        self.predict_from_model(task)
