@@ -61,8 +61,8 @@ class Solver(object):
         np.random.seed(self.seed)
         random.seed(self.seed)
 
-    def predict(self, task):
-        return self.predict_from_model(task)
+    def predict(self, task, use_embedded_id=False):
+        return self.predict_from_model(task, use_embedded_id)
 
     def fit(self, tasks):
         texts = []
@@ -81,12 +81,18 @@ class Solver(object):
         self.clf.fit(vectors, classes)
         return self
 
-    def predict_from_model(self, task):
+    def predict_from_model(self, task, use_embedded_id=False):
         texts = []
+        ids = []
         for task_ in task:
+            if use_embedded_id:
+                ids.append(int(task["id"]))
             text = "{} {}".format(" ".join(self.word_tokenizer.tokenize(task_['text'])), task_['question']['type'])
             texts.append(text)
-        return self.clf.predict(self.vectorizer.transform(texts))
+        if use_embedded_id:
+            return ids
+        else:
+            return self.clf.predict(self.vectorizer.transform(texts))
     
     def fit_from_dir(self, dir_path):
         tasks = []
