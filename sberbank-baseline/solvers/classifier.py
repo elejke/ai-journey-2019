@@ -68,6 +68,8 @@ class Solver(object):
         texts = []
         classes = []
         for data in tasks:
+            if 'tasks' in data:
+                data = data['tasks']
             for task in data:
                 idx = int(task["id"])
                 text = "{} {}".format(" ".join(self.word_tokenizer.tokenize(task['text'])), task['question']['type'])
