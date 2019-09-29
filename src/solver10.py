@@ -71,3 +71,6 @@ class Solver(object):
 
     def fit(self, path=""):
         pass
+
+    def __call__(self, task):
+        self.predict_from_model(task)
