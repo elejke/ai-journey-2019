@@ -17,7 +17,6 @@ import stanfordnlp
 
 import pymorphy2
 
-from solvers_utils import remove_additional, check_pair, repair_words
 from solver10 import Solver as Solver10
 
 
@@ -36,7 +35,7 @@ synt = stanfordnlp.Pipeline(lang="ru")
 synt.processors["tokenize"].config["pretokenized"] = True
 
 
-solver_10_11_12 = Solver10(vocabulary=big_words_set)
+solver_10_11_12 = Solver10(vocabulary=big_words_set, morph=morph)
 
 def solver_15(task):
     text = task["text"]
