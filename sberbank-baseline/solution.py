@@ -1,4 +1,5 @@
 import random
+import traceback
 from collections import defaultdict
 
 from flask import Flask, request, jsonify
@@ -7,8 +8,24 @@ import numpy as np
 from utils import *
 from solvers import *
 
-import traceback
+from src.solvers import solver_1, solver_4, solver_5, solver_6, solver_8, \
+    solver_10_11_12, solver_15, solver_16, solver_24, solver_25
 
+
+custom_solvers = {
+    1: solver_1,
+    4: solver_4,
+    5: solver_5,
+    6: solver_6,
+    8: solver_8,
+    10: solver_10_11_12,
+    11: solver_10_11_12,
+    12: solver_10_11_12,
+    15: solver_15,
+    16: solver_16,
+    24: solver_24,
+    25: solver_25
+}
 
 solver_param = defaultdict(dict)
 solver_param[17]["train_size"] = 0.9
@@ -57,6 +74,8 @@ class CuttingEdgeStrongGeneralAI(object):
         solvers = []
         for i, solver_class in enumerate(solver_classes):
             solver_index = i + 1
+            if solver_index in custom_solvers:
+                continue
             train_tasks = load_tasks(self.train_path, task_num=solver_index)
             solver_path = os.path.join("data", "models", "solver{}.pkl".format(solver_index))
             solver = solver_class.Solver(**solver_param[solver_index])
@@ -150,7 +169,12 @@ class CuttingEdgeStrongGeneralAI(object):
             task_id = task['id']
             task_index, task_type = i + 1, task["question"]["type"]
             try:
-                prediction = self.solvers[task_number[i] - 1].predict_from_model(task)
+                if task_number[i] in custom_solvers:
+                    print("From custom solver")
+                    prediction = custom_solvers[task_number[i]](task)
+                else:
+                    print("From baseline solver")
+                    prediction = self.solvers[task_number[i] - 1].predict_from_model(task)
                 print("Prediction: ", prediction)
             except Exception as e:
                 print(traceback.format_exc())
