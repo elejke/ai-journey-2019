@@ -107,7 +107,10 @@ def http_ready():
 @app.route('/take_exam', methods=['POST'])
 def http_take_exam():
     request_data = request.get_json()
-    tasks = request_data['tasks']
+    if "tasks" in request_data:
+        tasks = request_data['tasks']
+    else:
+        tasks = request_data
     answers = take_exam(tasks)
     return jsonify({
         'answers': answers
