@@ -26,8 +26,8 @@ def take_exam(tasks):
             answer = solver_6(task)
         elif task['id'] in ["8"]:
             answer = solver_8(task)
-        # elif task['id'] in ["9"]:
-        #     answer = solver_9(task)
+        elif task['id'] in ["9"]:
+            answer = solver_9(task)
         elif task['id'] in ["10", "11", "12"]:
             answer = solver_10_11_12.predict_from_model(task)
         elif task['id'] in ["15"]:
