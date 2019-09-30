@@ -183,15 +183,16 @@ class CuttingEdgeStrongGeneralAI(object):
             task_index, task_type = i + 1, task["question"]["type"]
             try:
                 if task_number[i] in custom_solvers:
-                    print("From custom solver")
                     prediction = custom_solvers[task_number[i]](task)
+                    print("From custom solver")
                 else:
-                    print("From baseline solver")
                     prediction = self.solvers[task_number[i] - 1].predict_from_model(task)
-                print("Prediction: ", prediction)
+                    print("From baseline solver")
             except Exception as e:
                 print(traceback.format_exc())
                 prediction = self.not_so_strong_task_solver(task)
+                print("From random solver")
+            print("Prediction: ", prediction)
             if isinstance(prediction, np.ndarray):
                 prediction = list(prediction)
             answers[task_id] = prediction
