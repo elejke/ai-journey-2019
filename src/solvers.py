@@ -957,7 +957,7 @@ def solver_9(task, testing=False):
 
     words = np.array([re.split(r", ", t["text"]) for t in task["question"]["choices"]])
     #обрезаем скобки
-    words = [[re.sub(r"[0-9\)]+", "", re.sub(r"\([а-я ]+\)", "", t2)).strip() for t2 in t1] for t1 in words]
+    words = [[re.sub(r"[0-9]+\)", "", re.sub(r"\([а-я ]+\)", "", t2)).strip() for t2 in t1] for t1 in words]
     #в зависимости от числа слов в каждом варианте, мы ожидаем разное число верных ответов
     num_answers = 2
     if len(words[0]) == 1:
