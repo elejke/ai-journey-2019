@@ -10,6 +10,9 @@ AI Journey 2019
 ## Framework (генерация сочинения):
 1. Автоматическая генерация сочинений: https://github.com/Omrigan/essay-writer
 
+## Text generation
+1. https://medium.com/@ageitgey/deepfaking-the-news-with-nlp-and-transformer-models-5e057ebd697d
+
 # External data:
 
 1. Список слов с частотами и частями речи: http://dict.ruslang.ru/Freq2011.zip
