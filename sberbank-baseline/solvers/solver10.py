@@ -22,10 +22,10 @@ class Solver(object):
         match = re.search(r'буква ([ЭОУАЫЕЁЮЯИ])', task["text"])
         if match:
             letter = match.group(1)
-            return self.get_answer_by_vowel(task["question"]["choices"], letter.lower())
+            return self.get_answer_by_vowel(task["choices"], letter.lower())
         elif "одна и та же буква" in task["text"]:
             for vowel in "эоуаыеёюяидтсз":
-                result_with_this_vowel = self.get_answer_by_vowel(task["question"]["choices"], vowel)
+                result_with_this_vowel = self.get_answer_by_vowel(task["choices"], vowel)
                 result.extend(result_with_this_vowel)
         return sorted(list(set(result)))
 
