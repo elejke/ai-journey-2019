@@ -86,7 +86,6 @@ class CuttingEdgeStrongGeneralAI(object):
             if solver_index in custom_solvers:
                 solvers.append(None)
                 continue
-            train_tasks = load_tasks(self.train_path, task_num=solver_index)
             solver_path = os.path.join("data", "models", "solver{}.pkl".format(solver_index))
             solver = solver_class.Solver(**solver_param[solver_index])
             if os.path.exists(solver_path):
@@ -95,7 +94,7 @@ class CuttingEdgeStrongGeneralAI(object):
             else:
                 print("Fitting Solver {}...".format(solver_index))
                 try:
-                    solver = solver_class.Solver(**solver_param[solver_index])
+                    train_tasks = load_tasks(self.train_path, task_num=solver_index)
                     solver.fit(train_tasks)
                     solver.save(solver_path)
                 except Exception as e:
