@@ -30,6 +30,11 @@ if "USE_CUSTOM_SOLVERS" in os.environ:
 else:
     custom_solvers = {}
 
+if "USE_EMBEDDED_ID" in os.environ:
+    use_embedded_id = True
+else:
+    use_embedded_id = False
+
 solver_param = defaultdict(dict)
 solver_param[17]["train_size"] = 0.9
 solver_param[18]["train_size"] = 0.85
@@ -166,7 +171,7 @@ class CuttingEdgeStrongGeneralAI(object):
                     variant = variant["tasks"]
         else:
             variant = exam
-        task_number = self.classifier.predict(variant)
+        task_number = self.classifier.predict(variant, use_embedded_id)
         print("Classifier results: ", task_number)
         for i, task in enumerate(variant):
             task_id = task['id']
