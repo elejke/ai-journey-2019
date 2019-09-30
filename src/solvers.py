@@ -17,7 +17,10 @@ import stanfordnlp
 
 import pymorphy2
 
-from solver10 import Solver as Solver10
+try:
+    from solver10 import Solver as Solver10
+except:
+    from src.solver10 import Solver as Solver10
 
 
 df_dict_full = pd.read_csv("../models/dictionaries/russian_1.5kk_words.txt", encoding="windows-1251", header=None)
@@ -34,8 +37,8 @@ morph = pymorphy2.MorphAnalyzer()
 synt = stanfordnlp.Pipeline(lang="ru")
 synt.processors["tokenize"].config["pretokenized"] = True
 
-
 solver_10_11_12 = Solver10(vocabulary=big_words_set, morph=morph)
+
 
 def solver_15(task):
     text = task["text"]
