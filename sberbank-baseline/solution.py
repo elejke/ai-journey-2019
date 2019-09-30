@@ -83,6 +83,7 @@ class CuttingEdgeStrongGeneralAI(object):
         for i, solver_class in enumerate(solver_classes):
             solver_index = i + 1
             if solver_index in custom_solvers:
+                solvers.append(None)
                 continue
             train_tasks = load_tasks(self.train_path, task_num=solver_index)
             solver_path = os.path.join("data", "models", "solver{}.pkl".format(solver_index))
@@ -171,6 +172,10 @@ class CuttingEdgeStrongGeneralAI(object):
                     variant = variant["tasks"]
         else:
             variant = exam
+        if use_embedded_id:
+            print("Use embedded ids...")
+        else:
+            print("Use predicted ids...")
         task_number = self.classifier.predict(variant, use_embedded_id)
         print("Classifier results: ", task_number)
         for i, task in enumerate(variant):
