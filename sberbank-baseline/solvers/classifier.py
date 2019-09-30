@@ -86,7 +86,7 @@ class Solver(object):
         ids = []
         for task_ in task:
             if use_embedded_id:
-                ids.append(int(task["id"]))
+                ids.append(int(task_["id"]))
             text = "{} {}".format(" ".join(self.word_tokenizer.tokenize(task_['text'])), task_['question']['type'])
             texts.append(text)
         if use_embedded_id:
