@@ -6,6 +6,7 @@ from solver26 import solver_26
 
 from flask import Flask, request, jsonify
 
+
 def take_exam(tasks):
     answers = {}
 
@@ -29,10 +30,6 @@ def take_exam(tasks):
         #     answer = solver_9(task)
         elif task['id'] in ["10", "11", "12"]:
             answer = solver_10_11_12.predict_from_model(task)
-        # elif task['id'] in ["11"]:
-        #     answer = solver_11(task)
-        # elif task['id'] in ["12"]:
-        #     answer = solver_12(task)
         elif task['id'] in ["15"]:
             answer = solver_15(task)
         elif task['id'] in ["16"]:
