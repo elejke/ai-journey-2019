@@ -12,8 +12,8 @@ class Solver(object):
     def __init__(self, seed=42):
 
         self.morph = pymorphy2.MorphAnalyzer()
-        self.model = Model.load("data/udpipe_syntagrus.model".encode())
-        self.process_pipeline = Pipeline(self.model, 'tokenize'.encode(), Pipeline.DEFAULT, Pipeline.DEFAULT, 'conllu'.encode())
+        self.model = Model.load(str("data/udpipe_syntagrus.model"))
+        self.process_pipeline = Pipeline(self.model, str('tokenize'), Pipeline.DEFAULT, Pipeline.DEFAULT, str('conllu'))
         self.seed = seed
         self.init_seed()
         self.paronyms = self.get_paronyms()
@@ -88,8 +88,8 @@ class Solver(object):
         return final_paronym
 
     def syntax_parse(self, some_text, token):
-        processed = self.process_pipeline.process(some_text.lower().encode())
-        content = [l for l in processed.decode().split('\n') if not l.startswith('#')]
+        processed = self.process_pipeline.process(str(some_text.lower()))
+        content = [l for l in str(processed).split('\n') if not l.startswith('#')]
         tagged = [w.split('\t') for w in content if w]
 
         linked_word = ''

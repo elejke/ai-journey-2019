@@ -147,8 +147,8 @@ class Solver():
         self.morph = pymorphy2.MorphAnalyzer()
         self.categories = set()
         self.has_model = True
-        self.model = Model.load("data/udpipe_syntagrus.model".encode())
-        self.process_pipeline = Pipeline(self.model, 'tokenize'.encode(), Pipeline.DEFAULT, Pipeline.DEFAULT, 'conllu'.encode())
+        self.model = Model.load(str("data/udpipe_syntagrus.model"))
+        self.process_pipeline = Pipeline(self.model, str('tokenize'), Pipeline.DEFAULT, Pipeline.DEFAULT, str('conllu'))
         self.seed = seed
         self.label_dict = {
             'деепричастный оборот': "get_gerund",
@@ -169,8 +169,8 @@ class Solver():
         return random.seed(self.seed)
 
     def get_syntax(self, text):
-        processed = self.process_pipeline.process(text.encode())
-        content = [l for l in processed.decode().split('\n') if not l.startswith('#')]
+        processed = self.process_pipeline.process(str(text))
+        content = [l for l in str(processed).split('\n') if not l.startswith('#')]
         tagged = [w.split('\t') for w in content if w]
         return tagged
 
