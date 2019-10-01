@@ -658,10 +658,10 @@ def solver_8(task):
                 primary_pos_choices[-1].append(str(morph_word[0].tag.POS))
         primary_tag_choices[-1] = np.array(primary_tag_choices[-1])
         primary_pos_choices[-1] = np.array(primary_pos_choices[-1])
-        all_tag_choices[-1] = np.array(all_tag_choices[-1])
+        # all_tag_choices[-1] = np.array(all_tag_choices[-1])
     primary_tag_choices = np.array(primary_tag_choices)
     primary_pos_choices = np.array(primary_pos_choices)
-    all_tag_choices = np.array(all_tag_choices)
+    # all_tag_choices = np.array(all_tag_choices)
     synt_choices = synt(preprocessed_choices)
 
     question_classes = []
@@ -778,21 +778,18 @@ def solver_8(task):
                 #     possible_answers[-1].add(choice_num)
         elif question_classes[question_num] == 5:
             for choice_num in range(len(primary_tag_choices)):
-                all_nouns = primary_tag_choices[choice_num][np.isin(primary_pos_choices[choice_num], ["NPRO", "NOUN"])]
-                if len(all_nouns) >= 2:
-                    persons = set()
-                    for noun in all_nouns:
-                        if noun.person is not None:
-                            persons.add(noun.person)
-                        elif "Name" in str(noun):
-                            persons.add("NAME")
-                        elif noun.animacy == "anim":
-                            persons.add("anim")
-                        else:
-                            pass
-                    persons -= {None}
-                    if len(persons) > 1:
+                for word_num in range(len(all_tag_choices[choice_num])):
+                    if all_tag_choices[choice_num][word_num][0].normal_form in ["сказать",
+                                                                                "говорить",
+                                                                                "спросить",
+                                                                                "рассказать",
+                                                                                "рассказывать",
+                                                                                "подтвердить",
+                                                                                "писать",
+                                                                                "утверждать",
+                                                                                "произносить"]:
                         possible_answers[-1].add(choice_num)
+                        break
         elif question_classes[question_num] == 7:
             for choice_num in range(len(choices)):
                 if "не только" in choices[choice_num]["text"].lower():
