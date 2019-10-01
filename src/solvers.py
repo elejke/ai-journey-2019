@@ -749,8 +749,10 @@ def solver_8(task):
                     possible_answers[-1].add(choice_num)
         elif (question_classes[question_num] == 8) or (question_classes[question_num] == 9):
             for choice_num in range(len(preprocessed_choices)):
-                if "," in preprocessed_choices[choice_num]:
+                if (primary_pos_choices[choice_num] == "VERB").sum() >= 2:
                     possible_answers[-1].add(choice_num)
+                # if "," in preprocessed_choices[choice_num]:
+                #     possible_answers[-1].add(choice_num)
         elif question_classes[question_num] == 5:
             for choice_num in range(len(primary_tag_choices)):
                 all_nouns = primary_tag_choices[choice_num][np.isin(primary_pos_choices[choice_num], ["NPRO", "NOUN"])]
