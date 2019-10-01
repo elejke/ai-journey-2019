@@ -17,7 +17,10 @@ import stanfordnlp
 
 import pymorphy2
 
-from solver10 import Solver as Solver10
+try:
+    from solver10 import Solver as Solver10
+except:
+    from src.solver10 import Solver as Solver10
 
 
 df_dict_full = pd.read_csv("../models/dictionaries/russian_1.5kk_words.txt", encoding="windows-1251", header=None)
@@ -34,8 +37,8 @@ morph = pymorphy2.MorphAnalyzer()
 synt = stanfordnlp.Pipeline(lang="ru")
 synt.processors["tokenize"].config["pretokenized"] = True
 
-
 solver_10_11_12 = Solver10(vocabulary=big_words_set, morph=morph)
+
 
 def solver_15(task):
     text = task["text"]
@@ -954,7 +957,7 @@ def solver_9(task, testing=False):
 
     words = np.array([re.split(r", ", t["text"]) for t in task["question"]["choices"]])
     #обрезаем скобки
-    words = [[re.sub(r"[0-9\)]+", "", re.sub(r"\([а-я ]+\)", "", t2)).strip() for t2 in t1] for t1 in words]
+    words = [[re.sub(r"[0-9]+\)", "", re.sub(r"\([а-я ]+\)", "", t2)).strip() for t2 in t1] for t1 in words]
     #в зависимости от числа слов в каждом варианте, мы ожидаем разное число верных ответов
     num_answers = 2
     if len(words[0]) == 1:

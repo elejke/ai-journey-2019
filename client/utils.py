@@ -15,7 +15,9 @@ def answers_enricher(path):
     for file in parsed_answers["path"].drop_duplicates().values:
         with open(file, "r") as f:
             file_data = json.load(f)
-        for question in file_data["tasks"]:
+        if "tasks" in file_data:
+            file_data = file_data["tasks"]
+        for question in file_data:
             col_id = (parsed_answers["path"] == file) & (parsed_answers["id"] == int(question["id"]))
             parsed_answers.loc[col_id, "type"] = question["question"]["type"]
             try:

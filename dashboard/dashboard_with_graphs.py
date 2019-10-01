@@ -15,7 +15,8 @@ SCORES_DIR = "../scores_dir/"
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
-df_scores = pd.read_csv(os.path.join(SCORES_DIR, "scores.csv"))[["id", "score"]]
+df_scores = pd.read_csv(os.path.join(SCORES_DIR, "scores.csv"))[["id", "score", "metric"]]
+df_scores.columns = ["id", "score", "baseline"]
 
 df_list = []
 full_model_list = []
@@ -43,20 +44,46 @@ def update_table(lock):
     lock.release()
 
 
-def generate_table(max_rows=29):
+def cell_style(value, threshold_value):
+    if value >= threshold_value:
+        style = {
+            'backgroundColor': '#e6ffef',
+        }
+    else:
+        style = {
+            'backgroundColor': '#ffe6e6',
+        }
+    return style
+
+
+def generate_table():
 
     update_table(lock)
 
-    df = pd.concat([df_scores[["id", "score"]]] + list(df_list)[-5:], axis=1).round(2)
+    df = pd.concat([df_scores] + list(df_list)[-5:], axis=1).round(2)
+
+    body = []
+    for i in range(len(df)):
+        row = []
+        if i < len(df) - 2:
+            style = cell_style(df.iloc[i][df.columns[-1]], df.iloc[i]["baseline"])
+        else:
+            style = {}
+        for col in df.columns:
+            if col == "id":
+                val = html.Td(dcc.Link(df.iloc[i][col], href=f"/graph/{df.iloc[i]['id']}"), style=style)
+            else:
+                val = html.Td(df.iloc[i][col], style=style)
+            row.append(val)
+        row = html.Tr(row)
+        body.append(row)
 
     return html.Table(
         # Header
         [html.Tr([html.Th(col) for col in df.columns])] +
 
         # Body
-        [html.Tr([
-            html.Td(dcc.Link(df.iloc[i][col], href=f"/graph/{df.iloc[i]['id']}")) if col == "id" else html.Td(df.iloc[i][col]) for col in df.columns
-        ]) for i in range(min(len(df), max_rows))]
+        body
     )
 
 
@@ -88,6 +115,12 @@ def serve_graph_layout(default="1"):
                             "y": [df_scores[df_scores["id"] == default].iloc[0]["score"]] * len(xaxisrange),
                             "mode": "lines",
                             "name": "Max score"
+                        },
+                        {
+                            "x": xaxisrange,
+                            "y": [df_scores[df_scores["id"] == default].iloc[0]["baseline"]] * len(xaxisrange),
+                            "mode": "lines",
+                            "name": "Baseline score"
                         }
                     ],
                     'layout': dict(
@@ -148,6 +181,12 @@ def update_map(value):
                         "y": [df_scores[df_scores["id"] == value].iloc[0]["score"]] * len(xaxisrange),
                         "mode": "lines",
                         "name": "Max score"
+                    },
+                    {
+                        "x": xaxisrange,
+                        "y": [df_scores[df_scores["id"] == value].iloc[0]["baseline"]] * len(xaxisrange),
+                        "mode": "lines",
+                        "name": "Baseline score"
                     }
                 ],
                 'layout': dict(

@@ -2,7 +2,11 @@ import re
 import random
 import pymorphy2
 import numpy as np
-from solvers_utils import standardize_task
+
+try:
+    from solvers_utils import standardize_task
+except:
+    from src.solvers_utils import standardize_task
 
 
 class Solver(object):
@@ -120,3 +124,6 @@ class Solver(object):
 
     def fit(self, path=""):
         pass
+
+    def __call__(self, task):
+        return self.predict_from_model(task)
