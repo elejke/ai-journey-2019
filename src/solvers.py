@@ -746,7 +746,30 @@ def solver_8(task):
             for choice_num in range(len(preprocessed_choices)):
                 if ("«" in preprocessed_choices[choice_num]) and \
                         ("»" in preprocessed_choices[choice_num]):
-                    possible_answers[-1].add(choice_num)
+                    start_add = False
+                    is_good = True
+                    for word_num in range(len(preprocessed_choices[choice_num])):
+                        if preprocessed_choices[choice_num][word_num] == "«":
+                            start_add = True
+                        elif preprocessed_choices[choice_num][word_num] == "»":
+                            start_add = False
+                        else:
+                            if start_add:
+                                top1_proba = all_tag_choices[choice_num][word_num][0].score
+                                is_there_nomn_form = False
+                                was_there_noun = False
+                                for form in all_tag_choices[choice_num][word_num]:
+                                    if form.score < top1_proba:
+                                        break
+                                    if form.tag.POS in ["NOUN", "NPRO"]:
+                                        was_there_noun = True
+                                    if form.tag.case == "nomn":
+                                        is_there_nomn_form = True
+                                if was_there_noun and not is_there_nomn_form:
+                                    is_good = False
+                                    break
+                    if not is_good:
+                        possible_answers[-1].add(choice_num)
         elif (question_classes[question_num] == 8) or (question_classes[question_num] == 9):
             for choice_num in range(len(preprocessed_choices)):
                 if (primary_pos_choices[choice_num] == "VERB").sum() >= 2:
