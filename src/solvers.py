@@ -636,6 +636,9 @@ def solver_8(task):
     prepositions_by_case["loc2"] = prepositions_by_case["loct"]
     all_prepositions = frozenset([item for sublist in prepositions_by_case.values() for item in sublist])
 
+    punkts = frozenset([",", ".", "и"])
+    prepositions_for_complex_sentences = frozenset(["который", "чтобы", "что", "однако"])
+
     questions = task["question"]["left"]
     choices = task["question"]["choices"]
 
@@ -772,10 +775,13 @@ def solver_8(task):
                         possible_answers[-1].add(choice_num)
         elif (question_classes[question_num] == 8) or (question_classes[question_num] == 9):
             for choice_num in range(len(preprocessed_choices)):
-                if (primary_pos_choices[choice_num] == "VERB").sum() >= 2:
-                    possible_answers[-1].add(choice_num)
-                # if "," in preprocessed_choices[choice_num]:
-                #     possible_answers[-1].add(choice_num)
+                for word_num in range(2, len(all_tag_choices[choice_num])):
+                    if all_tag_choices[choice_num][word_num][0].normal_form in prepositions_for_complex_sentences:
+                        if (preprocessed_choices[choice_num][word_num - 1] in punkts) or \
+                                (preprocessed_choices[choice_num][word_num - 2] in punkts) and \
+                                (all_tag_choices[choice_num][word_num - 1][0].tag.POS == "PREP"):
+                            possible_answers[-1].add(choice_num)
+                            break
         elif question_classes[question_num] == 5:
             for choice_num in range(len(primary_tag_choices)):
                 for word_num in range(len(all_tag_choices[choice_num])):
