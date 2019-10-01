@@ -48,6 +48,7 @@ class CuttingEdgeStrongGeneralAI(object):
     def __init__(self, train_path='public_set/train'):
         self.train_path = train_path
         self.classifier = classifier.Solver()
+        self.clf_loading()
         solver_classes = [
             solver1,
             solver2,
@@ -77,7 +78,6 @@ class CuttingEdgeStrongGeneralAI(object):
             solver26
         ]
         self.solvers = self.solver_loading(solver_classes)
-        self.clf_fitting()
 
     def solver_loading(self, solver_classes):
         solvers = []
@@ -103,15 +103,19 @@ class CuttingEdgeStrongGeneralAI(object):
             solvers.append(solver)
         return solvers
 
-    def clf_fitting(self):
-        tasks = []
-        for filename in os.listdir(self.train_path):
-            if filename.endswith(".json"):
-                data = read_config(os.path.join(self.train_path, filename))
-                tasks.append(data)
-        print("Fitting Classifier...")
-        self.classifier.fit(tasks)
-        print("Classifier is ready!")
+    def clf_loading(self):
+        clf_path = os.path.join("data", "models", "classifier.pkl")
+        if os.path.exists(clf_path):
+            print("Loading Classifier")
+            self.classifier.load(clf_path)
+        else:
+            try:
+                print("Fitting Classifier...")
+                self.classifier.fit_from_dir(self.train_path)
+                self.classifier.save(clf_path)
+            except Exception as e:
+                print('Exception during fitting: {}'.format(e))
+        print("Classifier is ready!\n")
         return self
 
     def not_so_strong_task_solver(self, task):

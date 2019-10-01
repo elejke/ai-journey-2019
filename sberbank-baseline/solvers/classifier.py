@@ -5,7 +5,8 @@ import numpy as np
 from sklearn.svm import LinearSVC
 #import utils
 import os
-from utils import read_config, load_pickle, save_pickle
+from utils import read_config
+import joblib
 
 
 class Solver(object):
@@ -101,10 +102,13 @@ class Solver(object):
                 data = read_config(os.path.join(dir_path, file_name))
                 tasks.append(data)
         return self.fit(tasks)
-    
-    @classmethod
-    def load(cls, path):
-        return load_pickle(path)
-    
+
+    def load(self, path):
+        dump = joblib.load(path)
+        self.vectorizer = dump["vectorizer"]
+        self.ngram_range = self.vectorizer.ngram_range
+        self.clf = dump["classifier"]
+        return self
+
     def save(self, path):
-        save_pickle(self, path)
+        joblib.dump({"classifier": self.clf, "vectorizer": self.vectorizer}, path)
