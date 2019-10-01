@@ -73,7 +73,10 @@ class Solver(object):
                 data = data['tasks']
             for task in data:
                 idx = int(task["id"])
-                text = "{} {}".format(" ".join(self.word_tokenizer.tokenize(task['text'])), task['question']['type'])
+                text = "{} {} {} {}".format(" ".join(self.word_tokenizer.tokenize(task['text'])),
+                                            task['question']['type'],
+                                            "IS_THERE_CHOICES_" + str('choices' in task['question']),
+                                            "SCORE_" + str(task["score"]))
                 texts.append(text)
                 classes.append(idx)
         vectors = self.vectorizer.fit_transform(texts)
@@ -88,7 +91,10 @@ class Solver(object):
         for task_ in task:
             if use_embedded_id:
                 ids.append(int(task_["id"]))
-            text = "{} {}".format(" ".join(self.word_tokenizer.tokenize(task_['text'])), task_['question']['type'])
+            text = "{} {} {} {}".format(" ".join(self.word_tokenizer.tokenize(task_['text'])),
+                                        task_['question']['type'],
+                                        "IS_THERE_CHOICES_" + str('choices' in task_['question']),
+                                        "SCORE_" + str(task_["score"]))
             texts.append(text)
         if use_embedded_id:
             return ids
