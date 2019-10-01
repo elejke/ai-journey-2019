@@ -680,7 +680,10 @@ def solver_8(task):
             is_finalized = False
             for choice_num in range(len(preprocessed_choices)):
                 for word_num in range(len(preprocessed_choices[choice_num])):
+                    top1_proba = all_tag_choices[choice_num][word_num][0].score
                     for form in all_tag_choices[choice_num][word_num]:
+                        if form.score < top1_proba:
+                            break
                         if (form.tag.POS == "PRTF") or (form.tag.POS == "PRTS"):
                             parent_index = synt_choices.sentences[choice_num].words[word_num].governor
                             if parent_index != 0:
@@ -792,7 +795,9 @@ def solver_8(task):
                                 grammemes = {form.tag.number, form.tag.gender} - {None}
                                 casted = predicate_morph.inflect(grammemes)
                                 if casted is None:
-                                    casted = form.inflect(grammemes - {form.tag.gender})
+                                    casted = predicate_morph.inflect(grammemes - {form.tag.gender})
+                                if casted is None:
+                                    continue
                                 if casted.word != predicate_morph.word:
                                     possible_answers[-1].add(choice_num)
                                     break
