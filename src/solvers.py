@@ -45,6 +45,7 @@ checkpoint_path = bert_folder+'/bert_model.ckpt'
 vocab_path = bert_folder+'/vocab.txt'
 tokenizer_bert = tokenization.FullTokenizer(vocab_file=vocab_path, do_lower_case=False)
 model_bert = load_trained_model_from_checkpoint(config_path, checkpoint_path, training=True)
+model_bert._make_predict_function()
 
 synt = stanfordnlp.Pipeline(lang="ru")
 synt.processors["tokenize"].config["pretokenized"] = True
