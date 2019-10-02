@@ -884,7 +884,8 @@ def solver_9(task, testing=False):
 
     def word_exists(w):
         analysis = morph.parse(w)
-        if (analysis[0].methods_stack[0][0].__class__.__name__ == "DictionaryAnalyzer") and (analysis[0].methods_stack[0][1] == w):
+        if (analysis[0].methods_stack[0][0].__class__.__name__ == "DictionaryAnalyzer") and \
+                (analysis[0].methods_stack[0][1] == w):
             return True
         return False
 
@@ -893,7 +894,8 @@ def solver_9(task, testing=False):
         for candidate in "аоеиы":
             w_n = re.sub(r"\.\.", candidate, w)
             analysis = morph.parse(w_n)
-            if (analysis[0].methods_stack[0][0].__class__.__name__ == "DictionaryAnalyzer") and (analysis[0].methods_stack[0][1] == w_n):
+            if (analysis[0].methods_stack[0][0].__class__.__name__ == "DictionaryAnalyzer") and \
+                    (analysis[0].methods_stack[0][1] == w_n):
                 amount += 1
         if amount == 0:
             amount = 1
