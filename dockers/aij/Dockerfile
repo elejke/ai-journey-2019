@@ -30,7 +30,8 @@ RUN python -c "import pymystem3.mystem ; pymystem3.mystem.autoinstall()" && \
 RUN pip install fasttext
 
 # add custom models to the docker
-COPY ./models/fasttext/cc.ru.300.bin /misc/models/fasttext/cc.ru.300.bin
+COPY ./models/fasttext/ /misc/models/fasttext/
+COPY ./models/bert/ /misc/models/bert/
 
 # load NLTK corpus
 RUN python -c "import nltk; nltk.download('stopwords')"
@@ -38,3 +39,6 @@ RUN python -c "import nltk; nltk.download('stopwords')"
 # StanfordNLP
 RUN pip install stanfordnlp
 RUN python -c "import stanfordnlp; stanfordnlp.download('ru', force=True); nlp = stanfordnlp.Pipeline(lang='ru')"
+
+# Bert
+RUN pip install keras-bert
