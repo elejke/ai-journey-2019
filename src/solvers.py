@@ -1,5 +1,6 @@
 import os
 import re
+import sys
 import json
 import copy
 import regex
@@ -17,6 +18,10 @@ import stanfordnlp
 
 import pymorphy2
 
+from keras_bert import load_trained_model_from_checkpoint
+sys.path.append("/misc/models/bert")
+import tokenization
+
 try:
     from solver10 import Solver as Solver10
 except:
@@ -33,6 +38,13 @@ small_words_dict = df_dict.set_index("Lemma")[["Freq(ipm)"]].to_dict()["Freq(ipm
 slovarnie_slova = pd.read_csv("../models/dictionaries/slovarnie_slova.txt", header=None).rename({0: "word"}, axis=1)
 
 morph = pymorphy2.MorphAnalyzer()
+
+bert_folder = '/misc/models/bert'
+config_path = bert_folder+'/bert_config.json'
+checkpoint_path = bert_folder+'/bert_model.ckpt'
+vocab_path = bert_folder+'/vocab.txt'
+tokenizer_bert = tokenization.FullTokenizer(vocab_file=vocab_path, do_lower_case=False)
+model_bert = load_trained_model_from_checkpoint(config_path, checkpoint_path, training=True)
 
 synt = stanfordnlp.Pipeline(lang="ru")
 synt.processors["tokenize"].config["pretokenized"] = True
@@ -1115,3 +1127,38 @@ def solver_2(task):
     order = np.argsort(dist)
 
     return target_set[order[0]]
+
+
+def solver_17(task, threshold=0.5, testing=False):
+    max_length = 512
+
+    text = task["text"]
+    text = re.sub(r"\(\d\)", "[MASK]", text)
+    if testing:
+        print(text)
+    text = text.replace("[ ]*\[MASK\][ ]*", "[MASK]")
+    text = text.split("[MASK]")
+
+    tokens = ["[CLS]"]
+    for i in range(len(text)):
+        if i == 0:
+            tokens = tokens + tokenizer_bert.tokenize(text[i])
+        else:
+            tokens = tokens + ['[MASK]'] + tokenizer_bert.tokenize(text[i])
+    tokens = tokens + ['[SEP]']
+    token_input = tokenizer_bert.convert_tokens_to_ids(tokens)
+    token_input = np.array(token_input + [0] * (512 - len(token_input)))
+
+    mask_input = np.zeros(max_length)
+    mask_input[token_input == 103] = 1
+
+    seg_input = np.zeros(max_length)
+    predicts = model_bert.predict([token_input.reshape(1, -1), seg_input.reshape(1, -1), mask_input.reshape(1, -1)])[0]
+    comma_likelihoods = predicts[0, :, 117][mask_input.astype(bool)]
+    dot_likelihoods = predicts[0, :, 119][mask_input.astype(bool)]
+    and_likelihoods = predicts[0, :, 549][mask_input.astype(bool)]
+    or_likelihoods = predicts[0, :, 10880][mask_input.astype(bool)]
+    complex_likelihoods = [t1 + t2 for t1, t2 in zip(comma_likelihoods, and_likelihoods)]
+    if testing:
+        print(f"',': {comma_likelihoods}, '.': {dot_likelihoods}, 'и': {and_likelihoods}, 'или': {or_likelihoods}")
+    return [str(i + 1) for i, t in enumerate(complex_likelihoods) if t >= threshold]
