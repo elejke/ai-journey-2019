@@ -11,7 +11,7 @@ from solvers import *
 
 if "USE_CUSTOM_SOLVERS" in os.environ:
     from src.solvers import solver_1, solver_4, solver_5, solver_6, solver_8, solver_9, \
-        solver_10_11_12, solver_15, solver_16, solver_24, solver_25
+        solver_10_11_12, solver_15, solver_16, solver_24, solver_25, solver_17
 
     custom_solvers = {
         1: solver_1,
@@ -25,6 +25,9 @@ if "USE_CUSTOM_SOLVERS" in os.environ:
         12: solver_10_11_12,
         15: solver_15,
         16: solver_16,
+        17: solver_17,
+        19: solver_17,
+        20: solver_17,
         24: solver_24,
         25: solver_25
     }
