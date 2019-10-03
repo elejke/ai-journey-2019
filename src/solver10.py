@@ -4,9 +4,9 @@ import pymorphy2
 import numpy as np
 
 try:
-    from solvers_utils import standardize_task
+    from solvers_utils import standardize_task_10
 except:
-    from src.solvers_utils import standardize_task
+    from src.solvers_utils import standardize_task_10
 
 
 class Solver(object):
@@ -31,8 +31,8 @@ class Solver(object):
         return random.seed(self.seed)
 
     def predict_from_model(self, task):
-        #         result_ids, result_parts, task = dict(), [], standardize_task(task)
-        result_ids, result_parts, task = [], [], standardize_task(task)
+        #         result_ids, result_parts, task = dict(), [], standardize_task_10(task)
+        result_ids, result_parts, task = [], [], standardize_task_10(task)
 
         # parse task to find the list of letters to check:
         match = re.search(r'буква ([ЭОУАЫЕЁЮЯИэоуаыеёюяи])', task["text"])
