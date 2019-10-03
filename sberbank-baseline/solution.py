@@ -200,6 +200,7 @@ class CuttingEdgeStrongGeneralAI(object):
                 prediction = self.not_so_strong_task_solver(task)
                 print("From random solver")
             print("Prediction: ", prediction)
+            print()
             if isinstance(prediction, np.ndarray):
                 prediction = list(prediction)
             answers[task_id] = prediction
