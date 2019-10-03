@@ -537,7 +537,9 @@ def solver_6(task):
 
     text = task["text"]
 
-    words = regex.split("[\n\xa0]", text)[1].lower().translate(str.maketrans('', '', string.punctuation)).split()
+    split = regex.split("[\n\xa0]", text)
+    split = [s for s in split[1:] if s != ""]
+    words = split[0].lower().translate(str.maketrans('', '', string.punctuation)).split()
 
     pos_mapping = {
         "ADJS": "ADJF",
