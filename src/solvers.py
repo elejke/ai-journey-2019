@@ -1048,22 +1048,30 @@ def solver_9(task, testing=False):
 
 
 def solver_2(task):
-
-    podchinitelniye_soyuzy = ["что", "потомучто"]
-    sochinitelniye_soyuzy = ["но", "однако"]
-    protivitelniye_soyuzy = ["но", "однако"]
-    narechiya = ["потому", "поэтому", "настолько", "сначала", "сейчас", "сегодня"]
-    chastizy = ["только", "даже", "и", "именно", "ведь"]
-    soyuzniye_slova = ["которых", "который", "которым", "которому", "которой", "которые", "которыми"]
-    ukazatelniye_mestoimeniya = [
-        'это', 'этот', 'такой', 'эти'
-    ]
+    podchinitelniye_soyuzy = ["что", "поскольку", "ведь", "потомучто", "ибо",
+                              "если", "чтобы", "когда", "потому", "из"]
+    sochinitelniye_soyuzy = ["но", "однако", "а", "тоже", "также", "и"]
+    protivitelniye_soyuzy = ["но", "однако", "а", "зато"]
+    narechiya = ["поэтому", "потому", "отсюда", "сначала", "сейчас",
+                 "теперь", "сегодня", "настолько", "так", "недаром",
+                 "почему", "отчего", "столь", "неслучайно", "совсем",
+                 "вовсе", "недаром", "тогда", "здесь", "там", "тут"]
+    chastizy = ["только", "именно", "даже", "и", "ведь", "лишь", "помимо"]
+    soyuzniye_slova = ["которых", "который", "которым", "которому", "которой",
+                       "которые", "которыми", "что", "поэтому"]
+    ukazatelniye_mestoimeniya = ["это", "этот", "такой", "эти", "эта", "такая",
+                                 "тот", "этим", "такие", "этой", "такое", "этих",
+                                 "таких", "те"]
     otnositelniye_mestoimeniya = soyuzniye_slova
-    vvodniye_slova = ["например", "такимобразом"]
-    mestoimeniya = ukazatelniye_mestoimeniya
+    vvodniye_slova = ["например", "такимобразом", "так", "безусловно", "бесспорно",
+                      "напротив", "оказывается", "действительно", "однако", "разумеется"]
+    mestoimeniya = []
 
     text = task["text"]
     text = regex.sub("\<[\.…]+\>", "@", text)
+    if "@" not in text:
+        text = regex.sub("…", "@", text)
+        text = regex.sub("\.\.\.", "@", text)
 
     if regex.search("противительн\w+\s*союз", task["text"]) is not None:
         target_set = protivitelniye_soyuzy
@@ -1086,50 +1094,70 @@ def solver_2(task):
     elif regex.search("местоимен", task["text"]) is not None:
         target_set = mestoimeniya
     else:
-        target_set = ["кто"]
+        target_set = []
 
-    target_sentence = None
-    for sentence in re.split("[(.]", text):
-        if ")" in sentence:
-            sentence_split = sentence.split(")")
-            if sentence_split[0].isdigit():
-                if "@" in sentence_split[1]:
-                    target_sentence = sentence_split[1].strip()
+    target_set_indices = []
+    for word in target_set:
+        _temp = tokenizer_bert.convert_tokens_to_ids(tokenizer_bert.tokenize(word))
+        if len(_temp) > 1:
+            continue
+        target_set_indices.append(_temp[0])
+    target_set_indices = np.array(target_set_indices)
+
+    _sent_nums = [int(regex.search("\d{1,2}", i).group())
+                  for i in regex.findall("\(\s*\d{1,2}\s*\)", text)]
+    max_sent_num = str(max(_sent_nums))
+    min_sent_num = str(min(_sent_nums))
+
+    target_sentence = ""
+    is_first_met = False
+    for sentence in regex.split("\(\s*\d{1,2}", regex.sub("\(\s*(\d{1,2})\s*\)", "(\g<1> \g<1> \g<1>)", text)):
+        if regex.search("\s*\d{1,2}\s*\)", sentence) is not None:
+            sentence_split = regex.split("\s*\d{1,2}\s*\)", sentence)
+            if sentence_split[0].strip().isdigit():
+                if not is_first_met and sentence_split[0].strip() != min_sent_num:
+                    continue
+                else:
+                    is_first_met = True
+                if sentence_split[0].strip() == max_sent_num:
+                    target_sentence += sentence_split[1].split(".")[0].strip() + "."
                     break
-    if target_sentence is None:
+                else:
+                    target_sentence += sentence_split[1].strip() + " "
+    target_sentence = target_sentence.strip()
+
+    if (target_sentence is None) or ("@" not in target_sentence):
+        print("random")
         return random.choice(target_set)
 
-    words_split = regex.findall(r"\w+|[^\w\s]", target_sentence.lower())
+    text = regex.sub(r"@", "[MASK]", target_sentence)
+    text = text.split("[MASK]")
 
-    replace_index = -1
-    for i in range(len(words_split)):
-        if words_split[i] == "@":
-            replace_index = i
-            break
-    context = words_split[max(replace_index - 5, 0):replace_index] + words_split[replace_index + 1:replace_index + 6]
+    tokens = ["[CLS]"]
+    for i in range(len(text)):
+        if i == 0:
+            tokens = tokens + tokenizer_bert.tokenize(text[i].strip())
+        else:
+            tokens = tokens + ["[MASK]"] + tokenizer_bert.tokenize(text[i].strip())
+    tokens = tokens + ["[SEP]"]
 
-    context_vector = np.zeros(model_fasttext.get_dimension())
-    for word in context:
-        temp = model_fasttext[word]
-        norm = np.linalg.norm(temp, ord=2)
-        if norm != 0:
-            temp /= np.linalg.norm(temp, ord=2)
-            context_vector += temp
-    norm = np.linalg.norm(context_vector, ord=2)
-    if norm != 0:
-        context_vector /= norm
+    max_length = 512
 
-    target_vectors = []
-    for word in target_set:
-        temp = model_fasttext[word]
-        temp /= np.linalg.norm(temp, ord=2)
-        target_vectors.append(temp)
-    target_vectors = np.array(target_vectors)
+    token_input = tokenizer_bert.convert_tokens_to_ids(tokens)
+    token_input = np.array(token_input + [0] * (max_length - len(token_input)))
 
-    dist = np.linalg.norm(target_vectors - context_vector, axis=1, ord=2)
-    order = np.argsort(dist)
+    mask_input = np.zeros(max_length)
+    mask_input[token_input == 103] = 1
 
-    return target_set[order[0]]
+    seg_input = np.zeros(max_length)
+
+    predicts = model_bert.predict([token_input.reshape(1, -1),
+                                   seg_input.reshape(1, -1),
+                                   mask_input.reshape(1, -1)])[0]
+    if len(target_set_indices) > 0:
+        predicts[:, :, target_set_indices] = predicts[:, :, target_set_indices] * 1000000
+
+    return tokenizer_bert.convert_ids_to_tokens(np.argmax(predicts, axis=2)[0][mask_input.astype(bool)])[0].lower()
 
 
 def solver_17(task, threshold=0.5, testing=False):
