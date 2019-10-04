@@ -1157,10 +1157,15 @@ def solver_17(task, threshold=0.5, testing=False):
 
     seg_input = np.zeros(max_length)
     predicts = model_bert.predict([token_input.reshape(1, -1), seg_input.reshape(1, -1), mask_input.reshape(1, -1)])[0]
-    comma_likelihoods = predicts[0, :, 117][mask_input.astype(bool)]
-    dot_likelihoods = predicts[0, :, 119][mask_input.astype(bool)]
-    and_likelihoods = predicts[0, :, 549][mask_input.astype(bool)]
-    or_likelihoods = predicts[0, :, 10880][mask_input.astype(bool)]
+
+    comma_id = tokenizer_bert.convert_tokens_to_ids(tokenizer_bert.tokenize(","))[0]
+    comma_likelihoods = predicts[0, :, comma_id][mask_input.astype(bool)]
+    dot_id = tokenizer_bert.convert_tokens_to_ids(tokenizer_bert.tokenize("."))[0]
+    dot_likelihoods = predicts[0, :, dot_id][mask_input.astype(bool)]
+    and_id = tokenizer_bert.convert_tokens_to_ids(tokenizer_bert.tokenize("и"))[0]
+    and_likelihoods = predicts[0, :, and_id][mask_input.astype(bool)]
+    or_id = tokenizer_bert.convert_tokens_to_ids(tokenizer_bert.tokenize("или"))[0]
+    or_likelihoods = predicts[0, :, or_id][mask_input.astype(bool)]
     complex_likelihoods = [t1 + t2 for t1, t2 in zip(comma_likelihoods, and_likelihoods)]
     if testing:
         print(f"',': {comma_likelihoods}, '.': {dot_likelihoods}, 'и': {and_likelihoods}, 'или': {or_likelihoods}")
