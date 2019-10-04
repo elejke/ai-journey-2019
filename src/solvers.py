@@ -1075,7 +1075,7 @@ def solver_2(task):
         target_set = narechiya
     elif regex.search("частиц", task["text"]) is not None:
         target_set = chastizy
-    elif regex.search("союзн\w+\s*слов", task["text"]) is None:
+    elif regex.search("союзн\w+\s*слов", task["text"]) is not None:
         target_set = soyuzniye_slova
     elif regex.search("указательн\w+\s*местоимен", task["text"]) is not None:
         target_set = ukazatelniye_mestoimeniya
