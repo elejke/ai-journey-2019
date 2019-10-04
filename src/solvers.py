@@ -1150,7 +1150,7 @@ def solver_17(task, threshold=0.5, testing=False):
             tokens = tokens + ['[MASK]'] + tokenizer_bert.tokenize(text[i])
     tokens = tokens + ['[SEP]']
     token_input = tokenizer_bert.convert_tokens_to_ids(tokens)
-    token_input = np.array(token_input + [0] * (512 - len(token_input)))
+    token_input = np.array(token_input + [0] * (max_length - len(token_input)))
 
     mask_input = np.zeros(max_length)
     mask_input[token_input == 103] = 1
