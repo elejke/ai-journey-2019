@@ -1136,7 +1136,7 @@ def solver_17(task, threshold=0.5, testing=False):
     max_length = 512
 
     text = task["text"]
-    text = re.sub(r"\(\d\)", "[MASK]", text)
+    text = re.sub(r"\(\s*\d{1,2}\s*\)", "[MASK]", text)
     if testing:
         print(text)
     text = text.replace("[ ]*\[MASK\][ ]*", "[MASK]")
