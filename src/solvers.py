@@ -1167,15 +1167,14 @@ def solver_17(task, threshold=0.5, testing=False):
     text = re.sub(r"\(\s*\d{1,2}\s*\)", "[MASK]", text)
     if testing:
         print(text)
-    text = text.replace("[ ]*\[MASK\][ ]*", "[MASK]")
     text = text.split("[MASK]")
 
     tokens = ["[CLS]"]
     for i in range(len(text)):
         if i == 0:
-            tokens = tokens + tokenizer_bert.tokenize(text[i])
+            tokens = tokens + tokenizer_bert.tokenize(text[i].strip())
         else:
-            tokens = tokens + ['[MASK]'] + tokenizer_bert.tokenize(text[i])
+            tokens = tokens + ['[MASK]'] + tokenizer_bert.tokenize(text[i].strip())
     tokens = tokens + ['[SEP]']
     token_input = tokenizer_bert.convert_tokens_to_ids(tokens)
     token_input = np.array(token_input + [0] * (max_length - len(token_input)))
