@@ -10,11 +10,13 @@ from utils import *
 from solvers import *
 
 if "USE_CUSTOM_SOLVERS" in os.environ:
-    from src.solvers import solver_1, solver_4, solver_5, solver_6, solver_8, solver_9, \
-        solver_10_11_12, solver_15, solver_16, solver_24, solver_25, solver_17
+    from src.solvers import solver_1, solver_2, solver_4, solver_5, solver_6, solver_8, solver_9, \
+        solver_10_11_12, solver_15, solver_16, solver_17, solver_18, solver_19, solver_20, \
+        solver_24, solver_25
 
     custom_solvers = {
         1: solver_1,
+        2: solver_2,
         4: solver_4,
         5: solver_5,
         6: solver_6,
@@ -26,8 +28,9 @@ if "USE_CUSTOM_SOLVERS" in os.environ:
         15: solver_15,
         16: solver_16,
         17: solver_17,
-        19: solver_17,
-        20: solver_17,
+        18: solver_18,
+        19: solver_19,
+        20: solver_20,
         24: solver_24,
         25: solver_25
     }
