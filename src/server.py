@@ -13,7 +13,7 @@ from solvers import solver_1, \
                     solver_18, \
                     solver_19, \
                     solver_20, \
-                    solver_24 \
+                    solver_24, \
                     solver_25
 
 from solver26 import solver_26
