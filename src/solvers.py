@@ -884,6 +884,14 @@ def solver_8(task):
     return answers
 
 
+def word_exists(w):
+    analysis = morph.parse(w)
+    if (analysis[0].methods_stack[0][0].__class__.__name__ == "DictionaryAnalyzer") and \
+            (analysis[0].methods_stack[0][1] == w):
+        return True
+    return False
+
+
 def solver_9(task, testing=False):
     def is_unverifiable(w):
         for w2 in slovarnie_slova.word:
@@ -895,13 +903,6 @@ def solver_9(task, testing=False):
     #     stressed_w = accent.put_stress(w)
     #     if (stressed_w[pos+1] == "'") or ("'" not in stressed_w):
     #         return True
-        return False
-
-    def word_exists(w):
-        analysis = morph.parse(w)
-        if (analysis[0].methods_stack[0][0].__class__.__name__ == "DictionaryAnalyzer") and \
-                (analysis[0].methods_stack[0][1] == w):
-            return True
         return False
 
     def possible_variants(w):
@@ -1160,13 +1161,11 @@ def solver_2(task):
     return tokenizer_bert.convert_ids_to_tokens(np.argmax(predicts, axis=2)[0][mask_input.astype(bool)])[0].lower()
 
 
-def solver_17(task, threshold=0.5, testing=False):
+def base_17_18_19_20(task):
     max_length = 512
 
     text = task["text"]
     text = re.sub(r"\(\s*\d{1,2}\s*\)", "[MASK]", text)
-    if testing:
-        print(text)
     text = text.split("[MASK]")
 
     tokens = ["[CLS]"]
@@ -1193,7 +1192,28 @@ def solver_17(task, threshold=0.5, testing=False):
     and_likelihoods = predicts[0, :, and_id][mask_input.astype(bool)]
     or_id = tokenizer_bert.convert_tokens_to_ids(tokenizer_bert.tokenize("или"))[0]
     or_likelihoods = predicts[0, :, or_id][mask_input.astype(bool)]
-    complex_likelihoods = [t1 + t2 for t1, t2 in zip(comma_likelihoods, and_likelihoods)]
-    if testing:
-        print(f"',': {comma_likelihoods}, '.': {dot_likelihoods}, 'и': {and_likelihoods}, 'или': {or_likelihoods}")
-    return [str(i + 1) for i, t in enumerate(complex_likelihoods) if t >= threshold]
+    return comma_likelihoods, dot_likelihoods, and_likelihoods, or_likelihoods
+
+
+def solver_17(task):
+    comma_likelihoods, dot_likelihoods, and_likelihoods, or_likelihoods = base_17_18_19_20(task)
+    final_preds = comma_likelihoods + and_likelihoods + dot_likelihoods
+    return [str(i + 1) for i, t in enumerate(final_preds) if t > 0.65]
+
+
+def solver_18(task):
+    comma_likelihoods, dot_likelihoods, and_likelihoods, or_likelihoods = base_17_18_19_20(task)
+    final_preds = comma_likelihoods + and_likelihoods + dot_likelihoods
+    return [str(i + 1) for i, t in enumerate(final_preds) if t > 0.35]
+
+
+def solver_19(task):
+    comma_likelihoods, dot_likelihoods, and_likelihoods, or_likelihoods = base_17_18_19_20(task)
+    final_preds = comma_likelihoods + or_likelihoods + dot_likelihoods
+    return [str(i + 1) for i, t in enumerate(final_preds) if t > 0.55]
+
+
+def solver_20(task):
+    comma_likelihoods, dot_likelihoods, and_likelihoods, or_likelihoods = base_17_18_19_20(task)
+    final_preds = comma_likelihoods
+    return [str(i + 1) for i, t in enumerate(final_preds) if t > 0.7]
