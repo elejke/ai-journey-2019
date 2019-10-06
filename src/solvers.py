@@ -1386,3 +1386,123 @@ def solver_13(task):
     # else:
     #     print(np.array(res[1])[np.where(np.array(res[0]) == 0)])
     # return joined_choices, options, reason,
+
+def solver_14(task):
+    def possible_variants(w):
+        w1 = re.sub(r"[\(\)]", "", w)
+        if w.startswith("("):
+            w2 = re.sub(r"\)", "-", re.sub(r"\(", "", w))
+            w3 = re.sub(r"\)", " ", re.sub(r"\(", "", w))
+        else:
+            w2 = re.sub(r"\(", "-", re.sub(r"\)", "", w))
+            w3 = re.sub(r"\(", " ", re.sub(r"\)", "", w))
+        w1_exists = word_exists(w1)
+        w2_exists = word_exists(w2)
+        w3_exists = word_exists(w3.split(" ")[0]) and word_exists(w3.split(" ")[1])
+        if (not w2_exists) and (not w3_exists):
+            w1_exists = True
+        return w1, w1_exists, w2, w2_exists, w3, w3_exists
+
+    def both_together_likelihood(w1_orig, w1_cand, p1, w2_orig, w2_cand, p2, sent):
+        max_length = 512
+
+        if p1 == 1:
+            sent = re.sub(w1_orig, w1_cand, sent)
+        if p2 == 1:
+            sent = re.sub(w2_orig, w2_cand, sent)
+
+        w1_orig_shield = re.sub("\)", "\\)", re.sub("\(", "\\(", w1_orig))
+        w2_orig_shield = re.sub("\)", "\\)", re.sub("\(", "\\(", w2_orig))
+        sent = re.split(fr"({w1_orig_shield}|{w2_orig_shield})", sent)
+        sent = [t for t in sent if len(t) > 0]
+        tokens = ["[CLS]"]
+        exp_tokens = ["[CLS]"]
+        word_masks = [0]
+
+        w1_used = False
+        for part in sent:
+            if (part == w1_orig) and not w1_used:
+                kek = tokenizer_bert.tokenize(w1_cand)
+                exp_tokens += kek
+                tokens += ["[MASK]"] * len(kek)
+                word_masks += [1] * len(kek)
+                w1_used = True
+            elif part == w2_orig:
+                kek = tokenizer_bert.tokenize(w2_cand)
+                exp_tokens += kek
+                tokens += ["[MASK]"] * len(kek)
+                word_masks += [2] * len(kek)
+            else:
+                kek = tokenizer_bert.tokenize(part.strip())
+                exp_tokens += kek
+                tokens += kek
+                word_masks += [0] * len(kek)
+        tokens += ["[SEP]"]
+        exp_tokens += ["[SEP]"]
+        token_input = tokenizer_bert.convert_tokens_to_ids(tokens)
+        token_input = np.array(token_input + [0] * (max_length - len(token_input)))
+        exp_token_input = tokenizer_bert.convert_tokens_to_ids(exp_tokens)
+        exp_token_input = np.array(exp_token_input + [0] * (max_length - len(exp_token_input)))
+        word_masks = np.array(word_masks + [0] * (max_length - len(word_masks)))
+        mask_input = word_masks != 0
+        seg_input = np.zeros(max_length)
+
+        predicts = model_bert.predict([token_input.reshape(1, -1),
+                                 seg_input.reshape(1, -1),
+                                 mask_input.reshape(1, -1)])[0]
+        preds_1 = predicts[0, word_masks==1]
+        exp_token_id_1 = exp_token_input[word_masks==1]
+        subprobas_1 = []
+        for i, t_id in enumerate(exp_token_id_1):
+            subprobas_1.append(preds_1[i, t_id])
+        preds_2 = predicts[0, word_masks==2]
+        exp_token_id_2 = exp_token_input[word_masks==2]
+        subprobas_2 = []
+        for i, t_id in enumerate(exp_token_id_2):
+            subprobas_2.append(preds_2[i, t_id])
+        print(sent)
+        print(subprobas_1, subprobas_2)
+        if p1 == 1:
+            return np.mean(subprobas_2)
+        if p2 == 1:
+            return np.mean(subprobas_1)
+        return np.min(np.mean(subprobas_1) * np.mean(subprobas_2))
+    text = task["text"]
+    tmp = re.split(r"\n", text)
+    sentences = []
+    word_pairs = []
+    possibilities = []
+    together_variants = []
+    for s in tmp:
+        words = re.findall("[А-ЯЁ]*\([А-ЯЁ]+\)[А-ЯЁ]*", s)
+        if len(words) == 2:
+            w1_1, t1_1, w1_2, t1_2, w1_3, t1_3 = possible_variants(words[0].lower())
+            w2_1, t2_1, w2_2, t2_2, w2_3, t2_3 = possible_variants(words[1].lower())
+            if t1_1 and t2_1:
+                word_pairs.append(words)
+                sentences.append(s)
+                possibilities.append([[t1_1, t1_2, t1_3], [t2_1, t2_2, t2_3]])
+                together_variants.append([w1_1, w2_1])
+                if not(t1_2 or t1_3 or t2_2 or t2_3):
+                    # У нас есть досрочный ответ
+                    return w1_1+w2_1
+    max_likelihood = 0
+    if len(together_variants) == 1:
+        w1_cand, w2_cand = together_variants[0]
+        return w1_cand + w2_cand
+    elif len(together_variants) == 0:
+        return w1_1 + w2_1
+    for s, word_pair, possibility, together_variant in zip(sentences,
+                                                           word_pairs,
+                                                           possibilities,
+                                                           together_variants):
+        w1_orig, w2_orig = word_pair
+        w1_cand, w2_cand = together_variant
+        p1, p2 = possibility
+        likelihood = both_together_likelihood(w1_orig, w1_cand, sum(p1),
+                                              w2_orig, w2_cand, sum(p2),
+                                              s)
+        if likelihood > max_likelihood:
+            max_likelihood = likelihood
+            answer = w1_cand + w2_cand
+    return answer
