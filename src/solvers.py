@@ -1217,3 +1217,172 @@ def solver_20(task):
     comma_likelihoods, dot_likelihoods, and_likelihoods, or_likelihoods = base_17_18_19_20(task)
     final_preds = comma_likelihoods
     return [str(i + 1) for i, t in enumerate(final_preds) if t > 0.7]
+
+
+def solver_13(task):
+    text = task["text"]
+    choices = [sent.strip() for sent in regex.split("[\n\xa0.?!…]", text)
+               if regex.search("\(не\)", sent.lower()) is not None]
+    joined_choices = []
+    reason = []
+    options = []
+    for sent in choices:
+        match_raw = re.search("\(не\)", sent.lower())
+        sent = (sent[:match_raw.span()[1]] +
+                regex.sub("\(\s*(\w+)\s*\)", "\g<1> ", sent[match_raw.span()[1]:])).replace("  ", " ")
+        match = regex.search("\(не\)\s*(\w+[\p{Pd}−]*\w*)", sent.lower())
+        query_word = match.group(1)
+        options.append("не" + query_word)
+
+        if query_word not in big_words_set:
+            joined_choices.append(1)
+            reason.append("не употребляется без не - слитно")
+            continue
+
+        if regex.search("[\p{Pd}−]", query_word) is not None:
+            joined_choices.append(-1)
+            reason.append("слова с дефисом - раздельно")
+            continue
+
+        if (query_word == "смотря") and sent[match.span()[1]:].strip().startswith("на "):
+            joined_choices.append(1)
+            reason.append("устойчивое выражение - слитно")
+            continue
+
+        if (match.span()[0] != 0) and (sent[:match.span()[0]].strip().split()[-1] in
+                                       ["вовсе", "отнюдь", "далеко", "ничуть",
+                                        "нимало", "нисколько", "никак"]):
+            joined_choices.append(-1)
+            reason.append("пояснительное слово - раздельно")
+            continue
+
+        if query_word in ["надо", "нужно", "жаль",
+                          "готов", "готова", "готовы",
+                          "мог", "могла", "могли",
+                          "должен", "должна", "должны",
+                          "рад", "рада", "рады"]:
+            joined_choices.append(-1)
+            reason.append("слова исключения - раздельно")
+            continue
+
+        if query_word in ["кто", "что", "какой", "чей", "сколько", "где",
+                          "куда", "когда", "как", "почему", "зачем",
+                          "кого", "чего", "кому", "чему", "кем", "чем"]:
+            if regex.search("\,\s*(а|А|как)", sent[match.span()[1]:]) is not None:
+                joined_choices.append(-1)
+                reason.append("местоимение как неопределенное/отрицательное, но не оно - раздельно")
+                continue
+            joined_choices.append(1)
+            reason.append("неопределенные/отрицательное местоимения - слитно")
+            continue
+
+        form = morph.parse(query_word)[0]
+        # глаголы/деепричастия без приставки "недо" и употребляющиеся с не - раздельно
+        if form.tag.POS in ["INFN", "VERB", "GRND"]:
+            if not query_word.startswith("до"):
+                joined_choices.append(-1)
+                reason.append("глаголы/деепричастия без приставки 'недо' и употребляющиеся без не - раздельно")
+            else:
+                reason.append("глаголы/деепричастия с приставки 'недо' или не употребляющиеся без не - слитно")
+                joined_choices.append(1)
+            continue
+        # краткие прилагательные/союзы/числительные/местоимения/сравнительные - раздельно
+        if form.tag.POS in ["PRTS", "CONJ", "NUMR", "NPRO", "COMP", "PREP"]:
+            joined_choices.append(-1)
+            reason.append("краткие причастия/союзы/числительные/местоимения/сравнительные/предлоги - раздельно")
+            continue
+        # наречия
+        if form.tag.POS == "ADVB":
+            if regex.search("[ое]$", query_word) is None:
+                reason.append("наречие не на о/е - раздельно")
+                joined_choices.append(-1)
+                continue
+            if regex.search("\,\s*(а|А|но)", sent[match.span()[1]:]) is not None:
+                reason.append("наречие с противопоставлением - раздельно")
+                joined_choices.append(-1)
+                continue
+            else:
+                reason.append("наречие - неизвестно")
+                joined_choices.append(0.5)
+            continue
+
+        tokenized_sent = regex.findall(r"[\w\@]+|[^\w\s]", regex.sub("\(не\)\s*", "@@", sent.lower()))
+        for i in range(len(tokenized_sent)):
+            if "@@" in tokenized_sent[i]:
+                query_word_index = i + 1
+                tokenized_sent[i] = regex.sub("@@", "", tokenized_sent[i])
+                break
+        synt_sent = synt([tokenized_sent])
+
+        # причастие есть зависимое слово - раздельно
+        if form.tag.POS == "PRTF":
+            is_added = False
+            if regex.search("\,\s*(а|А|но)", sent[match.span()[1]:]) is not None:
+                joined_choices.append(-1)
+                reason.append("причастие с противопоставлением - раздельно")
+                continue
+            for w in synt_sent.sentences[0].words:
+                if w.governor == query_word_index:
+                    is_added = True
+                    joined_choices.append(-1)
+                    reason.append("причастие с зависимым словом - раздельно")
+                    break
+            if not is_added:
+                reason.append("причастие- неизвестно")
+                joined_choices.append(0.5)
+            continue
+        # прилагательные есть противопоставление - раздельно
+        if form.tag.POS in ["ADJF", "ADJS"]:
+            is_added = False
+            if regex.search("\,\s*(а|А)", sent[match.span()[1]:]) is not None:
+                joined_choices.append(-1)
+                reason.append("прилагательное с противопоставлением а - раздельно")
+                continue
+            if regex.search("\,\s*(но)", sent[match.span()[1]:]) is not None:
+                joined_choices.append(1)
+                reason.append("прилагательное с противопоставлением но - слитно")
+                continue
+            for w in synt_sent.sentences[0].words:
+                if w.governor == query_word_index:
+                    is_added = True
+                    joined_choices.append(-1)
+                    reason.append("прилагательное с зависимым словом - раздельно")
+                    break
+            if not is_added:
+                reason.append("прилагательное - неизвестно")
+                joined_choices.append(0.5)
+            continue
+        if form.tag.POS == "NOUN":
+            is_added = False
+            if regex.search("\,\s*(а|А|но)", sent[match.span()[1]:]) is not None:
+                joined_choices.append(-1)
+                reason.append("существительное с противопоставлением - раздельно")
+                continue
+            for w in synt_sent.sentences[0].words:
+                if w.governor == query_word_index:
+                    is_added = True
+                    joined_choices.append(-1)
+                    reason.append("существительное с зависимым словом - раздельно")
+                    break
+            if not is_added:
+                reason.append("существительное - неизвестно")
+                joined_choices.append(-0.5)
+            continue
+        joined_choices.append(0)
+        reason.append("неизвестно")
+
+    joined_choices = np.array(joined_choices)
+    options = np.array(options)
+    if len(joined_choices) == 0:
+        return "никогда"
+    max_conf = max(joined_choices)
+    return random.choice(options[joined_choices == max_conf])
+    # if 1 in res[0]:
+    #     print(np.array(res[1])[np.where(np.array(res[0]) == 1)])
+    # elif 0.5 in res[0]:
+    #     print(np.array(res[1])[np.where(np.array(res[0]) == 0.5)])
+    # elif -0.5 in res[0]:
+    #     print(np.array(res[1])[np.where(np.array(res[0]) == -0.5)])
+    # else:
+    #     print(np.array(res[1])[np.where(np.array(res[0]) == 0)])
+    # return joined_choices, options, reason,
