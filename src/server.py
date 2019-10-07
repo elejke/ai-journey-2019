@@ -1,6 +1,7 @@
 import random
 from solvers import solver_1, \
                     solver_2, \
+                    solver_3, \
                     solver_4, \
                     solver_5, \
                     solver_6, \
@@ -34,6 +35,8 @@ def take_exam(tasks):
             answer = solver_1(task)
         elif task['id'] in ["2"]:
             answer = solver_2(task)
+        elif task['id'] in ["3"]:
+            answer = solver_3(task)
         elif task['id'] in ["4"]:
             answer = solver_4(task)
         elif task['id'] in ["5"]:
