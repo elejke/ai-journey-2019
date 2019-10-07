@@ -1455,7 +1455,7 @@ def solver_14(task):
         mask_input = word_masks != 0
         seg_input = np.zeros(max_length)
 
-        predicts = bert.predict([token_input.reshape(1, -1),
+        predicts = model_bert.predict([token_input.reshape(1, -1),
                                        seg_input.reshape(1, -1),
                                        mask_input.reshape(1, -1)])[0]
         preds_1 = predicts[0, word_masks==1]
