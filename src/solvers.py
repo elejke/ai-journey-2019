@@ -1521,6 +1521,6 @@ def solver_14(task):
 def solver_3(task):
     lens = [len(choice["text"]) for choice in task["question"]["choices"]]
     argsorted = np.argsort(lens)
-    ans = [task["question"]["choices"][argsorted[-1]]["id"]]
+    ans = [str(task["question"]["choices"][argsorted[-1]]["id"])]
 
     return ans
