@@ -8,6 +8,7 @@ from solvers import solver_1, \
                     solver_9, \
                     solver_10_11_12, \
                     solver_13, \
+                    solver_14, \
                     solver_15, \
                     solver_16, \
                     solver_17, \
@@ -47,6 +48,8 @@ def take_exam(tasks):
             answer = solver_10_11_12.predict_from_model(task)
         elif task['id'] in ["13"]:
             answer = solver_13(task)
+        elif task['id'] in ["14"]:
+            answer = solver_14(task)
         elif task['id'] in ["15"]:
             answer = solver_15(task)
         elif task['id'] in ["16"]:
