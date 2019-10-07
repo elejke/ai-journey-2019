@@ -1283,10 +1283,10 @@ def solver_13(task):
                 joined_choices.append(-1)
                 reason.append("глаголы/деепричастия без приставки 'недо' и употребляющиеся без не - раздельно")
             else:
-                reason.append("глаголы/деепричастия с приставки 'недо' или не употребляющиеся без не - слитно")
+                reason.append("глаголы/деепричастия с приставкой 'недо' или не употребляющиеся без не - слитно")
                 joined_choices.append(1)
             continue
-        # краткие прилагательные/союзы/числительные/местоимения/сравнительные - раздельно
+        # краткие причастия/союзы/числительные/местоимения/сравнительные - раздельно
         if form.tag.POS in ["PRTS", "CONJ", "NUMR", "NPRO", "COMP", "PREP"]:
             joined_choices.append(-1)
             reason.append("краткие причастия/союзы/числительные/местоимения/сравнительные/предлоги - раздельно")
@@ -1324,7 +1324,7 @@ def solver_13(task):
             for w in synt_sent.sentences[0].words:
                 if w.governor == query_word_index:
                     is_added = True
-                    joined_choices.append(-1)
+                    joined_choices.append(-0.75)
                     reason.append("причастие с зависимым словом - раздельно")
                     break
             if not is_added:
@@ -1345,7 +1345,7 @@ def solver_13(task):
             for w in synt_sent.sentences[0].words:
                 if w.governor == query_word_index:
                     is_added = True
-                    joined_choices.append(-1)
+                    joined_choices.append(-0.75)
                     reason.append("прилагательное с зависимым словом - раздельно")
                     break
             if not is_added:
@@ -1361,7 +1361,7 @@ def solver_13(task):
             for w in synt_sent.sentences[0].words:
                 if w.governor == query_word_index:
                     is_added = True
-                    joined_choices.append(-1)
+                    joined_choices.append(-0.75)
                     reason.append("существительное с зависимым словом - раздельно")
                     break
             if not is_added:
