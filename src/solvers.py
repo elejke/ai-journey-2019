@@ -1399,6 +1399,14 @@ def solver_14(task):
         w1_exists = word_exists(w1)
         w2_exists = word_exists(w2)
         w3_exists = word_exists(w3.split(" ")[0]) and word_exists(w3.split(" ")[1])
+        # пропишем явно что делать, если слово начинается на ПОЛ, пайморфи тупит
+        # в этих случаях, правила приблизительно реализованы (не рассмотрены заглавные,
+        # случай с У)
+        if w1.startswith("пол"):
+            if w1[3] in "леыаояиюэё":
+                w1_exists, w2_exists, w3_exists = False, True, False
+            else:
+                w1_exists, w2_exists, w3_exists = True, False, False
         if (not w2_exists) and (not w3_exists):
             w1_exists = True
         return w1, w1_exists, w2, w2_exists, w3, w3_exists
@@ -1448,8 +1456,8 @@ def solver_14(task):
         seg_input = np.zeros(max_length)
 
         predicts = model_bert.predict([token_input.reshape(1, -1),
-                                 seg_input.reshape(1, -1),
-                                 mask_input.reshape(1, -1)])[0]
+                                       seg_input.reshape(1, -1),
+                                       mask_input.reshape(1, -1)])[0]
         preds_1 = predicts[0, word_masks==1]
         exp_token_id_1 = exp_token_input[word_masks==1]
         subprobas_1 = []
@@ -1466,7 +1474,7 @@ def solver_14(task):
             return np.mean(subprobas_2)
         if p2 == 1:
             return np.mean(subprobas_1)
-        return np.min(np.mean(subprobas_1) * np.mean(subprobas_2))
+        return min(np.mean(subprobas_1), np.mean(subprobas_2))
     text = task["text"]
     tmp = re.split(r"\n", text)
     sentences = []
