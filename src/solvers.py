@@ -1414,10 +1414,10 @@ def solver_14(task):
     def both_together_likelihood(w1_orig, w1_cand, p1, w2_orig, w2_cand, p2, sent):
         max_length = 512
 
-        if p1 == 1:
-            sent = re.sub(w1_orig, w1_cand, sent)
-        if p2 == 1:
-            sent = re.sub(w2_orig, w2_cand, sent)
+#         if p1 == 1:
+#             sent = re.sub(w1_orig, w1_cand, sent)
+#         if p2 == 1:
+#             sent = re.sub(w2_orig, w2_cand, sent)
 
         w1_orig_shield = re.sub("\)", "\\)", re.sub("\(", "\\(", w1_orig))
         w2_orig_shield = re.sub("\)", "\\)", re.sub("\(", "\\(", w2_orig))
@@ -1455,7 +1455,7 @@ def solver_14(task):
         mask_input = word_masks != 0
         seg_input = np.zeros(max_length)
 
-        predicts = model_bert.predict([token_input.reshape(1, -1),
+        predicts = bert.predict([token_input.reshape(1, -1),
                                        seg_input.reshape(1, -1),
                                        mask_input.reshape(1, -1)])[0]
         preds_1 = predicts[0, word_masks==1]
@@ -1470,18 +1470,20 @@ def solver_14(task):
             subprobas_2.append(preds_2[i, t_id])
         print(sent)
         print(subprobas_1, subprobas_2)
-        if p1 == 1:
-            return np.mean(subprobas_2)
-        if p2 == 1:
-            return np.mean(subprobas_1)
+#         if p1 == 1:
+#             return np.mean(subprobas_2)
+#         if p2 == 1:
+#             return np.mean(subprobas_1)
         return min(np.mean(subprobas_1), np.mean(subprobas_2))
     text = task["text"]
-    tmp = re.split(r"\n", text)
+    tmp = re.split(r"[\n\.]+", text)
     sentences = []
     word_pairs = []
     possibilities = []
     together_variants = []
     for s in tmp:
+        if not s.endswith("."):
+            s += "."
         words = re.findall("[А-ЯЁ]*\([А-ЯЁ]+\)[А-ЯЁ]*", s)
         if len(words) == 2:
             w1_1, t1_1, w1_2, t1_2, w1_3, t1_3 = possible_variants(words[0].lower())
