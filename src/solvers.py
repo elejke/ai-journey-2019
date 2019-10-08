@@ -1585,6 +1585,15 @@ def solver_21(task):
                 nums_temp[0].append(num)
             if regex.search(r"«.*[!?.…]\s*»\s*[\p{Pd}−]", sent):
                 nums_temp[1].append(num)
+    elif task_type == "zapytaya":
+        nums_temp.append([])
+        for num, sent in zip(numbers, sentences):
+            tokenized = regex.findall(r"\w+|[^\w\s]", sent)
+            for word in tokenized:
+                morph_word = morph.parse(word)
+                if str(morph_word[0].tag.POS) == "GRND":
+                    nums_temp[0].append(num)
+                    break
     for possible_solution in nums_temp:
         if len(possible_solution) > 1:
             return possible_solution
