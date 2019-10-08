@@ -1543,12 +1543,15 @@ def solver_21(task):
     if " двоеточ" in text:
         pattern = ":"
         tokens = [156]
+        task_type = "dvoetochie"
     elif " запят" in text:
         pattern = ","
         tokens = [128]
+        task_type = "zapytaya"
     else:
         pattern = r"[\p{Pd}−]\s+"
         tokens = [1022, 1146, 901, 130]
+        task_type = "tire"
 
     sentences = []
     numbers = []
@@ -1560,6 +1563,31 @@ def solver_21(task):
                     sentences.append(sentence_split[1].strip())
                     numbers.append(sentence_split[0])
     numbers = np.array(numbers)
+    sentences = np.array(sentences)
+
+    nums_temp = []
+    if task_type == "dvoetochie":
+        for num, sent in zip(numbers, sentences):
+            if regex.search(r":\s*«.*»", sent):
+                nums_temp.append(num)
+    elif task_type == "tire":
+        nums_temp = []
+        for num, sent in zip(numbers, sentences):
+            if regex.search(r"[\p{Pd}−]\s+это", sent):
+                nums_temp.append(num)
+            elif regex.search(r"[\p{Pd}−]\s+эта", sent):
+                nums_temp.append(num)
+            elif regex.search(r"[\p{Pd}−]\s+этот", sent):
+                nums_temp.append(num)
+            elif regex.search(r"[\p{Pd}−]\s+эти", sent):
+                nums_temp.append(num)
+    if len(nums_temp) > 1:
+        return nums_temp
+    elif len(nums_temp) == 1:
+        sentences = sentences[numbers != nums_temp[0]]
+        numbers = numbers[numbers != nums_temp[0]]
+    else:
+        pass
 
     sentence_embeddings = extract_embeddings(model_bert_embedder, sentences, vocabs=vocab_bert)
     token_positions = [np.where(np.isin(tokenizer_bert_end_to_end.encode(sent)[0], tokens))[0][0]
