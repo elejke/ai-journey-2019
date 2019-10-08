@@ -13,11 +13,16 @@ import nltk.corpus
 import numpy as np
 import pandas as pd
 
+from sklearn.metrics import pairwise_distances
+
 import fasttext
 import stanfordnlp
 
 import pymorphy2
 
+from keras_bert import extract_embeddings
+from keras_bert.tokenizer import Tokenizer
+from keras_bert.loader import load_vocabulary
 from keras_bert import load_trained_model_from_checkpoint
 sys.path.append("/misc/models/bert")
 import tokenization
@@ -40,12 +45,16 @@ slovarnie_slova = pd.read_csv("../models/dictionaries/slovarnie_slova.txt", head
 morph = pymorphy2.MorphAnalyzer()
 
 bert_folder = '/misc/models/bert'
-config_path = bert_folder+'/bert_config.json'
-checkpoint_path = bert_folder+'/bert_model.ckpt'
-vocab_path = bert_folder+'/vocab.txt'
+config_path = bert_folder + '/bert_config.json'
+checkpoint_path = bert_folder + '/bert_model.ckpt'
+vocab_path = bert_folder + '/vocab.txt'
+vocab_bert = load_vocabulary(vocab_path)
 tokenizer_bert = tokenization.FullTokenizer(vocab_file=vocab_path, do_lower_case=False)
+tokenizer_bert_end_to_end = Tokenizer(vocab_bert, cased=True)
 model_bert = load_trained_model_from_checkpoint(config_path, checkpoint_path, training=True)
 model_bert._make_predict_function()
+model_bert_embedder = load_trained_model_from_checkpoint(config_path, checkpoint_path, training=False)
+model_bert_embedder._make_predict_function()
 
 synt = stanfordnlp.Pipeline(lang="ru")
 synt.processors["tokenize"].config["pretokenized"] = True
@@ -1387,6 +1396,7 @@ def solver_13(task):
     #     print(np.array(res[1])[np.where(np.array(res[0]) == 0)])
     # return joined_choices, options, reason,
 
+
 def solver_14(task):
     def possible_variants(w):
         w1 = re.sub(r"[\(\)]", "", w)
@@ -1524,3 +1534,44 @@ def solver_3(task):
     ans = [str(task["question"]["choices"][argsorted[-1]]["id"])]
 
     return ans
+
+
+def solver_21(task):
+
+    text = task["text"]
+
+    if " двоеточ" in text:
+        pattern = ":"
+        tokens = [156]
+    elif " запят" in text:
+        pattern = ","
+        tokens = [128]
+    else:
+        pattern = r"[\p{Pd}−]\s+"
+        tokens = [1022, 1146, 901, 130]
+
+    sentences = []
+    numbers = []
+    for sentence in re.split("[(\n]", text):
+        if ")" in sentence:
+            sentence_split = sentence.split(")")
+            if sentence_split[0].isdigit():
+                if regex.search(pattern, sentence_split[1]) is not None:
+                    sentences.append(sentence_split[1].strip())
+                    numbers.append(sentence_split[0])
+    numbers = np.array(numbers)
+
+    sentence_embeddings = extract_embeddings(model_bert_embedder, sentences, vocabs=vocab_bert)
+    token_positions = [np.where(np.isin(tokenizer_bert_end_to_end.encode(sent)[0], tokens))[0][0]
+                       for sent in sentences]
+
+    token_vectors = [sentence_embeddings[i][token_positions[i]] for i in range(len(sentence_embeddings))]
+    token_vectors = np.array(token_vectors)
+
+    dist = pairwise_distances(token_vectors, metric="cosine")
+    dist[dist == 0.0] = 100000
+
+    preds = np.unravel_index(np.argmin(dist), (len(sentence_embeddings), len(sentence_embeddings)))
+    preds = np.array(preds)
+
+    return numbers[preds].tolist()
