@@ -1567,27 +1567,32 @@ def solver_21(task):
 
     nums_temp = []
     if task_type == "dvoetochie":
+        nums_temp.append([])
         for num, sent in zip(numbers, sentences):
             if regex.search(r":\s*«.*»", sent):
-                nums_temp.append(num)
+                nums_temp[0].append(num)
     elif task_type == "tire":
-        nums_temp = []
+        nums_temp.append([])
+        nums_temp.append([])
         for num, sent in zip(numbers, sentences):
             if regex.search(r"[\p{Pd}−]\s+это", sent):
-                nums_temp.append(num)
+                nums_temp[0].append(num)
             elif regex.search(r"[\p{Pd}−]\s+эта", sent):
-                nums_temp.append(num)
+                nums_temp[0].append(num)
             elif regex.search(r"[\p{Pd}−]\s+этот", sent):
-                nums_temp.append(num)
+                nums_temp[0].append(num)
             elif regex.search(r"[\p{Pd}−]\s+эти", sent):
-                nums_temp.append(num)
-    if len(nums_temp) > 1:
-        return nums_temp
-    elif len(nums_temp) == 1:
-        sentences = sentences[numbers != nums_temp[0]]
-        numbers = numbers[numbers != nums_temp[0]]
-    else:
-        pass
+                nums_temp[0].append(num)
+            if regex.search(r"«.*[!?.…]\s*»\s*[\p{Pd}−]", sent):
+                nums_temp[1].append(num)
+    for possible_solution in nums_temp:
+        if len(possible_solution) > 1:
+            return possible_solution
+        elif len(possible_solution) == 1:
+            sentences = sentences[numbers != possible_solution[0]]
+            numbers = numbers[numbers != possible_solution[0]]
+        else:
+            pass
 
     sentence_embeddings = extract_embeddings(model_bert_embedder, sentences, vocabs=vocab_bert)
     token_positions = [np.where(np.isin(tokenizer_bert_end_to_end.encode(sent)[0], tokens))[0][0]
