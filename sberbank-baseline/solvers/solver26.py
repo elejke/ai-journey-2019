@@ -1,5 +1,6 @@
 import random
 import re
+import regex
 import time
 import joblib
 import numpy as np
@@ -95,16 +96,17 @@ class Solver(BertEmbedder):
         assert len(citations) == 4, "Expected 4 (not {}) citations: {}".format(len(citations), citations)
         for citation, letter in zip(citations, "ABCD"):
             sent_nums = list()
-            matches = re.finditer(r"предложени\w{,3}\s*(\d[\d\-— ,]*)", citation)
+            matches = regex.finditer(r"предложени\w{,3}\s*(\d[\d\p{Pd}−\-— ,]*)", citation)
             for match in matches:
                 sent_nums_str = match.group(1)
                 for part in re.split(r",\s*", sent_nums_str):
-                    part = part.strip(" \t\n\v\f\r-–—−")
+                    part = regex.sub("^[ \t\n\v\f\r\p{Pd}−\-—]", "", part)
+                    part = regex.sub("[ \t\n\v\f\r\p{Pd}−\-—]$", "", part)
                     if len(part) > 0:
                         if part.isdigit():
                             sent_nums.append(int(part))
                         else:
-                            from_, to = re.split(r"[-–—−]", part)
+                            from_, to = regex.split(r"[\p{Pd}−\-—]", part)
                             extension = range(int(from_), int(to) + 1)
                             sent_nums.extend(extension)
             sents_ = [sent for sent in sents if self.get_sent_num(sent) in sent_nums]
