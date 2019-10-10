@@ -48,7 +48,7 @@ class Solver(BertEmbedder):
         return decisions
 
     def unify_type(self, type_):
-        type_ = re.split(r"\s", type_, 1)[-1]
+        type_ = re.sub("^[^а-яА-ЯёЁ]*", "", type_)
         type_ = type_.strip(" \t\n\v\f\r-–—−()").replace("и ", "")
         for key, value in self.unified_substrings.items():
             if key in type_:
