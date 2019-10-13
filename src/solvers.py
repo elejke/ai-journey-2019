@@ -41,7 +41,6 @@ df_dict = pd.read_table("../models/dictionaries/freqrnc2011.csv")
 small_words_dict = df_dict.set_index("Lemma")[["Freq(ipm)"]].to_dict()["Freq(ipm)"]
 
 slovarnie_slova = pd.read_csv("../models/dictionaries/slovarnie_slova.txt", header=None).rename({0: "word"}, axis=1)
-stress_dict = pd.read_csv("../models/dictionaries/orfoepicheskiy_automatic_gde_udarenie_rf.txt", header=None).rename({0: "word"}, axis=1)
 
 morph = pymorphy2.MorphAnalyzer()
 
@@ -917,7 +916,7 @@ def solver_9(task, testing=False):
             w = w[:pos] + w[pos].upper()
         else:
             w = w[:pos] + w[pos].upper() + w[pos + 1:]
-        return w in stress_dict.word.values
+        return w in df_dict_orfoepicheskiy.word.values
 
     def possible_variants(w):
         amount = 0
