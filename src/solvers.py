@@ -916,7 +916,7 @@ def solver_9(task, testing=False):
             w = w[:pos] + w[pos].upper()
         else:
             w = w[:pos] + w[pos].upper() + w[pos + 1:]
-        return w in df_dict_orfoepicheskiy.word.values
+        return w in df_dict_orfoepicheskiy
 
     def possible_variants(w):
         amount = 0
