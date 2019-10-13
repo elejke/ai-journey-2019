@@ -41,6 +41,7 @@ df_dict = pd.read_table("../models/dictionaries/freqrnc2011.csv")
 small_words_dict = df_dict.set_index("Lemma")[["Freq(ipm)"]].to_dict()["Freq(ipm)"]
 
 slovarnie_slova = pd.read_csv("../models/dictionaries/slovarnie_slova.txt", header=None).rename({0: "word"}, axis=1)
+stress_dict = pd.read_csv("../models/dictionaries/orfoepicheskiy_automatic_gde_udarenie_rf.txt", header=None).rename({0: "word"}, axis=1)
 
 morph = pymorphy2.MorphAnalyzer()
 
@@ -58,6 +59,9 @@ model_bert_embedder._make_predict_function()
 
 synt = stanfordnlp.Pipeline(lang="ru")
 synt.processors["tokenize"].config["pretokenized"] = True
+
+with open("../models/dictionaries/task_9_words.pickle", "rb") as f:
+    exact_labels = pickle.load(f)
 
 solver_10_11_12 = Solver10(vocabulary=big_words_set, morph=morph)
 
@@ -904,102 +908,101 @@ def word_exists(w):
 def solver_9(task, testing=False):
     def is_unverifiable(w):
         for w2 in slovarnie_slova.word:
-            if re.match(re.sub(r"\.\.", ".", w), w2):
+            if re.match(re.sub(r"[\.]+", ".", w), w2):
                 return True
         return False
 
     def is_stressed(w, pos):
-    #     stressed_w = accent.put_stress(w)
-    #     if (stressed_w[pos+1] == "'") or ("'" not in stressed_w):
-    #         return True
-        return False
+        if len(w) == pos:
+            w = w[:pos] + w[pos].upper()
+        else:
+            w = w[:pos] + w[pos].upper() + w[pos + 1:]
+        return w in stress_dict.word.values
 
     def possible_variants(w):
         amount = 0
         for candidate in "аоеиы":
-            w_n = re.sub(r"\.\.", candidate, w)
-            analysis = morph.parse(w_n)
-            if (analysis[0].methods_stack[0][0].__class__.__name__ == "DictionaryAnalyzer") and \
-                    (analysis[0].methods_stack[0][1] == w_n):
+            w_n = re.sub(r"[\.]+", candidate, w)
+            if word_exists(w_n):
                 amount += 1
         if amount == 0:
             amount = 1
         return amount
 
     def is_alternant(w):
-        #зависящие от конечной согласной корня
+        # зависящие от конечной согласной корня
         patterns_1 = [
-            (r"[а-я]*р\.\.(ст|щ)[а-я]*", "а"),
-            (r"[а-я]*р\.\.с[а-су-я]*", "о"),
-            (r"[а-я]*л\.\.г[а-я]*", "а"),
-            (r"[а-я]*л\.\.ж[а-я]*", "о"),
-            (r"[а-я]*ск\.\.к[а-я]*", "а"),
-            (r"[а-я]*ск\.\.ч[а-я]*", "о"),
+            (r"[а-я]*р[\.]+(ст|щ)[а-я]*", "а"),
+            (r"[а-я]*р[\.]+с[а-су-я]*", "о"),
+            (r"[а-я]*л[\.]+г[а-я]*", "а"),
+            (r"[а-я]*л[\.]+ж[а-я]*", "о"),
+            (r"[а-я]*ск[\.]+к[а-я]*", "а"),
+            (r"[а-я]*ск[\.]+ч[а-я]*", "о"),
         ]
-        #зависящие от суффикса "а" после корня
+        # зависящие от суффикса "а" после корня
         patterns_2 = [
-            (r"[а-я]*(б|д|м|п|т)\.\.ра[а-я]*", "и"),
-            (r"[а-я]*бл\.\.ста[а-я]*", "и"),
-            (r"[а-я]*ж\.\.га[а-я]*", "и"),
-            (r"[а-я]*ст\.\.ла[а-я]*", "и"),
-            (r"[а-я]*ч\.\.та[а-я]*", "и"),
-            (r"[а-я]*к\.\.са[а-я]*", "а"),
-            (r"[а-я]*(б|д|м|п|т)\.\.р[б-я]*", "е"),
-            (r"[а-я]*бл\.\.ст[б-я]*", "е"),
-            (r"[а-я]*ж\.\.г[б-я]*", "е"),
-            (r"[а-я]*ст\.\.л[б-я]*", "е"),
-            (r"[а-я]*ч\.\.т[б-я]*", "е"),
-            (r"[а-я]*к\.\.с[б-я]*", "о"),
+            (r"[а-я]*(б|д|м|п|т)[\.]+ра[а-я]*", "и"),
+            (r"[а-я]*бл[\.]+ста[а-я]*", "и"),
+            (r"[а-я]*ж[\.]+га[а-я]*", "и"),
+            (r"[а-я]*ст[\.]+ла[а-я]*", "и"),
+            (r"[а-я]*ч[\.]+та[а-я]*", "и"),
+            (r"[а-я]*к[\.]+са[а-я]*", "а"),
+            (r"[а-я]*(б|д|м|п|т)[\.]+р[б-я]*", "е"),
+            (r"[а-я]*бл[\.]+ст[б-я]*", "е"),
+            (r"[а-я]*ж[\.]+г[б-я]*", "е"),
+            (r"[а-я]*ст[\.]+л[б-я]*", "е"),
+            (r"[а-я]*ч[\.]+т[б-я]*", "е"),
+            (r"[а-я]*к[\.]+с[б-я]*", "о"),
         ]
-        #зависящие от ударения (плов-плав хз почему тут, всегда пишется "а" кроме исключений)
+        # зависящие от ударения (плов-плав хз почему тут, всегда пишется "а" кроме исключений)
         patterns_3a = [
-            (r"[а-я]*з\.\.р[а-я]*", "оа"),
-            (r"[а-я]*г\.\.р[а-я]*", "ао"),
-            (r"[а-я]*тв\.\.р[а-нп-я]+", "ао"),
+            (r"[а-я]*з[\.]+р[а-я]*", "оа"),
+            (r"[а-я]*г[\.]+р[а-я]*", "ао"),
+            (r"[а-я]*тв[\.]+р[а-нп-я]+", "ао"),
         ]
         patterns_3b = [
-            (r"[а-я]*пл\.\.в[а-я]*", "оа"),
+            (r"[а-я]*пл[\.]+в[а-я]*", "оа"),
         ]
-        #зависящие от лексического значения
+        # зависящие от лексического значения
         patterns_4 = [
-            (r"[а-я]*м\.\.к[а-я]*", "оа"),
-            (r"[а-я]*р\.\.вн[а-я]*", "оа"),
+            (r"[а-я]*м[\.]+к[а-я]*", "оа"),
+            (r"[а-я]*р[\.]+вн[а-я]*", "оа"),
         ]
 
         exceptions = [
-            "росток", "ростов", "ростислав", "ростовщик",
-            "отрасль", "скачок", "скачу", "сочетать", "сочетание",
-            "чета", "зоревать", "зорянка", "пловец", "пловчиха",
-            "плывуны", "уровень", "ровесник", "равнина", "равняйсь",
-            "равнение ",
+            r"росток", r"ростов", r"ростислав", r"ростовщик",
+            r"отрасль", r"скачок", r"скачу", r"сочетать", r"сочетание",
+            r"чета", r"зоревать", r"зорянка", r"пловец", r"пловчиха",
+            r"плывун[ы]{0,1}", r"уровень", r"ровесник", r"равнина", r"равняйсь",
+            r"равнение ",
         ]
         w = w.lower()
         pos_space = re.search(r"\.", w).span()[0]
         for p in patterns_1:
             if re.match(p[0], w):
                 for p_i in p[1]:
-                    filled_w = re.sub(r"\.\.", p_i, w)
+                    filled_w = re.sub(r"[\.]+", p_i, w)
                     if word_exists(filled_w):
                         stressed = is_stressed(filled_w, pos_space)
                         return True, 1, filled_w, pos_space, stressed
         for p in patterns_2:
             if re.match(p[0], w):
                 for p_i in p[1]:
-                    filled_w = re.sub(r"\.\.", p_i, w)
+                    filled_w = re.sub(r"[\.]+", p_i, w)
                     if word_exists(filled_w):
                         stressed = is_stressed(filled_w, pos_space)
                         return True, 2, filled_w, pos_space, stressed
         for p in patterns_4:
             if re.match(p[0], w):
                 for p_i in p[1]:
-                    filled_w = re.sub(r"\.\.", p_i, w)
+                    filled_w = re.sub(r"[\.]+", p_i, w)
                     if word_exists(filled_w):
                         stressed = is_stressed(filled_w, pos_space)
                         return True, 4, filled_w, pos_space, stressed
         for p in patterns_3a:
             if re.match(p[0], w):
                 for q, p_i in enumerate(p[1]):
-                    filled_w = re.sub(r"\.\.", p_i, w)
+                    filled_w = re.sub(r"[\.]+", p_i, w)
                     if word_exists(filled_w):
                         stress_ind = is_stressed(filled_w, pos_space)
                         if (stress_ind) and (q == 0):
@@ -1009,49 +1012,70 @@ def solver_9(task, testing=False):
         for p in patterns_3b:
             if re.match(p[0], w):
                 for p_i in p[1]:
-                    filled_w = re.sub(r"\.\.", p_i, w)
+                    filled_w = re.sub(r"[\.]+", p_i, w)
                     if word_exists(filled_w):
                         stressed = is_stressed(filled_w, pos_space)
                         return True, 3, filled_w, pos_space, stressed
         return False, None, None, pos_space, None
 
     words = np.array([re.split(r", ", t["text"]) for t in task["question"]["choices"]])
-    #обрезаем скобки
-    words = [[re.sub(r"[0-9]+\)", "", re.sub(r"\([а-я ]+\)", "", t2)).strip() for t2 in t1] for t1 in words]
-    #в зависимости от числа слов в каждом варианте, мы ожидаем разное число верных ответов
-    num_answers = 2
-    if len(words[0]) == 1:
-        num_answers = 1
-    #определяем какой тип нужно искать
+    # обрезаем цифры
+    words = [[re.sub(r"…", "..", re.sub(r"[0-9]+\)", "", t2)).strip() for t2 in t1] for t1 in words]
+    exact_types = np.zeros((len(words), len(words[0]))).astype(int) - 1
+    for i in range(exact_types.shape[0]):
+        for j in range(exact_types.shape[1]):
+            if words[i][j] in exact_labels["alt"]:
+                exact_types[i, j] = 0
+            elif words[i][j] in exact_labels["unver"]:
+                exact_types[i, j] = 1
+            elif words[i][j] in exact_labels["ver"]:
+                exact_types[i, j] = 2
+    words = [[re.sub(r"\([а-я ]+\)", "", t2).strip() for t2 in t1] for t1 in words]
+
+    # определяем какой тип нужно искать
     if "чередующ" in task["text"]:
         task_type = 0
     elif "непровер" in task["text"]:
         task_type = 1
     else:
         task_type = 2
+
     alt_labels = [[is_alternant(t2) for t2 in t1] for t1 in words]
     unver_labels = [[is_unverifiable(t2) for t2 in t1] for t1 in words]
     possible_ways = [[possible_variants(t2) for t2 in t1] for t1 in words]
     scores = np.zeros((len(words), len(words[0]), 3))
     for i in range(scores.shape[0]):
         for j in range(scores.shape[1]):
-            scores[i, j, 0] = 0
-            scores[i, j, 1] = unver_labels[i][j]
-            if alt_labels[i][j][0]:
-                scores[i, j, 0] = alt_labels[i][j][0]
-            scores[i, j, 2] = 1 - scores[i, j, 0] - 10 * scores[i, j, 1] * (possible_ways[i][j]-1)
-    if testing: print(scores)
+            if exact_types[i, j] >= 0:
+                if exact_types[i, j] != task_type:
+                    scores[i, :, task_type] = -100
+                    break
+                scores[i, j, exact_types[i, j]] = 1
+            else:
+                scores[i, j, 0] = 0
+                scores[i, j, 1] = unver_labels[i][j] * 0.9
+                if alt_labels[i][j][0]:
+                    scores[i, j, 0] = alt_labels[i][j][0] * 0.9
+                scores[i, j, 2] = 0.9 - 0.5 * (scores[i, j, 0] + scores[i, j, 1])
+
+    if testing:
+        print(scores)
     agg_scores = scores.mean(axis=1)
-    if testing: print(agg_scores)
+    if testing:
+        print(agg_scores)
     agg_scores = agg_scores[:, task_type]
-    if testing: print(agg_scores)
+    if testing:
+        print(agg_scores)
     max_score = agg_scores.max()
     second_value = agg_scores[agg_scores.argsort()[-2]]
-    answer_numbers = np.arange(len(agg_scores))[agg_scores==max_score]
-    if (len(answer_numbers) < 2) and (second_value > 0):
+    answer_numbers = np.arange(len(agg_scores))[agg_scores == max_score]
+    if ((len(answer_numbers) < 2) and (second_value > 0)) or ((len(answer_numbers) == 2) and (second_value > 2.2)):
         answer_numbers = np.concatenate([answer_numbers,
-                                         np.arange(len(agg_scores))[agg_scores==second_value]])
-#     answer_numbers = agg_scores.argsort()[2:]
+                                         np.arange(len(agg_scores))[agg_scores == second_value]])
+        if second_value > 2.2:
+            answer_numbers = answer_numbers[:3]
+        else:
+            answer_numbers = answer_numbers[:2]
     answer_numbers += 1
     answer_numbers = [str(t) for t in answer_numbers]
     return answer_numbers
