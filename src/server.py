@@ -1,19 +1,23 @@
 import random
 from solvers import solver_1, \
                     solver_2, \
+                    solver_3, \
                     solver_4, \
                     solver_5, \
                     solver_6, \
+                    solver_7, \
                     solver_8, \
                     solver_9, \
                     solver_10_11_12, \
                     solver_13, \
+                    solver_14, \
                     solver_15, \
                     solver_16, \
                     solver_17, \
                     solver_18, \
                     solver_19, \
                     solver_20, \
+                    solver_21, \
                     solver_24, \
                     solver_25
 
@@ -33,12 +37,16 @@ def take_exam(tasks):
             answer = solver_1(task)
         elif task['id'] in ["2"]:
             answer = solver_2(task)
+        elif task['id'] in ["3"]:
+            answer = solver_3(task)
         elif task['id'] in ["4"]:
             answer = solver_4(task)
         elif task['id'] in ["5"]:
             answer = solver_5(task)
         elif task['id'] in ["6"]:
             answer = solver_6(task)
+        elif task['id'] in ["7"]:
+            answer = solver_7(task)
         elif task['id'] in ["8"]:
             answer = solver_8(task)
         elif task['id'] in ["9"]:
@@ -47,6 +55,8 @@ def take_exam(tasks):
             answer = solver_10_11_12.predict_from_model(task)
         elif task['id'] in ["13"]:
             answer = solver_13(task)
+        elif task['id'] in ["14"]:
+            answer = solver_14(task)
         elif task['id'] in ["15"]:
             answer = solver_15(task)
         elif task['id'] in ["16"]:
@@ -59,6 +69,8 @@ def take_exam(tasks):
             answer = solver_19(task)
         elif task['id'] in ["20"]:
             answer = solver_20(task)
+        elif task['id'] in ["21"]:
+            answer = solver_21(task)
         elif task['id'] in ["24"]:
             answer = solver_24(task)
         elif task['id'] in ["25"]:

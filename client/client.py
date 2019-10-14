@@ -67,7 +67,7 @@ class Client(object):
         self.in_dir = in_dir
         self.out_path = out_path
         self.url = url
-        self.max_wait_time_ready = 120
+        self.max_wait_time_ready = 240
 
         # the name of the folder is the UNIX timestamp of the moment when class instance was created
         self._report_path = os.path.join(out_path, str(int(time.time() * 10 ** 6)) +

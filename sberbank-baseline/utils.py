@@ -5,10 +5,12 @@ import pickle
 import pymorphy2
 import re
 
+
 def rus_tok(text, m = pymorphy2.MorphAnalyzer()):
     reg = '([0-9]|\W|[a-zA-Z])'
     toks = text.split()
     return [m.parse(t)[0].normal_form for t in toks if not re.match(reg, t)]
+
 
 def load_tasks(dir_path, task_num=None):
     tasks, filenames = [], [os.path.join(dir_path, f) for f in os.listdir(dir_path)]
@@ -17,6 +19,8 @@ def load_tasks(dir_path, task_num=None):
             with open(filename, encoding='utf-8') as f:
                 dt = f.read().encode('utf-8')
                 data = json.loads(dt)
+                if "tasks" in data:
+                    data = data["tasks"]
                 tasks += [d for d in data if 'id' in d and int(d['id']) == task_num]
     return tasks
 

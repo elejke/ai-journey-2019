@@ -42,3 +42,6 @@ RUN python -c "import stanfordnlp; stanfordnlp.download('ru', force=True); nlp =
 
 # Bert
 RUN pip install keras-bert
+
+# TextDistance
+RUN pip install "textdistance[extras]"

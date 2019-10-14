@@ -164,9 +164,10 @@ class Solver(object):
             return sents, label
 
     def ensemble(self, X, y, label):
-        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(X, y, test_size=0.3, stratify=y,
-                                                                                random_state=7)
-
+        self.X_train = X
+        self.y_train = y
+        self.X_test = []
+        self.y_test = []
         func = self.cls_dict[label]["train"]
         predictions = getattr(self, func)()
         """
@@ -201,7 +202,6 @@ class Solver(object):
                 if "correct_variants" in task["solution"]
                 else [task["solution"]["correct"]]
             )
-
             for choice in choices:
                 target = 1 if choice["id"] in y_true[0] else 0
                 sents, label = self.parse_choices(text, choice["text"])
@@ -218,19 +218,14 @@ class Solver(object):
                             for_train_dict[label]["1"].append(sents)
                         else:
                             for_train_dict[label]["0"].append(sents)
-
-
         for key, value in for_train_dict.items():
             if key in ["discourse", "description", "narrative", "cause", "general"]:
                 X, y = [], []
-
                 for k, val in value.items():
                     for v in val:
                         X.append(" ".join(self.preprocess(v)))
                         y.append(int(k))
                 self.ensemble(X, y, key)
-
-
 
     def get_prediction(self, sents, label):
         if label == "action":
@@ -258,13 +253,11 @@ class Solver(object):
             predictions = getattr(self, func).predict(X_test)
             if predictions[0] == 1:
                 return True
-
         return False
 
     def predict_from_model(self, task):
         """ Mean accuracy: 54% """
         text, choices = self.parse_task(task)
-
         result = []
         for choice in choices:
             sents, label = self.parse_choices(text, choice["text"])
@@ -282,7 +275,6 @@ class Solver(object):
             choice = random.choice(choices)
             pred.append(choice["id"])
             choices.remove(choice)
-
         return pred
 
     def predict(self, task):
@@ -299,8 +291,8 @@ class Solver(object):
         ])
 
         self.clf_desc.fit(self.X_train, self.y_train)
-        predictions = self.clf_desc.predict(self.X_test)
-        return predictions
+        # predictions = self.clf_desc.predict(self.X_test)
+        # return predictions
 
     def narrative(self):
         self.clf_nar = pipeline.Pipeline([
@@ -310,8 +302,8 @@ class Solver(object):
         ])
 
         self.clf_nar.fit(self.X_train, self.y_train)
-        predictions = self.clf_nar.predict(self.X_test)
-        return predictions
+        # predictions = self.clf_nar.predict(self.X_test)
+        # return predictions
 
     def discourse(self):
         self.clf_discource = pipeline.Pipeline([
@@ -321,8 +313,8 @@ class Solver(object):
         ])
 
         self.clf_discource.fit(self.X_train, self.y_train)
-        predictions = self.clf_discource.predict(self.X_test)
-        return predictions
+        # predictions = self.clf_discource.predict(self.X_test)
+        # return predictions
 
     def cause(self):
         self.clf_cause = pipeline.Pipeline([
@@ -332,8 +324,8 @@ class Solver(object):
         ])
 
         self.clf_cause.fit(self.X_train, self.y_train)
-        predictions = self.clf_cause.predict(self.X_test)
-        return predictions
+        # predictions = self.clf_cause.predict(self.X_test)
+        # return predictions
 
     def general_class(self):
         self.clf_gen = pipeline.Pipeline([
@@ -343,5 +335,5 @@ class Solver(object):
         ])
 
         self.clf_gen.fit(self.X_train, self.y_train)
-        predictions = self.clf_gen.predict(self.X_test)
-        return predictions
+        # predictions = self.clf_gen.predict(self.X_test)
+        # return predictions
