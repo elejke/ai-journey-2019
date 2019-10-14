@@ -26,7 +26,7 @@ def solver_7_classifier(question_choices):
     unknown_choices_ids = []
 
     X_high = list(map(lambda x: x.lower().strip().replace("  ", " ").replace("ё", "е"),
-                      regex.findall("[А-ЯЁ]+[А-ЯЁ\ ]+", ",".join(question_choices))))
+                      regex.findall("[А-ЯЁ]+[IА-ЯЁ\ ]+", ",".join(question_choices))))
 
     for i, x_ in enumerate(X_high):
         if not _check_known_word(x_):
@@ -35,23 +35,6 @@ def solver_7_classifier(question_choices):
     if not len(unknown_choices_ids):
         unknown_choices_ids = list(range(5))
     return np.random.choice(unknown_choices_ids)
-
-#
-# def map_kases(x):
-#     return ((x == 0) * "nomn" +
-#             (x == 1) * "gent" +
-#             (x == 2) * "datv" +
-#             (x == 3) * "accs" +
-#             (x == 4) * "ablt" +
-#             (x == 5) * "loct")
-#
-# def map_gender(x):
-#     return ((x == 0) * "masc" +
-#             (x == 1) * "femn")
-#
-#
-# df_numeralized['kase_name'] = df_numeralized.kase.apply(map_kases)
-# df_numeralized['gender_name'] = df_numeralized.gender.apply(map_gender)
 
 
 def _find_nearest_numerical(word, vocab=None, n_neighbours=1):
