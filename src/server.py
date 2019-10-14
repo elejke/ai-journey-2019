@@ -5,6 +5,7 @@ from solvers import solver_1, \
                     solver_4, \
                     solver_5, \
                     solver_6, \
+                    solver_7, \
                     solver_8, \
                     solver_9, \
                     solver_10_11_12, \
@@ -44,6 +45,8 @@ def take_exam(tasks):
             answer = solver_5(task)
         elif task['id'] in ["6"]:
             answer = solver_6(task)
+        elif task['id'] in ["7"]:
+            answer = solver_7(task)
         elif task['id'] in ["8"]:
             answer = solver_8(task)
         elif task['id'] in ["9"]:
