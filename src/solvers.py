@@ -1423,6 +1423,12 @@ def solver_13(task):
 
 
 def solver_14(task):
+    correct_words = {
+        "slitno": ["(на)едине", "(в)последствии", "(буд)то"],
+        "razdelno": ["(с)утра", "(по)двое", "(по)трое", "(по)одному", "(под)мышкой"],
+        "defis": []
+    }
+
     def possible_variants(w):
         w1 = re.sub(r"[\(\)]", "", w)
         if w.startswith("("):
@@ -1431,9 +1437,13 @@ def solver_14(task):
         else:
             w2 = re.sub(r"\(", "-", re.sub(r"\)", "", w))
             w3 = re.sub(r"\(", " ", re.sub(r"\)", "", w))
-        w1_exists = word_exists(w1)
-        w2_exists = word_exists(w2)
-        w3_exists = word_exists(w3.split(" ")[0]) and word_exists(w3.split(" ")[1])
+        if w.lower() in correct_words["slitno"]:
+            return w1, True, w2, False, w3, False
+        if w.lower() in correct_words["razdelno"]:
+            return w1, False, w2, False, w3, True
+        w1_exists = word_exists(w1.lower())
+        w2_exists = word_exists(w2.lower())
+        w3_exists = word_exists(w3.split(" ")[0].lower()) and word_exists(w3.split(" ")[1].lower())
         # пропишем явно что делать, если слово начинается на ПОЛ, пайморфи тупит
         # в этих случаях, правила приблизительно реализованы (не рассмотрены заглавные,
         # случай с У)
@@ -1448,14 +1458,15 @@ def solver_14(task):
 
     def both_together_likelihood(w1_orig, w1_cand, p1, w2_orig, w2_cand, p2, sent):
         max_length = 512
+        print("Original sentence: ", sent)
+        w1_orig_shield = re.sub(r"\)", "\\)", re.sub("\(", "\\(", w1_orig))
+        w2_orig_shield = re.sub(r"\)", "\\)", re.sub("\(", "\\(", w2_orig))
 
-#         if p1 == 1:
-#             sent = re.sub(w1_orig, w1_cand, sent)
-#         if p2 == 1:
-#             sent = re.sub(w2_orig, w2_cand, sent)
-
-        w1_orig_shield = re.sub("\)", "\\)", re.sub("\(", "\\(", w1_orig))
-        w2_orig_shield = re.sub("\)", "\\)", re.sub("\(", "\\(", w2_orig))
+        if p1 == 1:
+            sent = re.sub(w1_orig_shield, w1_cand, sent, 1)
+        if p2 == 1:
+            sent = re.sub(w2_orig_shield, w2_cand, sent)
+        print("With sub: ", sent)
         sent = re.split(fr"({w1_orig_shield}|{w2_orig_shield})", sent)
         sent = [t for t in sent if len(t) > 0]
         tokens = ["[CLS]"]
@@ -1463,6 +1474,8 @@ def solver_14(task):
         word_masks = [0]
 
         w1_used = False
+        if p1 == 1:
+            w1_used = True
         for part in sent:
             if (part == w1_orig) and not w1_used:
                 kek = tokenizer_bert.tokenize(w1_cand)
@@ -1491,35 +1504,45 @@ def solver_14(task):
         seg_input = np.zeros(max_length)
 
         predicts = model_bert.predict([token_input.reshape(1, -1),
-                                       seg_input.reshape(1, -1),
-                                       mask_input.reshape(1, -1)])[0]
-        preds_1 = predicts[0, word_masks==1]
-        exp_token_id_1 = exp_token_input[word_masks==1]
+                                 seg_input.reshape(1, -1),
+                                 mask_input.reshape(1, -1)])[0]
+        preds_1 = predicts[0, word_masks == 1]
+        exp_token_id_1 = exp_token_input[word_masks == 1]
         subprobas_1 = []
         for i, t_id in enumerate(exp_token_id_1):
             subprobas_1.append(preds_1[i, t_id])
-        preds_2 = predicts[0, word_masks==2]
-        exp_token_id_2 = exp_token_input[word_masks==2]
+        preds_2 = predicts[0, word_masks == 2]
+        exp_token_id_2 = exp_token_input[word_masks == 2]
         subprobas_2 = []
         for i, t_id in enumerate(exp_token_id_2):
             subprobas_2.append(preds_2[i, t_id])
-        print(sent)
         print(subprobas_1, subprobas_2)
-#         if p1 == 1:
-#             return np.mean(subprobas_2)
-#         if p2 == 1:
-#             return np.mean(subprobas_1)
-        return min(np.mean(subprobas_1), np.mean(subprobas_2))
+        if p1 == 1:
+            return np.mean(subprobas_2)
+        if p2 == 1:
+            return np.mean(subprobas_1)
+
     text = task["text"]
-    tmp = re.split(r"[\n\.]+", text)
+    tmp = re.split(r"[\n\.\?\!]+", text)
     sentences = []
     word_pairs = []
     possibilities = []
     together_variants = []
+    tmp = [t for t in tmp if len(t) > 0]
+    for i, s in enumerate(tmp):
+        words = re.findall(r"[А-ЯЁ]*\([А-ЯЁ]+\)[А-ЯЁ]*", s)
+        if (len(words) == 1) and (i < len(tmp) - 1):
+            words_next = re.findall(r"[А-ЯЁ]*\([А-ЯЁ]+\)[А-ЯЁ]*", tmp[i + 1])
+            if len(words_next) == 1:
+                tmp[i] = tmp[i] + ". " + tmp[i + 1]
+                tmp[i + 1] = ""
+    tmp = [t for t in tmp if len(t) > 0]
     for s in tmp:
-        if not s.endswith("."):
+        if len(s) < 1:
+            continue
+        if not s[-1] in ".?!":
             s += "."
-        words = re.findall("[А-ЯЁ]*\([А-ЯЁ]+\)[А-ЯЁ]*", s)
+        words = re.findall(r"[А-ЯЁ]*\([А-ЯЁ]+\)[А-ЯЁ]*", s)
         if len(words) == 2:
             w1_1, t1_1, w1_2, t1_2, w1_3, t1_3 = possible_variants(words[0].lower())
             w2_1, t2_1, w2_2, t2_2, w2_3, t2_3 = possible_variants(words[1].lower())
@@ -1528,25 +1551,31 @@ def solver_14(task):
                 sentences.append(s)
                 possibilities.append([[t1_1, t1_2, t1_3], [t2_1, t2_2, t2_3]])
                 together_variants.append([w1_1, w2_1])
-                if not(t1_2 or t1_3 or t2_2 or t2_3):
+                if not (t1_2 or t1_3 or t2_2 or t2_3):
                     # У нас есть досрочный ответ
-                    return w1_1+w2_1
+                    return w1_1 + w2_1
+
     max_likelihood = 0
     if len(together_variants) == 1:
         w1_cand, w2_cand = together_variants[0]
         return w1_cand + w2_cand
     elif len(together_variants) == 0:
         return w1_1 + w2_1
+
     for s, word_pair, possibility, together_variant in zip(sentences,
                                                            word_pairs,
                                                            possibilities,
                                                            together_variants):
         w1_orig, w2_orig = word_pair
         w1_cand, w2_cand = together_variant
-        p1, p2 = possibility
-        likelihood = both_together_likelihood(w1_orig, w1_cand, sum(p1),
-                                              w2_orig, w2_cand, sum(p2),
-                                              s)
+        likelihood_1 = both_together_likelihood(w1_orig, w1_cand, 0,
+                                                w2_orig, w2_cand, 1,
+                                                s)
+        likelihood_2 = both_together_likelihood(w1_orig, w1_cand, 1,
+                                                w2_orig, w2_cand, 0,
+                                                s)
+
+        likelihood = min(likelihood_1, likelihood_2)
         if likelihood > max_likelihood:
             max_likelihood = likelihood
             answer = w1_cand + w2_cand
