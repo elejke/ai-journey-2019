@@ -13,6 +13,7 @@ dl = DamerauLevenshtein()
 df_hard_nouns = pd.read_csv("../models/dictionaries/hard_nouns.csv")
 df_hard_verbs = pd.read_csv("../models/dictionaries/hard_verbs.csv")
 df_numeralized = pd.read_csv("../models/dictionaries/numeralized.csv")
+df_answers_reshuege_and_pub_train = pd.read_csv("../models/dictionaries/task7_correct_answers_pub_and_reshuege.csv")
 
 df_dict_full = pd.read_csv("../models/dictionaries/russian_1.5kk_words.txt", encoding="windows-1251", header=None)
 df_dict_full.columns = ["Lemma"]
@@ -89,6 +90,24 @@ def reconstruct_numeralized(word_pair):
     return reconstructed
 
 
+def solver_ANY(x):
+    def _find_nearest(x, vocab=pd.concat([df_hard_nouns, df_hard_verbs,
+                                          df_answers_reshuege_and_pub_train]).word.values):
+        sims = []
+        vocab = list(filter(lambda _: _ != x, vocab))
+        for word_ in vocab:
+            sim = dl.normalized_similarity(x, word_)
+            sims.append(sim)
+        if np.sort(sims)[-1] > 0.6:
+            return vocab[np.argsort(sims)[-1]]
+        else:
+            return x
+
+    #     word_1, word_2 = x.lower().split()
+
+    x = regex.findall("[А-ЯЁ]+[А-ЯЁ\ ]+", x)[0].strip()
+
+    return _find_nearest(x.lower())
 
 def solver_VERB(x):
     def _find_nearest(x, vocab=df_hard_verbs.word.values):
@@ -280,7 +299,7 @@ def solver_7_reconstructor(x):
         x = xs_[1].lower()
         y_pred = solver_VERB(x)
     else:
-        y_pred = solver_VERB(xs_[0])
+        y_pred = solver_ANY(x)
 
     return y_pred
 
