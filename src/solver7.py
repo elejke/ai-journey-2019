@@ -255,11 +255,12 @@ def solver_NAI_BOLEE(x):
     return xs_
 
 
-def solver(x):
+def solver_7_reconstructor(x):
     xs_ = x.split()
     parsed_words = []
     for word_ in xs_:
         parsed_words.append(str(morph.parse(word_.lower())[0].tag.POS))
+
     if "более" in x.lower():
         y_pred = solver_NAI_BOLEE(x)
     elif " ".join(parsed_words) == 'NOUN NOUN' and xs_[0].lower() != xs_[0]:
