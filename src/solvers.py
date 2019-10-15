@@ -27,7 +27,10 @@ from keras_bert import load_trained_model_from_checkpoint
 sys.path.append("/misc/models/bert")
 import tokenization
 
-from solver7 import solver_7
+try:
+    from solver7 import solver_7
+except:
+    from src.solver7 import solver_7
 
 try:
     from solver10 import Solver as Solver10

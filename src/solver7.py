@@ -247,13 +247,22 @@ def solver_ADJF_NOUN_1(x):
     return inflected
 
 
-def solver_7_reconstructor(x):
+def solver_NAI_BOLEE(x):
+    try:
+        xs_ = x.lower().split("более")[1].split()[0].strip()
+    except:
+        xs_ = x.lower().split()[-1].strip()
+    return xs_
+
+
+def solver(x):
     xs_ = x.split()
     parsed_words = []
     for word_ in xs_:
         parsed_words.append(str(morph.parse(word_.lower())[0].tag.POS))
-
-    if " ".join(parsed_words) == 'NOUN NOUN' and xs_[0].lower() != xs_[0]:
+    if "более" in x.lower():
+        y_pred = solver_NAI_BOLEE(x)
+    elif " ".join(parsed_words) == 'NOUN NOUN' and xs_[0].lower() != xs_[0]:
         y_pred = solver_NUM_NOUN(x)
     #         print(x, y_, y_pred, y_ == y_pred)
     elif " ".join(parsed_words) == 'NOUN NOUN' and xs_[0].lower() == xs_[0]:
