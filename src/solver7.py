@@ -18,28 +18,31 @@ df_hard_verbs = pd.read_csv("../models/dictionaries/hard_verbs.csv")
 df_numeralized = pd.read_csv("../models/dictionaries/numeralized.csv")
 df_answers_reshuege_and_pub_train = pd.read_csv("../models/dictionaries/task7_correct_answers_pub_and_reshuege.csv")
 
-df_dict_full = pd.read_csv("../models/dictionaries/russian_1.5kk_words.txt", encoding="windows-1251", header=None)
-df_dict_full.columns = ["Lemma"]
-big_words_set = set(df_dict_full["Lemma"].str.replace("ё", "е").values)
+# df_dict_full = pd.read_csv("../models/dictionaries/russian_1.5kk_words.txt", encoding="windows-1251", header=None)
+# df_dict_full.columns = ["Lemma"]
+# big_words_set = set(df_dict_full["Lemma"].str.replace("ё", "е").values)
 
-def solver_7_classifier(question_choices):
-    def _check_known_word(word):
-        return word.lower().replace("  ", " ").replace("ё", "е") in big_words_set
-
-    unknown_choices_ids = []
-
-    X_high = list(map(lambda x: x.lower().strip().replace("  ", " ").replace("ё", "е"),
-                      regex.findall("[А-ЯЁ]+[IА-ЯЁ\ ]+", ",".join(question_choices))))
-
-    for i, x_ in enumerate(X_high):
-        if not _check_known_word(x_):
-            unknown_choices_ids.append(i)
-
-    if not len(unknown_choices_ids):
-        unknown_choices_ids = list(range(5))
-    return np.random.choice(unknown_choices_ids)
+xgb_clf = pickle.load(open("../models/dictionaries/task_7_xgb.pkl", "rb"))
 
 rnc_path = "../models/dictionaries/1grams-3.txt"
+
+# def solver_7_classifier(question_choices):
+#     def _check_known_word(word):
+#         return word.lower().replace("  ", " ").replace("ё", "е") in big_words_set
+#
+#     unknown_choices_ids = []
+#
+#     X_high = list(map(lambda x: x.lower().strip().replace("  ", " ").replace("ё", "е"),
+#                       regex.findall("[А-ЯЁ]+[IА-ЯЁ\ ]+", ",".join(question_choices))))
+#
+#     for i, x_ in enumerate(X_high):
+#         if not _check_known_word(x_):
+#             unknown_choices_ids.append(i)
+#
+#     if not len(unknown_choices_ids):
+#         unknown_choices_ids = list(range(5))
+#     return np.random.choice(unknown_choices_ids)
+
 
 def lazy_unigrams(rnc_path):
     unigram_freq_dict = {}
@@ -56,9 +59,7 @@ def lazy_unigrams(rnc_path):
             pass
     return unigram_freq_dict
 
-
 rnc_unigrams = lazy_unigrams(rnc_path)
-
 
 def get_error_word(words):
     frequencies = [rnc_unigrams[w] if w in rnc_unigrams else 10 for w in words]
@@ -207,8 +208,6 @@ def feature_extractor(x):
     features.append(X_high.lower() != solver_7_reconstructor(x))
 
     return np.array(features + pos_features).astype(int)
-
-xgb_clf = pickle.load(open("../models/dictionaries/task_7_xgb.pkl", "rb"))
 
 def solver_7_xgb_classifier(question_choices):
     feats = []
