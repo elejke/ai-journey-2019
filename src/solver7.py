@@ -210,7 +210,7 @@ def feature_extractor(x):
 
     return np.array(features + pos_features).astype(int)
 
-xgb_clf = pickle.load(open("../models/task_7_xgb.pkl", "rb"))
+xgb_clf = pickle.load(open("../models/dictionaries/task_7_xgb.pkl", "rb"))
 
 def solver_7_xgb_classifier(question_choices):
     feats = []
