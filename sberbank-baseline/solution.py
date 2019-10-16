@@ -85,7 +85,8 @@ class CuttingEdgeStrongGeneralAI(object):
             solver23,
             solver24,
             solver25,
-            solver26
+            solver26,
+            solver27
         ]
         self.solvers = self.solver_loading(solver_classes)
 
