@@ -39,9 +39,7 @@ def solver_7_classifier(question_choices):
         unknown_choices_ids = list(range(5))
     return np.random.choice(unknown_choices_ids)
 
-
-rnc_path = "../sberbank-baseline/data/1grams-3.txt"
-
+rnc_path = "../models/dictionaries/1grams-3.txt"
 
 def lazy_unigrams(rnc_path):
     unigram_freq_dict = {}
