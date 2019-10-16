@@ -18,31 +18,20 @@ df_hard_verbs = pd.read_csv("../models/dictionaries/hard_verbs.csv")
 df_numeralized = pd.read_csv("../models/dictionaries/numeralized.csv")
 df_answers_reshuege_and_pub_train = pd.read_csv("../models/dictionaries/task7_correct_answers_pub_and_reshuege.csv")
 
-# df_dict_full = pd.read_csv("../models/dictionaries/russian_1.5kk_words.txt", encoding="windows-1251", header=None)
-# df_dict_full.columns = ["Lemma"]
-# big_words_set = set(df_dict_full["Lemma"].str.replace("ё", "е").values)
-
 xgb_clf = pickle.load(open("../models/dictionaries/task_7_xgb.pkl", "rb"))
 
 rnc_path = "../models/dictionaries/1grams-3.txt"
 
-# def solver_7_classifier(question_choices):
-#     def _check_known_word(word):
-#         return word.lower().replace("  ", " ").replace("ё", "е") in big_words_set
-#
-#     unknown_choices_ids = []
-#
-#     X_high = list(map(lambda x: x.lower().strip().replace("  ", " ").replace("ё", "е"),
-#                       regex.findall("[А-ЯЁ]+[IА-ЯЁ\ ]+", ",".join(question_choices))))
-#
-#     for i, x_ in enumerate(X_high):
-#         if not _check_known_word(x_):
-#             unknown_choices_ids.append(i)
-#
-#     if not len(unknown_choices_ids):
-#         unknown_choices_ids = list(range(5))
-#     return np.random.choice(unknown_choices_ids)
+df_mappings = pd.read_csv("../models/dictionaries/answers_mapping.csv")
 
+mappings_dict = dict(df_mappings.values)
+
+def hard_mapping(question_choices):
+    for qc in question_choices:
+        qc_ = qc.lower().strip()
+        if qc_ in mappings_dict:
+            return mappings_dict[qc_]
+    return False
 
 def lazy_unigrams(rnc_path):
     unigram_freq_dict = {}
@@ -484,6 +473,10 @@ def solver_7_reconstructor(x):
 
 def solver_7(task):
     x_ = task['text'].split("\n")[1:][:5]
+
+    hard_map = hard_mapping(x_)
+    if hard_map:
+        return hard_map
 
     incorrect_id = solver_7_xgb_classifier(x_)
     corrected_word = solver_7_reconstructor(x_[incorrect_id])
