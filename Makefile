@@ -90,6 +90,6 @@ submit:
 
 build:
 	cp dockers/aij/.dockerignore .
-	sudo docker build -f dockers/aij/Dockerfile -t vovacher/aij:6.0 .
+	sudo docker build -f dockers/aij/Dockerfile -t vovacher/aij:7.0 .
 	sudo docker build -f dockers/aij/combined.Dockerfile -t vovacher/aij-combined:4.0 .
 	rm .dockerignore

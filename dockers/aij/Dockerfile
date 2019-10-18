@@ -45,3 +45,6 @@ RUN pip install keras-bert
 
 # TextDistance
 RUN pip install "textdistance[extras]"
+
+# FastAI
+RUN pip install fastai summa

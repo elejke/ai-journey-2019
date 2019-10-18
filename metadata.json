@@ -1,4 +1,4 @@
 {
-    "image": "vovacher/aij:6.0",
+    "image": "vovacher/aij:7.0",
     "entry_point": "cd src && python server.py"
 }
