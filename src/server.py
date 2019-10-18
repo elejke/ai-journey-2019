@@ -19,10 +19,10 @@ from solvers import solver_1, \
                     solver_20, \
                     solver_21, \
                     solver_24, \
-                    solver_25
+                    solver_25, \
+                    solver_27
 
 from solver26 import solver_26
-from solver27 import EssayWriter
 
 from flask import Flask, request, jsonify
 
@@ -82,16 +82,7 @@ def take_exam(tasks):
         elif task['id'] in ["26"]:
             answer = solver_26(task)
         elif task['id'] in ["27"]:
-            writer = EssayWriter(
-                model_name='lm_5_ep_lr2-3_5_stlr',
-                dict_name='itos',
-                tf_vectorizer_path='data/tfvect.joblib',
-                lda_path='data/lda.joblib',
-                topics_path='data/topics.csv',
-                is_load=True,
-                seed=42,
-            )
-            answer = writer.generate(task['text'])
+            answer = solver_27(task)
 
         elif question['type'] == 'choice':
             # pick a random answer
