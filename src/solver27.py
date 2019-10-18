@@ -246,7 +246,7 @@ class EssayWriter(object):
         author = get_author(task)
         task, text = split_task_and_text(task)
 
-        brief_text = summarizer.summarize(text, language="russian", ratio=0.25, split=False)
+        brief_text = clear(summarizer.summarize(text, language="russian", ratio=0.25, split=False))
         citation = np.random.choice(summarizer.summarize(text, language="russian", ratio=0.1, split=True))
 
         essay = self._1st_paragraph(brief_text, mention_author(author))
