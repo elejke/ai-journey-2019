@@ -7,6 +7,7 @@ morph = pymorphy2.MorphAnalyzer()
 from fastai.text import *
 from fastai.callbacks import ReduceLROnPlateauCallback
 import numpy as np
+import pandas as pd
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -331,3 +332,6 @@ class EssayWriter(object):
         essay = self.continue_phrase(essay + next_sent, 40)
 
         return essay
+
+    def __call__(self, task):
+        return self.generate(task["text"])
