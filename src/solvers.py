@@ -37,6 +37,11 @@ try:
 except:
     from src.solver10 import Solver as Solver10
 
+try:
+    from solver27 import EssayWriter
+except:
+    from src.solver27 import EssayWriter
+
 
 df_dict_full = pd.read_csv("../models/dictionaries/russian_1.5kk_words.txt", encoding="windows-1251", header=None)
 df_dict_full.columns = ["Lemma"]
@@ -68,6 +73,15 @@ with open("../models/dictionaries/task_9_words.pickle", "rb") as f:
     exact_labels = pickle.load(f)
 
 solver_10_11_12 = Solver10(vocabulary=big_words_set, morph=morph)
+solver_27 = writer = EssayWriter(
+                model_name='lm_5_ep_lr2-3_5_stlr',
+                dict_name='itos',
+                tf_vectorizer_path='data/tfvect.joblib',
+                lda_path='data/lda.joblib',
+                topics_path='data/topics.csv',
+                is_load=True,
+                seed=42,
+            )
 
 
 def solver_15(task):
@@ -1241,19 +1255,19 @@ def solver_17(task):
 def solver_18(task):
     comma_likelihoods, dot_likelihoods, and_likelihoods, or_likelihoods = base_17_18_19_20(task)
     final_preds = comma_likelihoods + and_likelihoods + dot_likelihoods
-    return [str(i + 1) for i, t in enumerate(final_preds) if t > 0.35]
+    return [str(i + 1) for i, t in enumerate(final_preds) if t > 0.35] # 0.48
 
 
 def solver_19(task):
     comma_likelihoods, dot_likelihoods, and_likelihoods, or_likelihoods = base_17_18_19_20(task)
     final_preds = comma_likelihoods + or_likelihoods + dot_likelihoods
-    return [str(i + 1) for i, t in enumerate(final_preds) if t > 0.55]
+    return [str(i + 1) for i, t in enumerate(final_preds) if t > 0.55] # 0.62
 
 
 def solver_20(task):
     comma_likelihoods, dot_likelihoods, and_likelihoods, or_likelihoods = base_17_18_19_20(task)
     final_preds = comma_likelihoods
-    return [str(i + 1) for i, t in enumerate(final_preds) if t > 0.7]
+    return [str(i + 1) for i, t in enumerate(final_preds) if t > 0.7] # 0.93
 
 
 def solver_13(task):
