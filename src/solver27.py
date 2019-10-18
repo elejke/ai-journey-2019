@@ -52,7 +52,11 @@ def rus_tok(text, m=pymorphy2.MorphAnalyzer()):
 
 
 def get_author(text):
-    return re.search('\n\s*\*(\s*\w*){2,3}\s*\(', text).group().strip()[1:-1].split()
+    try:
+        author = re.search('\n\s*\*(\s*\w*){2,3}\s*\(', text).group().strip()[1:-1].split()
+    except AttributeError:
+        author = re.search('(\s*[А-Я]\w*){2,3}\s*\(', text).group().strip()[1:-1].split()
+    return author
 
 
 def mention_author(author, form='A. A. Aa', case='nomn'):
@@ -249,7 +253,7 @@ class EssayWriter(object):
         essay = self._2nd_paragraph(essay, citation)
         essay = self._3rd_paragraph(essay, mention_author(author))
         essay = self._4th_paragraph(essay)
-        essay = self._5th_paragraph(essay, 'Олег Петух', 'Внатуре Петух')
+        essay = self._5th_paragraph(essay, 'Л. Н. Толстого', 'Война и мир')
         essay = self._6th_paragraph(essay)
         essay = self._7th_paragraph(essay)
 
@@ -265,10 +269,10 @@ class EssayWriter(object):
     def _1st_paragraph(self, text, author):
 
         next_sent = essay_template['1.1'].format(problem_formulation='')
-        essay = self.continue_phrase(text + '\n\n' + next_sent, 5)
+        essay = self.continue_phrase(text + '\n\n' + next_sent, 10)
 
         next_sent = essay_template['1.2'].format(author=author, problem_explanation='')
-        essay = self.continue_phrase(essay + next_sent, 20)
+        essay = self.continue_phrase(essay + ' ' + next_sent, 30)
 
         return essay + '\n'
 
@@ -278,27 +282,27 @@ class EssayWriter(object):
         essay += next_sent
 
         next_sent = essay_template['2.2'].format(water='')
-        essay = self.continue_phrase(essay + next_sent, 30)
+        essay = self.continue_phrase(essay + ' ' + next_sent, 40)
 
         return essay + '\n'
 
     def _3rd_paragraph(self, essay, author):
 
         next_sent = essay_template['3.1'].format(author_position='')
-        essay = self.continue_phrase(essay + next_sent, 15)
+        essay = self.continue_phrase(essay + next_sent, 25)
 
         next_sent = essay_template['3.2'].format(author=author, water='')
-        essay = self.continue_phrase(essay + next_sent, 30)
+        essay = self.continue_phrase(essay + ' ' + next_sent, 40)
 
         return essay + '\n'
 
     def _4th_paragraph(self, essay):
 
         next_sent = essay_template['4.1'].format(own_position='')
-        essay = self.continue_phrase(essay + next_sent, 10)
+        essay = self.continue_phrase(essay + ' ' + next_sent, 20)
 
         next_sent = essay_template['4.2'].format(water='')
-        essay = self.continue_phrase(essay + next_sent, 30)
+        essay = self.continue_phrase(essay + ' ' + next_sent, 40)
 
         next_sent = essay_template['4.3'].format(water='')
         essay += next_sent
@@ -312,17 +316,17 @@ class EssayWriter(object):
         essay += next_sent
 
         next_sent = essay_template['5.2'].format(water='')
-        essay = self.continue_phrase(essay + next_sent, 30)
+        essay = self.continue_phrase(essay + next_sent, 40)
 
         return essay + '\n'
 
     def _6th_paragraph(self, essay):
 
         next_sent = essay_template['6.1'].format(argument2_description='')
-        essay = self.continue_phrase(essay + next_sent, 15)
+        essay = self.continue_phrase(essay + next_sent, 25)
 
         next_sent = essay_template['6.2'].format(water='')
-        essay = self.continue_phrase(essay + next_sent, 30)
+        essay = self.continue_phrase(essay + next_sent, 40)
 
         return essay + '\n'
 
