@@ -1255,19 +1255,19 @@ def solver_17(task):
 def solver_18(task):
     comma_likelihoods, dot_likelihoods, and_likelihoods, or_likelihoods = base_17_18_19_20(task)
     final_preds = comma_likelihoods + and_likelihoods + dot_likelihoods
-    return [str(i + 1) for i, t in enumerate(final_preds) if t > 0.35] # 0.48
+    return [str(i + 1) for i, t in enumerate(final_preds) if t > 0.48]
 
 
 def solver_19(task):
     comma_likelihoods, dot_likelihoods, and_likelihoods, or_likelihoods = base_17_18_19_20(task)
     final_preds = comma_likelihoods + or_likelihoods + dot_likelihoods
-    return [str(i + 1) for i, t in enumerate(final_preds) if t > 0.55] # 0.62
+    return [str(i + 1) for i, t in enumerate(final_preds) if t > 0.62]
 
 
 def solver_20(task):
     comma_likelihoods, dot_likelihoods, and_likelihoods, or_likelihoods = base_17_18_19_20(task)
     final_preds = comma_likelihoods
-    return [str(i + 1) for i, t in enumerate(final_preds) if t > 0.7] # 0.93
+    return [str(i + 1) for i, t in enumerate(final_preds) if t > 0.93]
 
 
 def solver_13(task):
