@@ -271,8 +271,8 @@ class EssayWriter(object):
     def generate(self, task, temperature=0.7):
 
         self.temperature = temperature
-        author = get_author(task)
         task, text = split_task_and_text(task)
+        author = get_author(task)
 
         brief_text = clear(summarizer.summarize(text, language="russian", ratio=0.25, split=False))
         citation = np.random.choice(summarizer.summarize(text, language="russian", ratio=0.1, split=True))
