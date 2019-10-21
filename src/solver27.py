@@ -2,6 +2,7 @@ import joblib
 import random
 from summa import summarizer
 import re
+import regex
 import pymorphy2
 morph = pymorphy2.MorphAnalyzer()
 from fastai.text import *
@@ -52,29 +53,56 @@ def rus_tok(text, m=pymorphy2.MorphAnalyzer()):
 
 
 def get_author(text):
-    try:
-        author = re.search('\n\s*\*(\s*\w*){2,3}\s*\(', text).group().strip()[1:-1].split()
-    except AttributeError:
-        author = re.search('(\s*[А-Я]\w*){2,3}\s*\(', text).group().strip()[1:-1].split()
-    return author
+    name_pattern = "[А-Я][а-яё]+[\p{Pd}−]*\w*"
+    short_name_pattern = "[А-Я]\."
+
+    match = regex.search(f"({name_pattern})\s+({name_pattern})\s+({name_pattern})", text)
+    if match is not None:
+        return list(match.groups())
+
+    match = regex.search(f"({name_pattern})\s+({name_pattern})", text)
+    if match is not None:
+        return list(match.groups())
+
+    match = regex.search(f"({short_name_pattern})\s*({short_name_pattern})\s*({name_pattern})", text)
+    if match is not None:
+        name = list(match.groups())
+        name[2] = morph.parse(name[2])[0].inflect({"nomn"}).word.capitalize()
+        return name
+
+    match = regex.search(f"({short_name_pattern})\s*({name_pattern})", text)
+    if match is not None:
+        name = list(match.groups())
+        name[1] = morph.parse(name[1])[0].inflect({"nomn"}).word.capitalize()
+        return name
+
+    return ["автор"]
 
 
-def mention_author(author, form='A. A. Aa', case='nomn'):
+def mention_author(author, case="nomn"):
     """Упоминает автора в нужном формате и склонении. Юзать правда лучше только в именительном, т.к. некоторые
     фамилии не склоняются. Например, Черных
 
     nomn	именительный	Кто? Что?	хомяк ест
-    gent	родительный	Кого? Чего?	у нас нет хомяка
-    datv	дательный	Кому? Чему?	сказать хомяку спасибо
-    accs	винительный	Кого? Что?	хомяк читает книгу
+    gent	родительный	    Кого? Чего?	у нас нет хомяка
+    datv	дательный	    Кому? Чему?	сказать хомяку спасибо
+    accs	винительный	    Кого? Что?	хомяк читает книгу
     ablt	творительный	Кем? Чем?	зерно съедено хомяком
-    loct	предложный	О ком? О чём? и т.п.	хомяка несут в корзинке
-    voct	звательный	Его формы используются при обращении к человеку.	Саш, пойдем в кино.
+    loct	предложный	    О ком? О чём? и т.п.	хомяка несут в корзинке
+    voct	звательный	    Его формы используются при обращении к человеку.	Саш, пойдем в кино.
     """
-    if form == 'A. A. Aa':
-        last_name = morph.parse(author[-1])[0].inflect({case})[0].capitalize()
-        initials = '. '.join(map(lambda x: x[0].upper(), author[:-1]))
-        result = '{}. {}'.format(initials, last_name)
+    if case not in ["nomn", "gent", "datv", "accs", "ablt", "loct", "voct"]:
+        case = "nomn"
+    if case != "nomn":
+        last_name = morph.parse(author[-1])[0].inflect({case})[0]
+    else:
+        last_name = author[-1]
+    if len(author) > 1:
+        last_name = last_name[0].upper() + last_name[1:]
+        initials = ". ".join(map(lambda x: x[0].upper(), author[:-1]))
+        result = "{}. {}".format(initials, last_name)
+    else:
+        result = last_name
     return result
 
 
