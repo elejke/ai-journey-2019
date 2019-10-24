@@ -32,7 +32,7 @@ essay_template = {
     # здесь формулировка проблемы может быть сделана только в именительном падеже:
     # Пример:
     #   {problem_formulation} = "проблема эгоизма"
-    '1.2b': 'Одной из самых важных среди них является {problem_formulation}.',
+    '1.2': 'Одной из самых важных среди них является {problem_formulation}.',
     # если оставлять пункт 1.3, то в нем должен быть маппинг на предложение {problem_explanation},
     # в котором идет раскрытие проблемы, это раскрытие является общим для данной проблемы и не зависит от текста:
     # Пример:
@@ -257,11 +257,10 @@ class EssayWriter(object):
         author = get_author(task)
 
         brief_text = clear(summarizer.summarize(text, language="russian", ratio=0.25, split=False))
-        citation1, citation2 = np.random.choice(summarizer.summarize(text, language="russian", ratio=0.1, split=True),
-                                                size=2, replace=False)
+        citation1 = np.random.choice(summarizer.summarize(text, language="russian", ratio=0.1, split=True))
 
         essay = self._1st_paragraph(brief_text, mention_author(author))
-        essay = self._2nd_paragraph(essay, citation1, citation2)
+        essay = self._2nd_paragraph(essay, citation1, citation1)
         essay = self._3rd_paragraph(essay, mention_author(author))
         essay = self._4th_paragraph(essay)
         essay = self._5th_paragraph(essay, "проблема плохого примера влияет на результат")
