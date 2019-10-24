@@ -50,6 +50,9 @@ big_words_set = frozenset(df_dict_full["Lemma"].values)
 df_dict = pd.read_table("../models/dictionaries/freqrnc2011.csv")
 small_words_dict = df_dict.set_index("Lemma")[["Freq(ipm)"]].to_dict()["Freq(ipm)"]
 
+with open("../models/dictionaries/freq_dict_ruscorpora.json") as f:
+    freq_dict = json.load(f)
+
 slovarnie_slova = pd.read_csv("../models/dictionaries/slovarnie_slova.txt", header=None).rename({0: "word"}, axis=1)
 
 morph = pymorphy2.MorphAnalyzer()
@@ -72,7 +75,40 @@ synt.processors["tokenize"].config["pretokenized"] = True
 with open("../models/dictionaries/task_9_words.pickle", "rb") as f:
     exact_labels = pickle.load(f)
 
+with open("../models/dictionaries/paronyms_ege.json") as f:
+    paronyms_ege = json.load(f)
+with open("../models/dictionaries/paronyms_all.json") as f:
+    paronyms_all = json.load(f)
+if os.path.exists("/misc/models/fasttext/cc.ru.300.bin"):
+    model_fasttext = fasttext.load_model("/misc/models/fasttext/cc.ru.300.bin")
+else:
+    model_fasttext = fasttext.load_model("../models/fasttext/cc.ru.300.bin")
+
+df_dict_orfoepicheskiy = pd.concat([
+    pd.read_csv("../models/dictionaries/orfoepicheckiy_ege2019.txt",
+                header=None,
+                names=["word"]),
+    pd.read_csv("../models/dictionaries/orfoepicheckiy_automatic_povtoru.txt",
+                header=None,
+                names=["word"]),
+    pd.read_csv("../models/dictionaries/orfoepicheskiy_automatic_gde_udarenie_rf.txt",
+                header=None,
+                names=["word"])
+], ignore_index=True)
+df_dict_orfoepicheskiy_lowercase = frozenset(df_dict_orfoepicheskiy["word"].str.lower())
+df_dict_orfoepicheskiy = frozenset(df_dict_orfoepicheskiy["word"])
+
+with open("../models/task_16/task_16_clf.pkl", 'rb') as file:
+    clf_task_16 = pickle.load(file)
+with open("../models/task_16/task_16_vectorizer_words.pkl", 'rb') as file:
+    vectorizer_words_task_16 = pickle.load(file)
+with open("../models/task_16/task_16_vectorizer_pos.pkl", 'rb') as file:
+    vectorizer_pos_task_16 = pickle.load(file)
+
+nltk_stopwords = frozenset(nltk.corpus.stopwords.words("russian"))
+
 solver_10_11_12 = Solver10(vocabulary=big_words_set, morph=morph)
+
 solver_27 = EssayWriter(
                 ulmfit_model_name='lm_5_ep_lr2-3_5_stlr',
                 ulmfit_dict_name='itos',
@@ -113,21 +149,6 @@ def solver_15(task):
     if len(answers) == 0:
         answers.append(str(random.choice(list(possible_answers.keys()))))
     return sorted(answers, key=lambda x: int(x))
-
-
-df_dict_orfoepicheskiy = pd.concat([
-    pd.read_csv("../models/dictionaries/orfoepicheckiy_ege2019.txt",
-                header=None,
-                names=["word"]),
-    pd.read_csv("../models/dictionaries/orfoepicheckiy_automatic_povtoru.txt",
-                header=None,
-                names=["word"]),
-    pd.read_csv("../models/dictionaries/orfoepicheskiy_automatic_gde_udarenie_rf.txt",
-                header=None,
-                names=["word"])
-], ignore_index=True)
-df_dict_orfoepicheskiy_lowercase = frozenset(df_dict_orfoepicheskiy["word"].str.lower())
-df_dict_orfoepicheskiy = frozenset(df_dict_orfoepicheskiy["word"])
 
 
 def solver_4(task):
@@ -367,16 +388,6 @@ def solver_25(task):
     return sorted(answer, key=lambda x: int(x))
 
 
-with open("../models/dictionaries/paronyms_ege.json") as f:
-    paronyms_ege = json.load(f)
-with open("../models/dictionaries/paronyms_all.json") as f:
-    paronyms_all = json.load(f)
-if os.path.exists("/misc/models/fasttext/cc.ru.300.bin"):
-    model_fasttext = fasttext.load_model("/misc/models/fasttext/cc.ru.300.bin")
-else:
-    model_fasttext = fasttext.load_model("../models/fasttext/cc.ru.300.bin")
-
-
 def solver_5(task):
 
     text = task["text"]
@@ -448,10 +459,6 @@ def solver_5(task):
     return ans.word
 
 
-with open("../models/dictionaries/freq_dict_ruscorpora.json") as f:
-    freq_dict = json.load(f)
-
-
 def solver_24(task):
 
     text = task["text"]
@@ -487,14 +494,6 @@ def solver_24(task):
     else:
         words = [word for word in text.lower().split() if len(word) > 1]
         return random.choice(words)
-
-
-with open("../models/task_16/task_16_clf.pkl", 'rb') as file:
-    clf_task_16 = pickle.load(file)
-with open("../models/task_16/task_16_vectorizer_words.pkl", 'rb') as file:
-    vectorizer_words_task_16 = pickle.load(file)
-with open("../models/task_16/task_16_vectorizer_pos.pkl", 'rb') as file:
-    vectorizer_pos_task_16 = pickle.load(file)
 
 
 def solver_16(task):
@@ -559,9 +558,6 @@ def solver_1(task):
     ans = [str(np.argsort(dist)[0] + 1), str(np.argsort(dist)[1] + 1)]
 
     return sorted(ans, key=lambda x: int(x))
-
-
-nltk_stopwords = frozenset(nltk.corpus.stopwords.words("russian"))
 
 
 def solver_6(task):
