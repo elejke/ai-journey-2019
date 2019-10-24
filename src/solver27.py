@@ -444,10 +444,12 @@ def split_task_and_text(task_text):
     """
 
     splitted = re.split(r'\(\d{1,3}\)', task_text)
+    if len(splitted) < 5:
+        return "", task_text
     formulation = [splitted[0]]
     text = splitted[1:-1]
 
-    last = re.split(r'[!?.]', splitted[-1])
+    last = re.split(r'[!?.…]', splitted[-1])
     text.append(last[0])
     formulation.append('.'.join(last[1:]))
 
