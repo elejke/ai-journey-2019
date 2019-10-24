@@ -106,11 +106,11 @@ class EssayWriter(object):
         Model name for load pretrained ulmfit model and store this.
     ulmfit_dict_name : str
         Dict name for load pretrained ulmfit dict and store this.
-    tf_vectorizer_path : str
+    lda_tf_vectorizer_path : str
         Path to vectorizer for topic modeling.
     lda_path : str
         Path to topic model.
-    topics_path : str
+    lda_topics_path : str
         Path to topics with first phrases.
     is_load : bool, optional(default=True)
         Load or not pretrained models.
@@ -126,9 +126,9 @@ class EssayWriter(object):
             self,
             ulmfit_model_name=None,
             ulmfit_dict_name=None,
-            tf_vectorizer_path=None,
+            lda_tf_vectorizer_path=None,
             lda_path=None,
-            topics_path=None,
+            lda_topics_path=None,
             is_load=True,
             seed=42
     ):
@@ -138,13 +138,13 @@ class EssayWriter(object):
         self.data = None
         self.learn = None
         self.temperature = None
-        self.tf_vectorizer_path = tf_vectorizer_path
+        self.lda_tf_vectorizer_path = lda_tf_vectorizer_path
         self.lda_path = lda_path
-        self.topics_path = topics_path
-        self.tf_vectorizer = None
+        self.lda_topics_path = lda_topics_path
+        self.lda_tf_vectorizer = None
         self.lda = None
-        self.topics = None
-        self.topic_dic = None
+        self.lda_topics = None
+        self.lda_topic_dic = None
         if is_load:
             self.load()
         self.seed = seed
@@ -154,30 +154,30 @@ class EssayWriter(object):
         random.seed(self.seed)
 
     def get_topic(self, documents):
-        tf = self.tf_vectorizer.transform(documents)
+        tf = self.lda_tf_vectorizer.transform(documents)
         lda_doc_topic = self.lda.transform(tf)
         doc_topics = []
         for n in range(lda_doc_topic.shape[0]):
             topic_most_pr = lda_doc_topic[n].argmax()
             doc_topics.append(topic_most_pr)
-        return [self.topic_dic[i] for i in doc_topics]
+        return [self.lda_topic_dic[i] for i in doc_topics]
 
     def getinfo(self, topic):
         dic = {}
-        for i in range(len(self.topics)):
-            if self.topics.iloc[i]['Topic'] == topic:
-                dic['Первая_фраза'] = self.topics.iloc[i]['First']
-                dic['Произведения для аргументов'] = self.topics.iloc[i]['Books']
-                dic['Тема'] = self.topics.iloc[i]['Theme']
-                dic['Писатели'] = self.topics.iloc[i]['Authors']
+        for i in range(len(self.lda_topics)):
+            if self.lda_topics.iloc[i]['Topic'] == topic:
+                dic['Первая_фраза'] = self.lda_topics.iloc[i]['First']
+                dic['Произведения для аргументов'] = self.lda_topics.iloc[i]['Books']
+                dic['Тема'] = self.lda_topics.iloc[i]['Theme']
+                dic['Писатели'] = self.lda_topics.iloc[i]['Authors']
         return dic
 
     def load(self):
 
-        self.tf_vectorizer = joblib.load(self.tf_vectorizer_path)
+        self.lda_tf_vectorizer = joblib.load(self.lda_tf_vectorizer_path)
         self.lda = joblib.load(self.lda_path)
-        self.topics = pd.read_csv(self.topics_path, sep="\t")
-        self.topic_dic = {int(i): self.topics.iloc[i]['Topic'] for i in range(len(self.topics))}
+        self.lda_topics = pd.read_csv(self.lda_topics_path, sep="\t")
+        self.lda_topic_dic = {int(i): self.lda_topics.iloc[i]['Topic'] for i in range(len(self.lda_topics))}
 
         self.data = TextList.from_df(
             pd.DataFrame(["tmp", "tmp"]),

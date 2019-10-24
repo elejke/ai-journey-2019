@@ -76,9 +76,9 @@ solver_10_11_12 = Solver10(vocabulary=big_words_set, morph=morph)
 solver_27 = EssayWriter(
                 ulmfit_model_name='lm_5_ep_lr2-3_5_stlr',
                 ulmfit_dict_name='itos',
-                tf_vectorizer_path='data/tfvect.joblib',
+                lda_tf_vectorizer_path='data/tfvect.joblib',
                 lda_path='data/lda.joblib',
-                topics_path='data/topics.csv',
+                lda_topics_path='data/lda_topics.csv',
                 is_load=True,
                 seed=42,
             )
