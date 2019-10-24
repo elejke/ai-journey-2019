@@ -1287,7 +1287,7 @@ def base_17_19(task):
 def solver_17(task):
     vectors = base_17_19(task)
     predictions = [lgbm.predict_proba(t.reshape(1, -1))[0, 1] for t in vectors]
-    ans = [str(i + 1) for i, t in enumerate(predictions) if t > 0.5]
+    ans = [str(i + 1) for i, t in enumerate(predictions) if t > 0.19]
     if len(ans) == 0:
         return [str(np.argmax(predictions) + 1)]
     return ans
@@ -1305,7 +1305,7 @@ def solver_18(task):
 def solver_19(task):
     vectors = base_17_19(task)
     predictions = [lgbm.predict_proba(t.reshape(1, -1))[0, 1] for t in vectors]
-    ans = [str(i + 1) for i, t in enumerate(predictions) if t > 0.7]
+    ans = [str(i + 1) for i, t in enumerate(predictions) if t > 0.67]
     if len(ans) == 0:
         return [str(np.argmax(predictions) + 1)]
     return ans
