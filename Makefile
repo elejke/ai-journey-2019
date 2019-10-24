@@ -79,7 +79,7 @@ destroy_all:
 
 submit:
 	cd ${ABS_BASE_PATH} && \
-	zip -r src.zip src sberbank-baseline models/dictionaries models/task_16 metadata.json -x *__pycache__* && \
+	zip -r src.zip src sberbank-baseline models/dictionaries models/task_16 models/task_27 metadata.json -x *__pycache__* && \
 	cd - && \
 	mv ${ABS_BASE_PATH}/src.zip submissions/.
 	@if [ `stat --printf="%s" submissions/src.zip` -gt 21474836480 ]; \
@@ -90,6 +90,6 @@ submit:
 
 build:
 	cp dockers/aij/.dockerignore .
-	sudo docker build -f dockers/aij/Dockerfile -t vovacher/aij:7.0 .
-	sudo docker build -f dockers/aij/combined.Dockerfile -t vovacher/aij-combined:4.0 .
+	sudo docker build -f dockers/aij/Dockerfile -t vovacher/aij:8.0 .
+	sudo docker build -f dockers/aij/combined.Dockerfile -t vovacher/aij-combined:5.0 .
 	rm .dockerignore
