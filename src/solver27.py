@@ -255,11 +255,12 @@ class EssayWriter(object):
         task, text = split_task_and_text(task)
 
         author = get_author(task)
+        theme = self.get_custom_topic(text)
 
         brief_text = clear(summarizer.summarize(text, language="russian", ratio=0.25, split=False))
         citation1 = np.random.choice(summarizer.summarize(text, language="russian", ratio=0.1, split=True))
 
-        essay = self._1st_paragraph(brief_text, mention_author(author))
+        essay = self._1st_paragraph(theme=theme, author=mention_author(author))
         essay = self._2nd_paragraph(essay, citation1, citation1)
         essay = self._3rd_paragraph(essay, mention_author(author))
         essay = self._4th_paragraph(essay)
@@ -278,18 +279,18 @@ class EssayWriter(object):
         text = text[:-40] + re.split(r"[.!?]", text[-40:])[0] + '. '  # Cut predicted sentence up to dot
         return clear(text)
 
-    def _1st_paragraph(self, text, author):
+    def _1st_paragraph(self, theme="тему семьи и детства", problem="проблема эгоизма", author="автор"):
 
         # TODO: theme classifier
-        theme_name = "тему семьи и детства"
+        # theme_name = "тему семьи и детства"
         # TODO: problem classifier:
-        problem_formulation = "проблема эгоизма"
+        # problem_formulation = "проблема эгоизма"
         # TODO: problem -> problem_explanation mapping dict:
-        problem_explanation = "безразличие людей к своим родным и близким, таким же людям как и они"
+        # problem_explanation = "безразличие людей к своим родным и близким, таким же людям как и они"
 
-        sentence_1 = essay_template['1.1'].format(theme_name=theme_name)
-        sentence_2 = essay_template['1.2'].format(problem_formulation=problem_formulation)
-        sentence_3 = essay_template['1.3'].format(author=author, problem_explanation=problem_explanation)
+        sentence_1 = essay_template['1.1'].format(theme_name=theme)
+        sentence_2 = essay_template['1.2'].format(problem_formulation=problem)
+        sentence_3 = essay_template['1.3'].format(author=author, problem_explanation=problem)
 
         #     next_sent = essay_template['1.3'].format(problem_formulation='')
         #     essay =  continue_phrase(text + '\n\n' + next_sent, 10)
