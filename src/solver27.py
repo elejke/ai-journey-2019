@@ -153,7 +153,7 @@ class EssayWriter(object):
     def _init_seed(self):
         random.seed(self.seed)
 
-    def get_topic(self, documents):
+    def get_lda_topic(self, documents):
         tf = self.lda_tf_vectorizer.transform(documents)
         lda_doc_topic = self.lda.transform(tf)
         doc_topics = []
@@ -162,7 +162,7 @@ class EssayWriter(object):
             doc_topics.append(topic_most_pr)
         return [self.lda_topic_dic[i] for i in doc_topics]
 
-    def getinfo(self, topic):
+    def get_lda_info(self, topic):
         dic = {}
         for i in range(len(self.lda_topics)):
             if self.lda_topics.iloc[i]['Topic'] == topic:
