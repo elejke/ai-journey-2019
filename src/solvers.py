@@ -1313,7 +1313,7 @@ def solver_19(task):
 
 def solver_20(task):
     comma_likelihoods, dot_likelihoods, and_likelihoods, or_likelihoods = base_18_20(task)
-    final_preds = comma_likelihoods
+    final_preds = comma_likelihoods + and_likelihoods + dot_likelihoods
     ans = [str(i + 1) for i, t in enumerate(final_preds) if t > 0.93]
     if len(ans) == 0:
         return [str(np.argmax(final_preds) + 1)]
