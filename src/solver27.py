@@ -137,6 +137,7 @@ class EssayWriter(object):
         self.ulmfit_dict_name = ulmfit_dict_name
         self.data = None
         self.learn = None
+        self.temperature = None
         self.tf_vectorizer_path = tf_vectorizer_path
         self.lda_path = lda_path
         self.topics_path = topics_path
@@ -200,16 +201,15 @@ class EssayWriter(object):
         author = get_author(task)
 
         brief_text = clear(summarizer.summarize(text, language="russian", ratio=0.25, split=False))
-        citation = np.random.choice(summarizer.summarize(text, language="russian", ratio=0.1, split=True))
+        citation1, citation2 = np.random.choice(summarizer.summarize(text, language="russian", ratio=0.1, split=True),
+                                                size=2, replace=False)
 
         essay = self._1st_paragraph(brief_text, mention_author(author))
-        essay = self._2nd_paragraph(essay, citation)
+        essay = self._2nd_paragraph(essay, citation1, citation2)
         essay = self._3rd_paragraph(essay, mention_author(author))
         essay = self._4th_paragraph(essay)
-        #     essay =  _5th_paragraph(essay, 'Л. Н. Толстого', 'Война и мир')
-        problem_formulation = "проблема плохого примера влияет на результат"
-        essay = self._5th_paragraph(essay, problem_formulation)  # , author, "Война и мир")
-        essay = self._6th_paragraph(essay, problem_formulation)
+        essay = self._5th_paragraph(essay, "проблема плохого примера влияет на результат")
+        essay = self._6th_paragraph(essay, "проблема плохого примера влияет на результат")
         essay = self._7th_paragraph(essay)
 
         #     return essay[len(brief_text):]
@@ -245,7 +245,7 @@ class EssayWriter(object):
 
         return " ".join([sentence_1, sentence_2, sentence_3])
 
-    def _2nd_paragraph(self, essay, citation):
+    def _2nd_paragraph(self, essay, citation1, citation2):
 
         # TODO: citation detector:
         # citation1, citation2 = self.citation_detector(text, problem_formulation, n_citations=2)
