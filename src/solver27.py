@@ -28,7 +28,7 @@ essay_template = {
     #   {theme_name} = "тему семьи и детства"          (хз ваще насколько это круто,
     #   {theme_name} = "тему деревни и города"          надо подумать, выписал примеры)
     #   {theme_name} = "тему культуры и искусства"
-    '1.1': 'Автор в своем тексте раскрывает {theme_name} и рассматривает несколько актуальных проблем современности.',
+    '1.1': 'Автор в своем тексте раскрывает тему {theme_name} и рассматривает несколько актуальных проблем современности.',
     # здесь формулировка проблемы может быть сделана только в именительном падеже:
     # Пример:
     #   {problem_formulation} = "проблема эгоизма"
@@ -124,6 +124,8 @@ class EssayWriter(object):
         FastText model.
     custom_topic_keywords_vectors_path : str
         path to the pickle file with dict topic: vectors of keywords
+    custom_topics_path : str
+        Path to custom topics.
     stopwords_path : str
         path to the pickle file with list of stopwords
     Examples
@@ -145,6 +147,7 @@ class EssayWriter(object):
             seed=42,
             fasttext_model=None,
             custom_topic_keywords_vectors_path=None,
+            custom_topics_path=None,
             stopwords_path=None
     ):
 
@@ -165,6 +168,8 @@ class EssayWriter(object):
         self.fasttext_model = fasttext_model
         self.stopwords_path = stopwords_path
         self.stopwords = None
+        self.custom_topics_path = custom_topics_path
+        self.custom_topics = None
         if is_load:
             self.load()
         self.seed = seed
@@ -244,6 +249,7 @@ class EssayWriter(object):
             self.custom_topic_keywords_vectors = pickle.load(f)
         with open(self.stopwords_path, "rb") as f:
             self.stopwords = pickle.load(f)
+        self.custom_topics = pd.read_csv(self.custom_topics_path, sep=";", index_col="theme")
 
         return self
 
@@ -288,7 +294,7 @@ class EssayWriter(object):
         # TODO: problem -> problem_explanation mapping dict:
         # problem_explanation = "безразличие людей к своим родным и близким, таким же людям как и они"
 
-        sentence_1 = essay_template['1.1'].format(theme_name=theme)
+        sentence_1 = essay_template['1.1'].format(theme_name=self.custom_topics.loc[theme]["theme_to_insert_vinitelniy"])
         sentence_2 = essay_template['1.2'].format(problem_formulation=problem)
         sentence_3 = essay_template['1.3'].format(author=author, problem_explanation=problem)
 

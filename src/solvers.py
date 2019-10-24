@@ -119,6 +119,7 @@ solver_27 = EssayWriter(
     seed=42,
     custom_topic_keywords_vectors_path="../models/task_27/custom_topic_keywords_vectors.pkl",
     fasttext_model=model_fasttext,
+    custom_topics_path="../models/task_27/topics.csv",
     stopwords_path="../models/task_27/stopwords.pkl"
 )
 
