@@ -55,7 +55,7 @@ slovarnie_slova = pd.read_csv("../models/dictionaries/slovarnie_slova.txt", head
 
 morph = pymorphy2.MorphAnalyzer()
 
-with open("../models/lgbm.pickle", "rb") as f:
+with open("../models/task_17_19/lgbm.pickle", "rb") as f:
     lgbm = pickle.load(f)
 
 bert_folder = '/misc/models/bert'
