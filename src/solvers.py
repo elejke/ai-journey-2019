@@ -7,6 +7,7 @@ import regex
 import pickle
 import random
 import string
+import lightgbm
 
 import nltk.corpus
 
@@ -53,6 +54,9 @@ small_words_dict = df_dict.set_index("Lemma")[["Freq(ipm)"]].to_dict()["Freq(ipm
 slovarnie_slova = pd.read_csv("../models/dictionaries/slovarnie_slova.txt", header=None).rename({0: "word"}, axis=1)
 
 morph = pymorphy2.MorphAnalyzer()
+
+with open("../models/lgbm.pickle", "rb") as f:
+    lgbm = pickle.load(f)
 
 bert_folder = '/misc/models/bert'
 config_path = bert_folder + '/bert_config.json'
@@ -1212,7 +1216,7 @@ def solver_2(task):
     return tokenizer_bert.convert_ids_to_tokens(np.argmax(predicts, axis=2)[0][mask_input.astype(bool)])[0].lower()
 
 
-def base_17_18_19_20(task):
+def base_18_20(task):
     max_length = 512
 
     text = task["text"]
@@ -1246,28 +1250,74 @@ def base_17_18_19_20(task):
     return comma_likelihoods, dot_likelihoods, and_likelihoods, or_likelihoods
 
 
+def base_17_19(task):
+    max_length = 512
+
+    text = task["text"]
+    text = re.sub(r"\(\s*\d{1,2}\s*\)", "[MASK]", text)
+    sentences = re.sub(r"([\.\!\?]+)", "\g<1>$", text)
+    sentences = sentences.split("$")
+    sentences = [t for t in sentences if "[MASK]" in t]
+    preds_list = []
+    for sent in sentences:
+        sent = sent.split("[MASK]")
+
+        tokens = ["[CLS]"]
+        for i in range(len(sent)):
+            if i == 0:
+                tokens = tokens + tokenizer_bert.tokenize(sent[i])
+            else:
+                tokens = tokens + ['[MASK]'] + tokenizer_bert.tokenize(sent[i])
+        tokens = tokens + ['[SEP]']
+        token_input = tokenizer_bert.convert_tokens_to_ids(tokens)
+        token_input = np.array(token_input + [0] * (512 - len(token_input)))
+
+        mask_input = np.zeros(max_length)
+        mask_token_id = tokenizer_bert.convert_tokens_to_ids(["[MASK]"])[0]
+        mask_input[token_input == mask_token_id] = 1
+
+        seg_input = np.zeros(max_length)
+        predicts = model_bert.predict([token_input.reshape(1, -1), seg_input.reshape(1, -1), mask_input.reshape(1, -1)])[0]
+        predicts = predicts[0, :, :][mask_input.astype(bool)]
+        preds_list.append(predicts)
+
+    return np.vstack(preds_list)
+
+
 def solver_17(task):
-    comma_likelihoods, dot_likelihoods, and_likelihoods, or_likelihoods = base_17_18_19_20(task)
-    final_preds = comma_likelihoods + and_likelihoods + dot_likelihoods
-    return [str(i + 1) for i, t in enumerate(final_preds) if t > 0.65]
+    vectors = base_17_19(task)
+    predictions = [lgbm.predict_proba(t.reshape(1, -1))[0, 1] for t in vectors]
+    ans = [str(i + 1) for i, t in enumerate(predictions) if t > 0.5]
+    if len(ans) == 0:
+        return [str(np.argmax(predictions) + 1)]
+    return ans
 
 
 def solver_18(task):
-    comma_likelihoods, dot_likelihoods, and_likelihoods, or_likelihoods = base_17_18_19_20(task)
+    comma_likelihoods, dot_likelihoods, and_likelihoods, or_likelihoods = base_18_20(task)
     final_preds = comma_likelihoods + and_likelihoods + dot_likelihoods
-    return [str(i + 1) for i, t in enumerate(final_preds) if t > 0.48]
+    ans = [str(i + 1) for i, t in enumerate(final_preds) if t > 0.48]
+    if len(ans) == 0:
+        return [str(np.argmax(final_preds) + 1)]
+    return ans
 
 
 def solver_19(task):
-    comma_likelihoods, dot_likelihoods, and_likelihoods, or_likelihoods = base_17_18_19_20(task)
-    final_preds = comma_likelihoods + or_likelihoods + dot_likelihoods
-    return [str(i + 1) for i, t in enumerate(final_preds) if t > 0.62]
+    vectors = base_17_19(task)
+    predictions = [lgbm.predict_proba(t.reshape(1, -1))[0, 1] for t in vectors]
+    ans = [str(i + 1) for i, t in enumerate(predictions) if t > 0.7]
+    if len(ans) == 0:
+        return [str(np.argmax(predictions) + 1)]
+    return ans
 
 
 def solver_20(task):
-    comma_likelihoods, dot_likelihoods, and_likelihoods, or_likelihoods = base_17_18_19_20(task)
+    comma_likelihoods, dot_likelihoods, and_likelihoods, or_likelihoods = base_18_20(task)
     final_preds = comma_likelihoods
-    return [str(i + 1) for i, t in enumerate(final_preds) if t > 0.93]
+    ans = [str(i + 1) for i, t in enumerate(final_preds) if t > 0.93]
+    if len(ans) == 0:
+        return [str(np.argmax(final_preds) + 1)]
+    return ans
 
 
 def solver_13(task):
