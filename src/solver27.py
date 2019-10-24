@@ -1,110 +1,19 @@
-import joblib
-import random
-from summa import summarizer
 import re
 import regex
-import pymorphy2
-morph = pymorphy2.MorphAnalyzer()
-from fastai.text import *
-from fastai.callbacks import ReduceLROnPlateauCallback
+import random
+
+import joblib
 import numpy as np
 import pandas as pd
-import warnings
-warnings.filterwarnings('ignore')
+
+import pymorphy2
+
+from summa import summarizer
+from fastai.text import *
+from fastai.callbacks import ReduceLROnPlateauCallback
 
 
-def split_task_and_text(task_text):
-    """Split initial task text to the question and actual text fragment. Using texts' sentence counters - (k).
-    :return : tuple(Task formulation, Referenced text of the task)
-    """
-
-    splitted = re.split(r'\(\d{1,3}\)', task_text)
-    formulation = [splitted[0]]
-    text = splitted[1:-1]
-
-    last = re.split(r'[!?.]', splitted[-1])
-    text.append(last[0])
-    formulation.append('.'.join(last[1:]))
-
-    return ''.join(formulation), ''.join(text).strip()
-
-
-def clear(text):
-    text = re.sub("[\t\r]+", "", text)
-    text = re.sub("[ ]+[:]", ":",
-                  re.sub("[ ]+[.]", ".",
-                         re.sub("[«][ ]+", "«",
-                                re.sub("[ ]+[»]", "»",
-                                       re.sub("[ ]+[,]", ",",
-                                              re.sub("[ ]+", " ", text))))))
-    text = re.sub("[ ]+[?]", "?", text)
-    text = re.sub("[ ]+[!]", "!", text)
-    text = re.sub("\n+", "\n", text)
-    text = [line.strip() for line in text.split("\n")]
-    # text = [line[1:] + line[1].upper() for line in text if len(line)]
-    text = "\n".join(text)
-    return text
-
-
-def rus_tok(text, m=pymorphy2.MorphAnalyzer()):
-    reg = '([0-9]|\W|[a-zA-Z])'
-    toks = text.split()
-    return [m.parse(t)[0].normal_form for t in toks if not re.match(reg, t)]
-
-
-def get_author(text):
-    name_pattern = "[А-Я][а-яё]+[\p{Pd}−]*\w*"
-    short_name_pattern = "[А-Я]\."
-
-    match = regex.search(f"({name_pattern})\s+({name_pattern})\s+({name_pattern})", text)
-    if match is not None:
-        return list(match.groups())
-
-    match = regex.search(f"({name_pattern})\s+({name_pattern})", text)
-    if match is not None:
-        return list(match.groups())
-
-    match = regex.search(f"({short_name_pattern})\s*({short_name_pattern})\s*({name_pattern})", text)
-    if match is not None:
-        name = list(match.groups())
-        name[2] = morph.parse(name[2])[0].inflect({"nomn"}).word.capitalize()
-        return name
-
-    match = regex.search(f"({short_name_pattern})\s*({name_pattern})", text)
-    if match is not None:
-        name = list(match.groups())
-        name[1] = morph.parse(name[1])[0].inflect({"nomn"}).word.capitalize()
-        return name
-
-    return ["автор"]
-
-
-def mention_author(author, case="nomn"):
-    """Упоминает автора в нужном формате и склонении. Юзать правда лучше только в именительном, т.к. некоторые
-    фамилии не склоняются. Например, Черных
-
-    nomn	именительный	Кто? Что?	хомяк ест
-    gent	родительный	    Кого? Чего?	у нас нет хомяка
-    datv	дательный	    Кому? Чему?	сказать хомяку спасибо
-    accs	винительный	    Кого? Что?	хомяк читает книгу
-    ablt	творительный	Кем? Чем?	зерно съедено хомяком
-    loct	предложный	    О ком? О чём? и т.п.	хомяка несут в корзинке
-    voct	звательный	    Его формы используются при обращении к человеку.	Саш, пойдем в кино.
-    """
-    if case not in ["nomn", "gent", "datv", "accs", "ablt", "loct", "voct"]:
-        case = "nomn"
-    if case != "nomn":
-        last_name = morph.parse(author[-1])[0].inflect({case})[0]
-    else:
-        last_name = author[-1]
-    if len(author) > 1:
-        last_name = last_name[0].upper() + last_name[1:]
-        initials = ". ".join(map(lambda x: x[0].upper(), author[:-1]))
-        result = "{}. {}".format(initials, last_name)
-    else:
-        result = last_name
-    return result
-
+morph = pymorphy2.MorphAnalyzer()
 
 essay_template = {
     # 1. Формулировка проблемы текста
@@ -265,10 +174,6 @@ class EssayWriter(object):
     def _init_seed(self):
         random.seed(self.seed)
 
-    def _init_args(self, **kwargs):
-        for k, v in kwargs.items():
-            setattr(self, k, v)
-
     def get_topic(self, documents):
         tf = self.tf_vectorizer.transform(documents)
         lda_doc_topic = self.lda.transform(tf)
@@ -287,39 +192,6 @@ class EssayWriter(object):
                 dic['Тема'] = self.topics.iloc[i]['Theme']
                 dic['Писатели'] = self.topics.iloc[i]['Authors']
         return dic
-
-    def fit(self, texts, num_epochs=5, is_fit_topics=False):
-
-        texts = pd.DataFrame(list(texts))
-
-        self.data = TextList.from_df(
-            texts, processor=[TokenizeProcessor(tokenizer=Tokenizer(lang="xx")),
-                              NumericalizeProcessor(vocab=Vocab.load("models/{}.pkl".format(self.dict_name)))]
-        ).random_split_by_pct(.1).label_for_lm().databunch(bs=16)
-
-        conf = awd_lstm_lm_config.copy()
-        conf['n_hid'] = 1150
-        self.learn.unfreeze()
-        self.learn.lr_find(start_lr=slice(10e-7, 10e-5), end_lr=slice(0.4, 10))
-        _ = self.learn.recorder.plot(skip_end=10, suggestion=True)
-        best_lm_lr = self.learn.recorder.min_grad_lr
-        print(best_lm_lr)
-
-        #         self.learn.fit_one_cycle(
-        #             num_epochs, best_lm_lr, callbacks=[ReduceLROnPlateauCallback(self.learn, factor=0.8)])
-        self.learn = language_model_learner(self.data, AWD_LSTM, pretrained=True, config=conf, drop_mult=0.7,
-                                            pretrained_fnames=[self.model_name, self.dict_name], silent=False)
-
-        self.learn.fit(num_epochs, best_lm_lr, callbacks=[ReduceLROnPlateauCallback(self.learn, factor=0.8)])
-
-        # TODO: fit lda
-        if is_fit_topics:
-            pass
-        return self
-
-    def save(self):
-        self.learn.save(self.model_name)
-        self.learn.save_encoder(self.model_name + "_enc")
 
     def load(self):
 
@@ -440,3 +312,96 @@ class EssayWriter(object):
 
     def __call__(self, task):
         return self.generate(task["text"])
+
+
+def split_task_and_text(task_text):
+    """Split initial task text to the question and actual text fragment. Using texts' sentence counters - (k).
+    :return : tuple(Task formulation, Referenced text of the task)
+    """
+
+    splitted = re.split(r'\(\d{1,3}\)', task_text)
+    formulation = [splitted[0]]
+    text = splitted[1:-1]
+
+    last = re.split(r'[!?.]', splitted[-1])
+    text.append(last[0])
+    formulation.append('.'.join(last[1:]))
+
+    return ''.join(formulation), ''.join(text).strip()
+
+
+def clear(text):
+    text = re.sub("[\t\r]+", "", text)
+    text = re.sub("[ ]+[:]", ":",
+                  re.sub("[ ]+[.]", ".",
+                         re.sub("[«][ ]+", "«",
+                                re.sub("[ ]+[»]", "»",
+                                       re.sub("[ ]+[,]", ",",
+                                              re.sub("[ ]+", " ", text))))))
+    text = re.sub("[ ]+[?]", "?", text)
+    text = re.sub("[ ]+[!]", "!", text)
+    text = re.sub("\n+", "\n", text)
+    text = [line.strip() for line in text.split("\n")]
+    # text = [line[1:] + line[1].upper() for line in text if len(line)]
+    text = "\n".join(text)
+    return text
+
+
+def rus_tok(text):
+    reg = '([0-9]|\W|[a-zA-Z])'
+    toks = text.split()
+    return [morph.parse(t)[0].normal_form for t in toks if not re.match(reg, t)]
+
+
+def get_author(text):
+    name_pattern = "[А-Я][а-яё]+[\p{Pd}−]*\w*"
+    short_name_pattern = "[А-Я]\."
+
+    match = regex.search(f"({name_pattern})\s+({name_pattern})\s+({name_pattern})", text)
+    if match is not None:
+        return list(match.groups())
+
+    match = regex.search(f"({name_pattern})\s+({name_pattern})", text)
+    if match is not None:
+        return list(match.groups())
+
+    match = regex.search(f"({short_name_pattern})\s*({short_name_pattern})\s*({name_pattern})", text)
+    if match is not None:
+        name = list(match.groups())
+        name[2] = morph.parse(name[2])[0].inflect({"nomn"}).word.capitalize()
+        return name
+
+    match = regex.search(f"({short_name_pattern})\s*({name_pattern})", text)
+    if match is not None:
+        name = list(match.groups())
+        name[1] = morph.parse(name[1])[0].inflect({"nomn"}).word.capitalize()
+        return name
+
+    return ["автор"]
+
+
+def mention_author(author, case="nomn"):
+    """Упоминает автора в нужном формате и склонении. Юзать правда лучше только в именительном, т.к. некоторые
+    фамилии не склоняются. Например, Черных
+
+    nomn	именительный	Кто? Что?	хомяк ест
+    gent	родительный	    Кого? Чего?	у нас нет хомяка
+    datv	дательный	    Кому? Чему?	сказать хомяку спасибо
+    accs	винительный	    Кого? Что?	хомяк читает книгу
+    ablt	творительный	Кем? Чем?	зерно съедено хомяком
+    loct	предложный	    О ком? О чём? и т.п.	хомяка несут в корзинке
+    voct	звательный	    Его формы используются при обращении к человеку.	Саш, пойдем в кино.
+    """
+    if case not in ["nomn", "gent", "datv", "accs", "ablt", "loct", "voct"]:
+        case = "nomn"
+    if case != "nomn":
+        last_name = morph.parse(author[-1])[0].inflect({case})[0]
+    else:
+        last_name = author[-1]
+    if len(author) > 1:
+        last_name = last_name[0].upper() + last_name[1:]
+        initials = ". ".join(map(lambda x: x[0].upper(), author[:-1]))
+        result = "{}. {}".format(initials, last_name)
+    else:
+        result = last_name
+    return result
