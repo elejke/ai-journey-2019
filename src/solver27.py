@@ -102,9 +102,9 @@ class EssayWriter(object):
     ----------
     seed : path2config, str
         Path to config.
-    model_name : str
+    ulmfit_model_name : str
         Model name for load pretrained ulmfit model and store this.
-    dict_name : str
+    ulmfit_dict_name : str
         Dict name for load pretrained ulmfit dict and store this.
     tf_vectorizer_path : str
         Path to vectorizer for topic modeling.
@@ -123,12 +123,18 @@ class EssayWriter(object):
     """
 
     def __init__(
-            self, model_name=None, dict_name=None, tf_vectorizer_path=None, lda_path=None,
-            topics_path=None, is_load=True, seed=42
+            self,
+            ulmfit_model_name=None,
+            ulmfit_dict_name=None,
+            tf_vectorizer_path=None,
+            lda_path=None,
+            topics_path=None,
+            is_load=True,
+            seed=42
     ):
 
-        self.model_name = model_name
-        self.dict_name = dict_name
+        self.ulmfit_model_name = ulmfit_model_name
+        self.ulmfit_dict_name = ulmfit_dict_name
         self.data = None
         self.learn = None
         self.tf_vectorizer_path = tf_vectorizer_path
@@ -175,13 +181,13 @@ class EssayWriter(object):
         self.data = TextList.from_df(
             pd.DataFrame(["tmp", "tmp"]),
             processor=[TokenizeProcessor(tokenizer=Tokenizer(lang="xx")),
-                       NumericalizeProcessor(vocab=Vocab.load("models/{}.pkl".format(self.dict_name)))]
+                       NumericalizeProcessor(vocab=Vocab.load("models/{}.pkl".format(self.ulmfit_dict_name)))]
         ).random_split_by_pct(.1).label_for_lm().databunch(bs=16)
 
         conf = awd_lstm_lm_config.copy()
         conf['n_hid'] = 1150
         self.learn = language_model_learner(self.data, AWD_LSTM, pretrained=True, config=conf, drop_mult=0.7,
-                                            pretrained_fnames=[self.model_name, self.dict_name], silent=False)
+                                            pretrained_fnames=[self.ulmfit_model_name, self.ulmfit_dict_name], silent=False)
 
         return self
 

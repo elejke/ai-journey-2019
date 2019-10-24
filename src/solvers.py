@@ -74,8 +74,8 @@ with open("../models/dictionaries/task_9_words.pickle", "rb") as f:
 
 solver_10_11_12 = Solver10(vocabulary=big_words_set, morph=morph)
 solver_27 = EssayWriter(
-                model_name='lm_5_ep_lr2-3_5_stlr',
-                dict_name='itos',
+                ulmfit_model_name='lm_5_ep_lr2-3_5_stlr',
+                ulmfit_dict_name='itos',
                 tf_vectorizer_path='data/tfvect.joblib',
                 lda_path='data/lda.joblib',
                 topics_path='data/topics.csv',
