@@ -110,14 +110,17 @@ nltk_stopwords = frozenset(nltk.corpus.stopwords.words("russian"))
 solver_10_11_12 = Solver10(vocabulary=big_words_set, morph=morph)
 
 solver_27 = EssayWriter(
-                ulmfit_model_name='lm_5_ep_lr2-3_5_stlr',
-                ulmfit_dict_name='itos',
-                lda_tf_vectorizer_path='data/tfvect.joblib',
-                lda_path='data/lda.joblib',
-                lda_topics_path='data/topics.csv',
-                is_load=True,
-                seed=42,
-            )
+    ulmfit_model_name='lm_5_ep_lr2-3_5_stlr',
+    ulmfit_dict_name='itos',
+    lda_tf_vectorizer_path='data/tfvect.joblib',
+    lda_path='data/lda.joblib',
+    lda_topics_path='data/topics.csv',
+    is_load=True,
+    seed=42,
+    custom_topic_keywords_vectors_path="../models/task_27/custom_topic_keywords_vectors.pkl",
+    fasttext_model=model_fasttext,
+    stopwords_path="../models/task_27/stopwords.pkl"
+)
 
 
 def solver_15(task):

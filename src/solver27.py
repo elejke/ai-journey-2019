@@ -2,17 +2,23 @@ import re
 import regex
 import random
 
+import pickle
 import joblib
 import numpy as np
 import pandas as pd
 
 import pymorphy2
 
+import yake
+import fasttext
+from sklearn.metrics import pairwise_distances
+
 from summa import summarizer
 from fastai.text import *
 
 
 morph = pymorphy2.MorphAnalyzer()
+kw_extractor = yake.KeywordExtractor(lan="ru", n=1, top=30)
 
 essay_template = {
     # 1. Формулировка проблемы текста
@@ -100,8 +106,6 @@ class EssayWriter(object):
 
     Parameters
     ----------
-    seed : path2config, str
-        Path to config.
     ulmfit_model_name : str
         Model name for load pretrained ulmfit model and store this.
     ulmfit_dict_name : str
@@ -114,6 +118,14 @@ class EssayWriter(object):
         Path to topics with first phrases.
     is_load : bool, optional(default=True)
         Load or not pretrained models.
+    seed : int
+        Random seed.
+    fasttext_model : str or FastText model loaded
+        FastText model.
+    custom_topic_keywords_vectors_path : str
+        path to the pickle file with dict topic: vectors of keywords
+    stopwords_path : str
+        path to the pickle file with list of stopwords
     Examples
     --------
     g = EssayWriter("lm_5_ep_lr2-3_5_stlr", "itos", "tfvect.joblib", "lda.joblib", "topics.csv", is_load=False)
@@ -130,7 +142,10 @@ class EssayWriter(object):
             lda_path=None,
             lda_topics_path=None,
             is_load=True,
-            seed=42
+            seed=42,
+            fasttext_model=None,
+            custom_topic_keywords_vectors_path=None,
+            stopwords_path=None
     ):
 
         self.ulmfit_model_name = ulmfit_model_name
@@ -145,6 +160,11 @@ class EssayWriter(object):
         self.lda = None
         self.lda_topics = None
         self.lda_topic_dic = None
+        self.custom_topic_keywords_vectors_path = custom_topic_keywords_vectors_path
+        self.custom_topic_keywords_vectors = None
+        self.fasttext_model = fasttext_model
+        self.stopwords_path = stopwords_path
+        self.stopwords = None
         if is_load:
             self.load()
         self.seed = seed
@@ -172,6 +192,30 @@ class EssayWriter(object):
                 dic['Писатели'] = self.lda_topics.iloc[i]['Authors']
         return dic
 
+    def get_custom_topic(self, text):
+        text_keywords = kw_extractor.extract_keywords(" ".join(custom_tok(text, self.stopwords +
+                                                                          ["рука", "свой", "самый", "какой-то",
+                                                                           "голова", "глаз", "некоторый", "ним"])))
+        text_keywords_vectors = []
+        text_keywords_dists = []
+        for w in text_keywords:
+            text_keywords_vectors.append(self.fasttext_model[w[0]])
+            text_keywords_dists.append(w[1])
+        text_keywords_vectors = np.array(text_keywords_vectors)
+        text_keywords_vectors /= np.linalg.norm(text_keywords_vectors, ord=2, axis=1, keepdims=True)
+        text_keywords_dists = np.array(text_keywords_dists)
+
+        topics = []
+        topics_dist = []
+        for topic in self.custom_topic_keywords_vectors:
+            distance_matrix = pairwise_distances(text_keywords_vectors, self.custom_topic_keywords_vectors[topic])
+            topics.append(topic)
+            #         topics_dist.append(np.min(distance_matrix, axis=0).mean())
+            topics_dist.append(np.min(distance_matrix * text_keywords_dists.reshape(-1, 1), axis=0).mean())
+        topic = topics[np.argmin(topics_dist)]
+
+        return topic
+
     def load(self):
 
         self.lda_tf_vectorizer = joblib.load(self.lda_tf_vectorizer_path)
@@ -190,6 +234,17 @@ class EssayWriter(object):
         self.learn = language_model_learner(self.data, AWD_LSTM, pretrained=True, config=conf, drop_mult=0.7,
                                             pretrained_fnames=[self.ulmfit_model_name, self.ulmfit_dict_name], silent=False)
 
+        if isinstance(self.fasttext_model, str):
+            self.fasttext_model = fasttext.load_model(self.fasttext_model)
+        elif self.fasttext_model is None:
+            raise ValueError("Pass loaded 'fasttext' instance")
+        else:
+            pass
+        with open(self.custom_topic_keywords_vectors_path, "rb") as f:
+            self.custom_topic_keywords_vectors = pickle.load(f)
+        with open(self.stopwords_path, "rb") as f:
+            self.stopwords = pickle.load(f)
+
         return self
 
     def generate(self,
@@ -198,6 +253,7 @@ class EssayWriter(object):
 
         self.temperature = temperature
         task, text = split_task_and_text(task)
+
         author = get_author(task)
 
         brief_text = clear(summarizer.summarize(text, language="russian", ratio=0.25, split=False))
@@ -413,6 +469,22 @@ def clear(text):
     # text = [line[1:] + line[1].upper() for line in text if len(line)]
     text = "\n".join(text)
     return text
+
+
+def custom_tok(text, stop_words=None):
+    if stop_words is None:
+        stop_words = set()
+    reg = "([0-9]|\W|[a-zA-Z])"
+    toks = text.split()
+    ans = []
+    for t in toks:
+        if not re.match(reg, t):
+            if t not in stop_words:
+                form = morph.parse(t)[0]
+                if form.tag.POS in ["NOUN", "ADJF"]:
+                    if form.normal_form not in stop_words:
+                        ans.append(form.normal_form)
+    return ans
 
 
 def rus_tok(text):
