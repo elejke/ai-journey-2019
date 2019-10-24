@@ -114,7 +114,7 @@ solver_27 = EssayWriter(
                 ulmfit_dict_name='itos',
                 lda_tf_vectorizer_path='data/tfvect.joblib',
                 lda_path='data/lda.joblib',
-                lda_topics_path='data/lda_topics.csv',
+                lda_topics_path='data/topics.csv',
                 is_load=True,
                 seed=42,
             )
