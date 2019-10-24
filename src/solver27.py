@@ -268,6 +268,7 @@ class EssayWriter(object):
         essay = self._7th_paragraph(essay)
 
         #     return essay[len(brief_text):]
+        essay = regex.sub("\n\s*", "\n\n", essay)
         return essay
 
     def continue_phrase(self, text, n_words=10):
