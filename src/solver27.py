@@ -10,37 +10,9 @@ import pymorphy2
 
 from summa import summarizer
 from fastai.text import *
-from fastai.callbacks import ReduceLROnPlateauCallback
 
 
 morph = pymorphy2.MorphAnalyzer()
-
-essay_old_template = {
-    # 1. Формулировка проблемы текста
-    '1.1': 'Текст посвящен одной из наиболее актуальных проблем современности - {problem_formulation}',
-    '1.2': '{author} заставляет нас задуматься о {problem_explanation}',  # (о чём? над какими вопросами?)
-    # 2. Комментарий проблемы (здесь два примера по проблеме из прочитанного текста, которые помогают понять суть
-    # проблемы)
-    '2.1': 'Главным тезисом в рассуждениях автора можно считать следующий: "{citation}"',
-    '2.2': 'Этим он подчеркивает, что {water}',
-    # 3. Авторская позиция по обозначенной проблеме.
-    '3.1': 'Развивая свою мысль, автор убеждает нас в том, что {author_position}',
-    '3.2': 'Также {author} считает, что {water}',
-    # 4. Собственное мнение по обозначенной проблеме (согласие).
-    '4.1': 'Хочется выразить своё мнение по обозначенной проблеме. И я считаю, что {own_position}',
-    '4.2': '{water}',
-    '4.3': 'Аргументирую свою точку зрения',
-    # 5. Аргумент 1 (из художественной, публицистической или научной литературы).
-    '5.1': 'Обратимся к произведению {argument1_author} «{argument1_source_name}».',
-    '5.2': '{water}',
-    # 6. Аргумент 2 (из жизни).
-    '6.1': 'Не так давно по телевидению передавали репортаж о {argument2_description}',
-    '6.2': '{water}',
-    # 7. Заключение.
-    '7.1': 'Таким образом, вместе с автором текста мы приходим к выводу, что {conclusion}',
-    # 'Заканчивая размышление над прочитанным текстом, сделаю вывод: как важно {conclusion}'
-}
-
 
 essay_template = {
     # 1. Формулировка проблемы текста
@@ -213,33 +185,13 @@ class EssayWriter(object):
 
         return self
 
-    # def generate(self, task, temperature=0.7):
-    #
-    #     self.temperature = temperature
-    #     task, text = split_task_and_text(task)
-    #     author = get_author(task)
-    #
-    #     brief_text = clear(summarizer.summarize(text, language="russian", ratio=0.25, split=False))
-    #     citation = np.random.choice(summarizer.summarize(text, language="russian", ratio=0.1, split=True))
-    #
-    #     essay = self._1st_paragraph(brief_text, mention_author(author))
-    #     essay = self._2nd_paragraph(essay, citation)
-    #     essay = self._3rd_paragraph(essay, mention_author(author))
-    #     essay = self._4th_paragraph(essay)
-    #     essay = self._5th_paragraph(essay, 'Л. Н. Толстого', 'Война и мир')
-    #     essay = self._6th_paragraph(essay)
-    #     essay = self._7th_paragraph(essay)
-    #
-    #     return essay[len(brief_text):]
-
     def generate(self,
                  task,
                  temperature=0.7):
 
-        temperature = temperature
-        #     author = get_author(task)
-        author = "Л. Н. Толстой".split()
+        self.temperature = temperature
         task, text = split_task_and_text(task)
+        author = get_author(task)
 
         brief_text = clear(summarizer.summarize(text, language="russian", ratio=0.25, split=False))
         citation = np.random.choice(summarizer.summarize(text, language="russian", ratio=0.1, split=True))
