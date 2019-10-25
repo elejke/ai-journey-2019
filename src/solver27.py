@@ -326,11 +326,14 @@ class EssayWriter(object):
         return essay[len(brief_text) + 2:]
 
     def continue_phrase(self, text, n_words=10):
+        init_len = len(text)
         text = clear(text)
         text = clear(self.learn.predict(text, n_words=n_words, no_unk=True, temperature=self.temperature))
         text = text.replace("xxbos", " ")  # Remove model special symbols
         text = text[:-40] + re.split(r"[.!?]", text[-40:])[0]  # Cut predicted sentence up to dot
-        return clear(text)
+        text = clear(text)
+        text = text[:init_len] + re.sub(r"\n+", r" ", text[init_len:])
+        return text
 
     def continue_phrase_with_pattern(self, essay, sent_template, n_words, variable_name, variable_value,
                                      default_value, replacement_dict=None):
@@ -372,10 +375,9 @@ class EssayWriter(object):
             author=author[0].upper() + author[1:], theme_name=theme
         )
         sentence_2 = essay_template['1.2'][var].format(problem_formulation=problem_formulation)
-        sentence_3 = essay_template['1.3'][var].format(problem_explanation=problem_explanation
-        )
+        sentence_3 = essay_template['1.3'][var].format(problem_explanation=problem_explanation).rstrip('.')
 
-        return ". ".join([sentence_1, sentence_2, sentence_3]) + '.\n'
+        return ". ".join([sentence_1, sentence_2, sentence_3]) + '.\n\n'
 
     def _2nd_paragraph(self, essay, citation1, citation2):
 
@@ -387,9 +389,9 @@ class EssayWriter(object):
         essay = essay + essay_template['2.1'][var].format(citation1=citation1) + '. '
         essay = self.continue_phrase(essay + essay_template['2.2'][var].format(water=''), 40) + '. '
         essay = essay + ' ' + essay_template['2.3'][var].format(citation2=citation2) + '. '
-        essay = self.continue_phrase(essay + essay_template['2.4'][var].format(water=''), 50)
+        essay = self.continue_phrase(essay + essay_template['2.4'][var].format(water=''), 50).rstrip('.')
 
-        return essay + '.\n'
+        return essay + '.\n\n'
 
     def _3rd_paragraph(self,
                        essay,
@@ -406,15 +408,15 @@ class EssayWriter(object):
         essay = self.continue_phrase_with_pattern(
             essay, essay_template['3.1'][var], 40, 'author_position', author_position,
             "в обществе распространилась страшная болезнь – «себялюбие»"
-        )
+        )[:-1]
 
         essay = self.continue_phrase_with_pattern(
-            essay + ' ', essay_template['3.2'][var], 60, 'author_position_reformulated',
+            essay + '. ', essay_template['3.2'][var], 60, 'author_position_reformulated',
             author_position_reformulated, "эгоизм и «себялюбие» захватывают наше общество",
             {'author_last_name': author_last_name}
         )
 
-        return essay + '\n'
+        return essay + '\n\n'
 
     def _4th_paragraph(self, essay, own_position='water'):
 
@@ -427,7 +429,7 @@ class EssayWriter(object):
 
         essay += ' ' + essay_template['4.2'][var] + '.'
 
-        return essay + '\n'
+        return essay + '\n\n'
 
     def _5th_paragraph(self, essay, argument_paragraph1='water'):
 
@@ -447,7 +449,7 @@ class EssayWriter(object):
             essay, essay_template['5.1'], 90, 'argument_paragraph1', argument_paragraph1, default_value
         )
 
-        return essay + '\n'
+        return essay[:-1] + '\n\n'
 
     def _6th_paragraph(self, essay, argument_paragraph2='water'):
 
@@ -463,7 +465,7 @@ class EssayWriter(object):
             essay, essay_template['6.1'], 90, 'argument_paragraph2', argument_paragraph2, default_value
         )
 
-        return essay + '\n'
+        return essay[:-1] + '\n\n'
 
     def _7th_paragraph(self, essay, conclusion='water'):
 
