@@ -315,7 +315,7 @@ class EssayWriter(object):
         essay = self._3rd_paragraph(essay,
                                     author_last_name=mention_author(author, mode='Aa'),
                                     author_position=self.custom_topics.loc[theme]["author_position"],
-                                    author_position_reformulated='water')
+                                    author_position_reformulated=self.custom_topics.loc[theme]["author_position"])
         essay = self._4th_paragraph(essay, own_position='water')
         essay = self._5th_paragraph(essay,
                                     argument_paragraph1=self.custom_topics.loc[theme]["argument_paragraph1"])
