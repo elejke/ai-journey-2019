@@ -28,39 +28,77 @@ essay_template = {
     #   {theme_name} = "тему семьи и детства"          (хз ваще насколько это круто,
     #   {theme_name} = "тему деревни и города"          надо подумать, выписал примеры)
     #   {theme_name} = "тему культуры и искусства"
-    '1.1': 'Автор в своем тексте раскрывает тему {theme_name} и рассматривает несколько актуальных проблем современности.',
+    '1.1': [
+        'Автор в своем тексте раскрывает тему {theme_name} и рассматривает несколько актуальных проблем современности',
+        'Прочитанный мною текст затрагивает важную общечеловеческую тему {theme_name} и раскрывает ряд актуальных '
+        'проблем',
+    ],
     # здесь формулировка проблемы может быть сделана только в именительном падеже:
     # Пример:
     #   {problem_formulation} = "проблема эгоизма"
-    '1.2': 'Одной из самых важных среди них является {problem_formulation}.',
+    '1.2': [
+        'Одной из самых важных среди них является {problem_formulation}',
+        'Одной из самых важных среди них является {problem_formulation}'
+    ],
     # если оставлять пункт 1.3, то в нем должен быть маппинг на предложение {problem_explanation},
     # в котором идет раскрытие проблемы, это раскрытие является общим для данной проблемы и не зависит от текста:
     # Пример:
     #   {author} = "Л. Н. Толстой"
     # Пример:
-    #   {problem_explanation} = "безразличие людей к своим родным и близким, таким же как они сами людям"
-    '1.3': '{author} заставляет нас задуматься о такой проблеме как {problem_explanation}.\n',
+    #   {problem_explanation} = "безразличие людей к своим родным и близким, таким же людям как и они"
+    '1.3': [
+        '{author} заставляет нас глубоко задуматься о {problem_explanation}',
+        '{problem_explanation} - именно над этим заставляет нас поразмышлять {author}'
+    ],
     # 2. Комментарий проблемы (здесь два примера по проблеме из прочитанного текста, которые помогают понять суть
     # проблемы)
-    '2.1': '"{citation1}" - в данном предложении текста находит свое отражение главный тезис рассуждений автора.',
-    '2.2': 'Более детально в сути проблемы можно разобраться прочитав предложение "{citation2}".\n',
+    '2.1': [
+        '«{citation1}» - в данном предложении текста находит свое отражение главный тезис рассуждений автора',
+        'Основной тезис авторской позиции выражен в следующих словах: «{citation1}»',
+    ],
+    # Трактовка цитаты. Но это только генератором скорее всего.
+    '2.2': [
+        'Эти слова обращают наше внимание на {water}',
+        'Этот отрывок объясняет нам, что {water}',
+        # 'В них звучит мысль о том, что {water}.'
+    ],
+    '2.3': [
+        'Более детально в сути проблемы можно разобраться прочитав предложение «{citation2}»',
+        'Но на этом рассуждения автора не заканчиваются. Он также пишет: «{citation2}»',
+    ],
+    '2.4': [
+        'Обе приведённых цитаты, дополняя друг друга, позволяют нам убедиться в том, что {water}',
+        'Этот пример еще раз показывает нам, что {water}',
+    ],
     # 3. Авторская позиция по обозначенной проблеме.
     # В случае авторской позиции, как мы уже обсуждали с @vovacher, хотелось бы захардкодить все возможные авторские
     # позиции под проблемы из списка. Если же это не будет реализовано, то генерация авторской позиции (???)
     # Пример:
     #   {author_position} = "в обществе распространилась страшная болезнь – «себялюбие»"
-    '3.1': 'Развивая свою мысль, автор убеждает нас в том, что {author_position}.',
+    '3.1': [
+        'Развивая свою мысль, автор убеждает нас в том, что {author_position}',
+        'На основании всего вышесказанного можно четко выделить позицию автора: {author_position}'
+    ],
     # '3.2': 'Также {author} считает, что {water}',
     # вместо {water} считаю, что нужно генерировать другими словами авторскую позицию (нужна подобная опция)
     # Пример:
     #   {author_position_reformulated} = "эгоизм и «себялюбие» захватывают наше общество"
-    '3.2': 'Таким образом {author} считает, что {author_position_reformulated}.\n',
+    '3.2': [
+        'Таким образом {author_last_name} считает, что {author_position_reformulated}',
+        '{author_last_name} убеждает нас в том, что {author_position_reformulated}'
+    ],
     # 4. Собственное мнение по обозначенной проблеме (согласие).
     # Пример:
     #   {own_position} = {author_position_reformulated2} = "эгоизм - это плохо"
-    '4.1': "Трудно не согласиться с мнением автора по обозначенной проблеме. Я тоже считаю, что {own_position}.",
-    '4.2': '{water}.',
-    '4.3': 'Не зря этот вопрос поднимался и во многих других произведениях известных литераторов.\n',
+    '4.1': [
+        "Трудно не согласиться с обозначенными в тексте проблемами. Я тоже считаю, что {own_position}",
+        "Я полностью поддерживаю точку зрения автора и также считаю, что {own_position}",
+        # "С полной уверенностью могу сказать, что автор прав. {own_position}."
+    ],
+    '4.2': [
+        'Не зря этот вопрос поднимался и во многих других произведениях известных литераторов',
+        'Этот вопрос не раз поднимался и в других произведениях известных литераторов',
+    ],
     # 5. Аргумент 1 (из художественной, публицистической или научной литературы).
     # Раздел 5 и 6 в идеальном случае содержит заранее известные аргументы, интегрированные в сочинение (взятые из
     # готовых сочинений).
@@ -69,7 +107,7 @@ essay_template = {
     #                            Анюта, став по расчету женой состоятельного чиновника, быстро забывает о своем
     #                            отце и братьях, которых прежде так любила. Эгоизм, поселившийся в ее душе после
     #                            замужества, способствует этому."
-    '5.1': "{argument_paragraph1}\n",
+    '5.1': "{argument_paragraph1}",
     # 6. Аргумент 2 (из жизни). В данном параграфе аналогично пятому используется готовый аргумент, который уже
     # обернут в конструкции цитирования и абсолютно избавлен от зависимости с текстом.
     # Пример:
@@ -81,14 +119,15 @@ essay_template = {
     #                            каких они очутились, исход ее не может быть иным, чем в финале новеллы: умирает
     #                            Катферт, придавленный телом Уэзерби, которого он прикончил в звериной драке
     #                            из-за чашки сахара."
-    '6.1': "{argument_paragraph2}\n",
+    '6.1': "{argument_paragraph2}",
     # 7. Заключение.
     # На деле - заключение {conclusion} должно являться переформулированной позицией автора
     # (у меня была клевая училка по русскому, и она всегда это говорила), так что в этом разделе нам тоже нужна
     # опция с возможностью переформулировать некоторое выражение другими словами:
     # Пример:
     #   {conclusion} = {author_position_reformulated3} = "«себялюбие» - это порок современного общества"
-    '7.1': 'Таким образом, вместе с автором текста мы приходим к выводу, что {conclusion}',
+    '7.1': ['Таким образом, вместе с автором текста мы приходим к выводу, что {conclusion}',
+            'Подводя итог, можно сказать, что {conclusion}'],
     # 'Заканчивая размышление над прочитанным текстом, сделаю вывод: как важно {conclusion}'
 }
 
@@ -237,7 +276,8 @@ class EssayWriter(object):
         conf = awd_lstm_lm_config.copy()
         conf['n_hid'] = 1150
         self.learn = language_model_learner(self.data, AWD_LSTM, pretrained=True, config=conf, drop_mult=0.7,
-                                            pretrained_fnames=[self.ulmfit_model_name, self.ulmfit_dict_name], silent=False)
+                                            pretrained_fnames=[self.ulmfit_model_name, self.ulmfit_dict_name],
+                                            silent=False)
 
         if isinstance(self.fasttext_model, str):
             self.fasttext_model = fasttext.load_model(self.fasttext_model)
@@ -249,7 +289,7 @@ class EssayWriter(object):
             self.custom_topic_keywords_vectors = pickle.load(f)
         with open(self.stopwords_path, "rb") as f:
             self.stopwords = pickle.load(f)
-        self.custom_topics = pd.read_csv(self.custom_topics_path, sep=";", index_col="theme")
+        self.custom_topics = pd.read_csv(self.custom_topics_path, sep=';', index_col='theme')
 
         return self
 
@@ -264,33 +304,49 @@ class EssayWriter(object):
         theme = self.get_custom_topic(text)
 
         brief_text = clear(summarizer.summarize(text, language="russian", ratio=0.25, split=False))
-        citation1 = np.random.choice(summarizer.summarize(text, language="russian", ratio=0.1, split=True))
+        citations = summarizer.summarize(text, language="russian", ratio=0.1, split=True)
 
         essay = self._1st_paragraph(theme=self.custom_topics.loc[theme]["theme_to_insert_vinitelniy"],
                                     problem_formulation=self.custom_topics.loc[theme]["problem_formulation"],
                                     problem_explanation=self.custom_topics.loc[theme]["problem_explanation"],
                                     author=mention_author(author))
-        essay = self._2nd_paragraph(essay, citation1, citation1)
+        essay = self._2nd_paragraph(brief_text + '\n\n' + essay, citations[0], citations[1])
         essay = self._3rd_paragraph(essay,
-                                    author=mention_author(author),
-                                    author_position=self.custom_topics.loc[theme]["author_position"])
-        essay = self._4th_paragraph(essay)
+                                    author_last_name=mention_author(author, mode='Aa'),
+                                    author_position=self.custom_topics.loc[theme]["author_position"],
+                                    author_position_reformulated='water')
+        essay = self._4th_paragraph(essay, own_position='water')
         essay = self._5th_paragraph(essay,
                                     argument_paragraph1=self.custom_topics.loc[theme]["argument_paragraph1"])
         essay = self._6th_paragraph(essay,
                                     argument_paragraph2=self.custom_topics.loc[theme]["argument_paragraph2"])
-        essay = self._7th_paragraph(essay)
+        essay = self._7th_paragraph(essay, conclusion='water')
 
-        #     return essay[len(brief_text):]
-        essay = regex.sub("\n\s*", "\n\n", essay)
-        return essay
+        return essay[len(brief_text) + 2:]
 
     def continue_phrase(self, text, n_words=10):
         text = clear(text)
         text = clear(self.learn.predict(text, n_words=n_words, no_unk=True, temperature=self.temperature))
         text = text.replace("xxbos", " ")  # Remove model special symbols
-        text = text[:-40] + re.split(r"[.!?]", text[-40:])[0] + '. '  # Cut predicted sentence up to dot
+        text = text[:-40] + re.split(r"[.!?]", text[-40:])[0]  # Cut predicted sentence up to dot
         return clear(text)
+
+    def continue_phrase_with_pattern(self, essay, sent_template, n_words, variable_name, variable_value,
+                                     default_value, replacement_dict=None):
+
+        if replacement_dict is None:
+            replacement_dict = dict()
+
+        if variable_value == 'water':
+            essay = self.continue_phrase(essay + sent_template.format(**replacement_dict, **{variable_name: ''}),
+                                         n_words)
+        elif (variable_value == '') or variable_value is None:
+            author_position = default_value
+            essay += sent_template.format(**replacement_dict, **{variable_name: default_value})
+        else:
+            essay += sent_template.format(**replacement_dict, **{variable_name: variable_value})
+
+        return essay + '.'
 
     def _1st_paragraph(self,
                        theme=None,
@@ -299,10 +355,10 @@ class EssayWriter(object):
                        author=None):
 
         if author is None:
-            author = "автор"
+            author = "Автор"
         # TODO: theme classifier
         if theme is None:
-            theme = "тему семьи и детства"
+            theme = "семьи и детства"
         # TODO: problem classifier:
         if problem_formulation is None:
             problem_formulation = "проблема эгоизма"
@@ -310,160 +366,114 @@ class EssayWriter(object):
         if problem_explanation is None:
             problem_explanation = "проблема эгоизма"
 
-        sentence_1 = essay_template['1.1'].format(theme_name=theme)
-        sentence_2 = essay_template['1.2'].format(problem_formulation=problem_formulation)
-        sentence_3 = essay_template['1.3'].format(author=author, problem_explanation=problem_explanation)
+        var = np.random.choice(range(len(essay_template['1.1'])))
 
-        #     next_sent = essay_template['1.3'].format(problem_formulation='')
-        #     essay =  continue_phrase(text + '\n\n' + next_sent, 10)
+        sentence_1 = essay_template['1.1'][var].format(theme_name=theme)
+        sentence_2 = essay_template['1.2'][var].format(problem_formulation=problem_formulation)
+        sentence_3 = essay_template['1.3'][var].format(
+            author=author, problem_explanation=problem_explanation
+        )
 
-        #     next_sent = essay_template['1.2'].format(author=author, problem_explanation='')
-        #     essay =  continue_phrase(essay + ' ' + next_sent, 30)
-
-        #     return essay + '\n'
-
-        return " ".join([sentence_1, sentence_2, sentence_3])
+        return ". ".join([sentence_1, sentence_2, sentence_3]) + '.\n'
 
     def _2nd_paragraph(self, essay, citation1, citation2):
 
         # TODO: citation detector:
         # citation1, citation2 = self.citation_detector(text, problem_formulation, n_citations=2)
-        citation1 = "Все люди должны знать свои права и обязанности и не имеют права нарушать права других людей."
-        citation2 = "Эгоистичное отношение к людям давно выведено из норм общественного поведения."
 
-        sentence_1 = essay_template['2.1'].format(citation1=citation1)
-        sentence_2 = essay_template['2.2'].format(citation2=citation2)
+        var = np.random.choice(range(len(essay_template['2.1'])))
 
-        #     next_sent = essay_template['2.1'].format(citation=citation)
-        #     essay += next_sent
+        essay = essay + essay_template['2.1'][var].format(citation1=citation1) + '. '
+        essay = self.continue_phrase(essay + essay_template['2.2'][var].format(water=''), 40) + '. '
+        essay = essay + ' ' + essay_template['2.3'][var].format(citation2=citation2) + '. '
+        essay = self.continue_phrase(essay + essay_template['2.4'][var].format(water=''), 50)
 
-        #     next_sent = essay_template['2.2'].format(water='')
-        #     essay =  continue_phrase(essay + ' ' + next_sent, 40)
-
-        #     return essay + '\n'
-
-        return " ".join([essay, sentence_1, sentence_2])
+        return essay + '.\n'
 
     def _3rd_paragraph(self,
                        essay,
-                       author=None,
-                       author_position=None,
-                       author_position_reformulated=None):
-
-        if author is None:
-            author = "автор"
-        # TODO: author position detector (???)):
-        if author_position is None:
-            author_position = "в обществе распространилась страшная болезнь – «себялюбие»"
-        if author_position_reformulated is None:
-            author_position_reformulated = author_position
-
-        sentence_1 = essay_template['3.1'].format(author_position=author_position)
-        sentence_2 = essay_template['3.2'].format(author=author,
-                                                  author_position_reformulated=author_position_reformulated)
-
-        #     next_sent = essay_template['3.1'].format(author_position='')
-        #     essay =  continue_phrase(essay + next_sent, 25)
-
-        #     next_sent = essay_template['3.2'].format(author=author, water='')
-        #     essay =  continue_phrase(essay + ' ' + next_sent, 40)
-
-        #     return essay + '\n'
-
-        return " ".join([essay, sentence_1, sentence_2])
-
-    def _4th_paragraph(self, essay):
-
-        # TODO: OWN POSITION ????:
+                       author_last_name=None,
+                       author_position='water',
+                       author_position_reformulated='water'):
 
         # TODO: author position detector (???)):
-        # author_position = self.author_position_detector(text, self.problem_formulation)
-        # author_position_reformulated = self.reformulate_author_position(author_position)
-        # own_position = author_position_reformulated
-        own_position = "эгоизм - это плохо"
-        # TODO: water generator:
-        # water = self.water_generator(text, last_sentnece, ...)
-        water = "Я был бы очень рад лично обсудить с автором вопросы, связанные с этой проблемой."
-        water = " ".join([water,
-                          "Несмотря на то, что сами идеи являются основой всего нашего общества, " +
-                          "многим они все равно чужды"])
-        sentence_1 = essay_template['4.1'].format(own_position=own_position)
-        sentence_2 = essay_template['4.2'].format(water=water)
+        if author_last_name is None:
+            author_last_name = "автор"
 
-        #     next_sent = essay_template['4.1'].format(own_position='')
-        #     essay =  continue_phrase(essay + ' ' + next_sent, 20)
+        var = np.random.choice(range(len(essay_template['3.1'])))
 
-        #     next_sent = essay_template['4.2'].format(water='')
-        #     essay =  continue_phrase(essay + ' ' + next_sent, 40)
+        essay = self.continue_phrase_with_pattern(
+            essay, essay_template['3.1'][var], 40, 'author_position', author_position,
+            "в обществе распространилась страшная болезнь – «себялюбие»"
+        )
 
-        #     next_sent = essay_template['4.3'].format(water='')
-        #     essay += next_sent
+        essay = self.continue_phrase_with_pattern(
+            essay + ' ', essay_template['3.2'][var], 60, 'author_position_reformulated',
+            author_position_reformulated, "эгоизм и «себялюбие» захватывают наше общество",
+            {'author_last_name': author_last_name}
+        )
 
-        #     return essay + '\n'
-        return " ".join([essay, sentence_1, sentence_2])
+        return essay + '\n'
 
-    def _5th_paragraph(self, essay, argument_paragraph1=None):
+    def _4th_paragraph(self, essay, own_position='water'):
+
+        # TODO: OWN POSITION detector????:
+        var = np.random.choice(range(len(essay_template['4.1'])))
+
+        essay = self.continue_phrase_with_pattern(
+            essay, essay_template['4.1'][var], 30, 'own_position', own_position, 'эгоизм - это плохо'
+        )
+
+        essay += ' ' + essay_template['4.2'][var] + '.'
+
+        return essay + '\n'
+
+    def _5th_paragraph(self, essay, argument_paragraph1='water'):
 
         # TODO: argument paragraph generator
 
-        if argument_paragraph1 is None:
-            argument_paragraph1 = ("Д. Лондон в своем произведении «В далеком краю» повествует читателям о судьбе " +
-                                   "Уэзерби и Катферта. Отправившись на Север за золотом, они вынуждены перезимовать " +
-                                   "вдвоем в хижине, стоящей далеко от обитаемых мест. И здесь с жестокой " +
-                                   "очевидностью выступает их бескрайний эгоизм. Отношения между героями — та же " +
-                                   "конкурентная борьба, только не за прибыль, а за выживание. И в тех условиях, в " +
-                                   "каких они очутились, исход ее не может быть иным, чем в финале новеллы: умирает " +
-                                   "Катферт, придавленный телом Уэзерби, которого он прикончил в звериной драке " +
-                                   "из-за чашки сахара.")
-        #     next_sent = essay_template['5.1'].format(argument1_author=argument1_author,
-        #                                              argument1_source_name=argument1_source_name)
-        #     essay += next_sent
+        default_value = (
+                "Д. Лондон в своем произведении «В далеком краю» повествует читателям о судьбе " +
+                "Уэзерби и Катферта. Отправившись на Север за золотом, они вынуждены перезимовать " +
+                "вдвоем в хижине, стоящей далеко от обитаемых мест. И здесь с жестокой " +
+                "очевидностью выступает их бескрайний эгоизм. Отношения между героями — та же " +
+                "конкурентная борьба, только не за прибыль, а за выживание. И в тех условиях, в " +
+                "каких они очутились, исход ее не может быть иным, чем в финале новеллы: умирает " +
+                "Катферт, придавленный телом Уэзерби, которого он прикончил в звериной драке " +
+                "из-за чашки сахара."
+        )
+        essay = self.continue_phrase_with_pattern(
+            essay, essay_template['5.1'], 90, 'argument_paragraph1', argument_paragraph1, default_value
+        )
 
-        #     next_sent = essay_template['5.2'].format(water='')
-        #     essay =  continue_phrase(essay + next_sent, 40)
+        return essay + '\n'
 
-        #     return essay + '\n'
-        sentence_1 = essay_template['5.1'].format(argument_paragraph1=argument_paragraph1)
-
-        return " ".join([essay, sentence_1])
-
-    def _6th_paragraph(self, essay, argument_paragraph2=None):
+    def _6th_paragraph(self, essay, argument_paragraph2='water'):
 
         # TODO: argument paragraph generator
 
-        if argument_paragraph2 is None:
-            argument_paragraph2 = ("Вспомним, например, рассказ А. П. Чехов «Анна на шее». Его главная героиня, " +
-                                   "Анюта, став по расчету женой состоятельного чиновника, быстро забывает о своем " +
-                                   "отце и братьях, которых прежде так любила. Эгоизм, поселившийся в ее душе после " +
-                                   "замужества, способствует этому.")
-        #     next_sent = essay_template['6.1'].format(argument2_author=argument2_author,
-        #                                              argument2_source_name=argument2_source_name)
-        #     essay += next_sent
+        default_value = (
+                "Вспомним, например, рассказ А. П. Чехов «Анна на шее». Его главная героиня, " +
+                "Анюта, став по расчету женой состоятельного чиновника, быстро забывает о своем " +
+                "отце и братьях, которых прежде так любила. Эгоизм, поселившийся в ее душе после " +
+                "замужества, способствует этому."
+        )
+        essay = self.continue_phrase_with_pattern(
+            essay, essay_template['6.1'], 90, 'argument_paragraph2', argument_paragraph2, default_value
+        )
 
-        #     next_sent = essay_template['6.2'].format(water='')
-        #     essay =  continue_phrase(essay + next_sent, 40)
+        return essay + '\n'
 
-        #     return essay + '\n'
+    def _7th_paragraph(self, essay, conclusion='water'):
 
-        sentence_1 = essay_template['6.1'].format(argument_paragraph2=argument_paragraph2)
+        var = np.random.choice(range(len(essay_template['7.1'])))
 
-        return " ".join([essay, sentence_1])
+        essay = self.continue_phrase_with_pattern(
+            essay, essay_template['7.1'][var], 10, 'conclusion', conclusion,
+            "«себялюбие» - это порок современного общества"
+        )
 
-    def _7th_paragraph(self, essay):
-
-        #     next_sent = essay_template['7.1'].format(conclusion='')
-        #     essay =  continue_phrase(essay + next_sent, 40)
-
-        #     return essay
-
-        # example:
-        conclusion = "«себялюбие» - это порок современного общества"
-        # author_position_reformulated = self.reformulate_author_position(author_position)
-        # conclusion = author_position_reformulated
-
-        sentence_1 = essay_template['7.1'].format(conclusion=conclusion)
-
-        return " ".join([essay, sentence_1])
+        return essay
 
     def __call__(self, task):
         return self.generate(task["text"])
@@ -489,15 +499,8 @@ def split_task_and_text(task_text):
 
 def clear(text):
     text = re.sub("[\t\r]+", "", text)
-    text = re.sub("[ ]+[:]", ":",
-                  re.sub("[ ]+[.]", ".",
-                         re.sub("[«][ ]+", "«",
-                                re.sub("[ ]+[»]", "»",
-                                       re.sub("[ ]+[,]", ",",
-                                              re.sub("[ ]+", " ", text))))))
-    text = re.sub("[ ]+[?]", "?", text)
-    text = re.sub("[ ]+[!]", "!", text)
-    text = re.sub("\n+", "\n", text)
+    text = re.sub(r"[ ]+([.,!?»: ])", r"\1", text)
+    text = re.sub(r"([«\])\s+", r"\1", text)
     text = [line.strip() for line in text.split("\n")]
     # text = [line[1:] + line[1].upper() for line in text if len(line)]
     text = "\n".join(text)
@@ -553,7 +556,7 @@ def get_author(text):
     return ["автор"]
 
 
-def mention_author(author, case="nomn"):
+def mention_author(author, mode='A.A. Aa', case="nomn"):
     """Упоминает автора в нужном формате и склонении. Юзать правда лучше только в именительном, т.к. некоторые
     фамилии не склоняются. Например, Черных
 
@@ -573,8 +576,12 @@ def mention_author(author, case="nomn"):
         last_name = author[-1]
     if len(author) > 1:
         last_name = last_name[0].upper() + last_name[1:]
-        initials = ". ".join(map(lambda x: x[0].upper(), author[:-1]))
-        result = "{}. {}".format(initials, last_name)
+        initials = ". ".join(map(lambda x: x[0], author[:-1]))
+        result = "{}. {}".format(initials.upper(), last_name)
     else:
         result = last_name
+
+    if mode == 'Aa':
+        result = result.split('.')[-1].strip()
+
     return result
