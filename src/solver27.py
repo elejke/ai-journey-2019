@@ -305,7 +305,11 @@ class EssayWriter(object):
         theme = self.get_custom_topic(text)
 
         brief_text = clear(summarizer.summarize(text, language="russian", ratio=0.25, split=False))
-        citations = summarizer.summarize(text, language="russian", ratio=0.1, split=True)
+        citations = []
+        ratio = 0.01
+        while len(citations) < 2:
+            citations = summarizer.summarize(text, language="russian", ratio=ratio, split=True)
+            ratio *= 2
 
         essay = self._1st_paragraph(
             theme=self.custom_topics.loc[theme]["theme_to_insert_vinitelniy"].rstrip(".?!…"),
