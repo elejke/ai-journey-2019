@@ -65,15 +65,15 @@ essay_template = {
     # Раздел 5 и 6 в идеальном случае содержит заранее известные аргументы, интегрированные в сочинение (взятые из
     # готовых сочинений).
     # Пример:
-    #   {agrument_paragraph1} = "Вспомним, например, рассказ А. П. Чехов «Анна на шее». Его главная героиня,
+    #   {argument_paragraph1} = "Вспомним, например, рассказ А. П. Чехов «Анна на шее». Его главная героиня,
     #                            Анюта, став по расчету женой состоятельного чиновника, быстро забывает о своем
     #                            отце и братьях, которых прежде так любила. Эгоизм, поселившийся в ее душе после
     #                            замужества, способствует этому."
-    '5.1': "{agrument_paragraph1}\n",
+    '5.1': "{argument_paragraph1}\n",
     # 6. Аргумент 2 (из жизни). В данном параграфе аналогично пятому используется готовый аргумент, который уже
     # обернут в конструкции цитирования и абсолютно избавлен от зависимости с текстом.
     # Пример:
-    #   {agrument_paragraph2} = "Д. Лондон в своем произведении «В далеком краю» повествует читателям о судьбе
+    #   {argument_paragraph2} = "Д. Лондон в своем произведении «В далеком краю» повествует читателям о судьбе
     #                            Уэзерби и Катферта. Отправившись на Север за золотом, они вынуждены перезимовать
     #                            вдвоем в хижине, стоящей далеко от обитаемых мест. И здесь с жестокой
     #                            очевидностью выступает их бескрайний эгоизм. Отношения между героями — та же
@@ -81,7 +81,7 @@ essay_template = {
     #                            каких они очутились, исход ее не может быть иным, чем в финале новеллы: умирает
     #                            Катферт, придавленный телом Уэзерби, которого он прикончил в звериной драке
     #                            из-за чашки сахара."
-    '6.1': "{agrument_paragraph2}\n",
+    '6.1': "{argument_paragraph2}\n",
     # 7. Заключение.
     # На деле - заключение {conclusion} должно являться переформулированной позицией автора
     # (у меня была клевая училка по русскому, и она всегда это говорила), так что в этом разделе нам тоже нужна
@@ -266,12 +266,19 @@ class EssayWriter(object):
         brief_text = clear(summarizer.summarize(text, language="russian", ratio=0.25, split=False))
         citation1 = np.random.choice(summarizer.summarize(text, language="russian", ratio=0.1, split=True))
 
-        essay = self._1st_paragraph(theme=theme, author=mention_author(author))
+        essay = self._1st_paragraph(theme=self.custom_topics.loc[theme]["theme_to_insert_vinitelniy"],
+                                    problem_formulation=self.custom_topics.loc[theme]["problem_formulation"],
+                                    problem_explanation=self.custom_topics.loc[theme]["problem_explanation"],
+                                    author=mention_author(author))
         essay = self._2nd_paragraph(essay, citation1, citation1)
-        essay = self._3rd_paragraph(essay, mention_author(author))
+        essay = self._3rd_paragraph(essay,
+                                    author=mention_author(author),
+                                    author_position=self.custom_topics.loc[theme]["author_position"])
         essay = self._4th_paragraph(essay)
-        essay = self._5th_paragraph(essay, "проблема плохого примера влияет на результат")
-        essay = self._6th_paragraph(essay, "проблема плохого примера влияет на результат")
+        essay = self._5th_paragraph(essay,
+                                    argument_paragraph1=self.custom_topics.loc[theme]["argument_paragraph1"])
+        essay = self._6th_paragraph(essay,
+                                    argument_paragraph2=self.custom_topics.loc[theme]["argument_paragraph2"])
         essay = self._7th_paragraph(essay)
 
         #     return essay[len(brief_text):]
@@ -285,18 +292,27 @@ class EssayWriter(object):
         text = text[:-40] + re.split(r"[.!?]", text[-40:])[0] + '. '  # Cut predicted sentence up to dot
         return clear(text)
 
-    def _1st_paragraph(self, theme="тему семьи и детства", problem="проблема эгоизма", author="автор"):
+    def _1st_paragraph(self,
+                       theme=None,
+                       problem_formulation=None,
+                       problem_explanation=None,
+                       author=None):
 
+        if author is None:
+            author = "автор"
         # TODO: theme classifier
-        # theme_name = "тему семьи и детства"
+        if theme is None:
+            theme = "тему семьи и детства"
         # TODO: problem classifier:
-        # problem_formulation = "проблема эгоизма"
+        if problem_formulation is None:
+            problem_formulation = "проблема эгоизма"
         # TODO: problem -> problem_explanation mapping dict:
-        # problem_explanation = "безразличие людей к своим родным и близким, таким же людям как и они"
+        if problem_explanation is None:
+            problem_explanation = "проблема эгоизма"
 
-        sentence_1 = essay_template['1.1'].format(theme_name=self.custom_topics.loc[theme]["theme_to_insert_vinitelniy"])
-        sentence_2 = essay_template['1.2'].format(problem_formulation=problem)
-        sentence_3 = essay_template['1.3'].format(author=author, problem_explanation=problem)
+        sentence_1 = essay_template['1.1'].format(theme_name=theme)
+        sentence_2 = essay_template['1.2'].format(problem_formulation=problem_formulation)
+        sentence_3 = essay_template['1.3'].format(author=author, problem_explanation=problem_explanation)
 
         #     next_sent = essay_template['1.3'].format(problem_formulation='')
         #     essay =  continue_phrase(text + '\n\n' + next_sent, 10)
@@ -328,13 +344,19 @@ class EssayWriter(object):
 
         return " ".join([essay, sentence_1, sentence_2])
 
-    def _3rd_paragraph(self, essay, author):
+    def _3rd_paragraph(self,
+                       essay,
+                       author=None,
+                       author_position=None,
+                       author_position_reformulated=None):
 
+        if author is None:
+            author = "автор"
         # TODO: author position detector (???)):
-        # author_position = self.author_position_detector(text, self.problem_formulation)
-        author_position = "в обществе распространилась страшная болезнь – «себялюбие»"
-        #     author_position_reformulated = self.reformulate_author_position(author_position)
-        author_position_reformulated = "эгоизм и «себялюбие» захватывают наше общество"
+        if author_position is None:
+            author_position = "в обществе распространилась страшная болезнь – «себялюбие»"
+        if author_position_reformulated is None:
+            author_position_reformulated = author_position
 
         sentence_1 = essay_template['3.1'].format(author_position=author_position)
         sentence_2 = essay_template['3.2'].format(author=author,
@@ -380,18 +402,19 @@ class EssayWriter(object):
         #     return essay + '\n'
         return " ".join([essay, sentence_1, sentence_2])
 
-    def _5th_paragraph(self, essay, problem_formulation):
+    def _5th_paragraph(self, essay, argument_paragraph1=None):
 
         # TODO: argument paragraph generator
 
-        agrument_paragraph1 = ("Д. Лондон в своем произведении «В далеком краю» повествует читателям о судьбе " +
-                               "Уэзерби и Катферта. Отправившись на Север за золотом, они вынуждены перезимовать " +
-                               "вдвоем в хижине, стоящей далеко от обитаемых мест. И здесь с жестокой " +
-                               "очевидностью выступает их бескрайний эгоизм. Отношения между героями — та же " +
-                               "конкурентная борьба, только не за прибыль, а за выживание. И в тех условиях, в " +
-                               "каких они очутились, исход ее не может быть иным, чем в финале новеллы: умирает " +
-                               "Катферт, придавленный телом Уэзерби, которого он прикончил в звериной драке " +
-                               "из-за чашки сахара.")
+        if argument_paragraph1 is None:
+            argument_paragraph1 = ("Д. Лондон в своем произведении «В далеком краю» повествует читателям о судьбе " +
+                                   "Уэзерби и Катферта. Отправившись на Север за золотом, они вынуждены перезимовать " +
+                                   "вдвоем в хижине, стоящей далеко от обитаемых мест. И здесь с жестокой " +
+                                   "очевидностью выступает их бескрайний эгоизм. Отношения между героями — та же " +
+                                   "конкурентная борьба, только не за прибыль, а за выживание. И в тех условиях, в " +
+                                   "каких они очутились, исход ее не может быть иным, чем в финале новеллы: умирает " +
+                                   "Катферт, придавленный телом Уэзерби, которого он прикончил в звериной драке " +
+                                   "из-за чашки сахара.")
         #     next_sent = essay_template['5.1'].format(argument1_author=argument1_author,
         #                                              argument1_source_name=argument1_source_name)
         #     essay += next_sent
@@ -400,18 +423,19 @@ class EssayWriter(object):
         #     essay =  continue_phrase(essay + next_sent, 40)
 
         #     return essay + '\n'
-        sentence_1 = essay_template['5.1'].format(agrument_paragraph1=agrument_paragraph1)
+        sentence_1 = essay_template['5.1'].format(argument_paragraph1=argument_paragraph1)
 
         return " ".join([essay, sentence_1])
 
-    def _6th_paragraph(self, essay, problem_formulation):
+    def _6th_paragraph(self, essay, argument_paragraph2=None):
 
         # TODO: argument paragraph generator
 
-        agrument_paragraph2 = ("Вспомним, например, рассказ А. П. Чехов «Анна на шее». Его главная героиня, " +
-                               "Анюта, став по расчету женой состоятельного чиновника, быстро забывает о своем " +
-                               "отце и братьях, которых прежде так любила. Эгоизм, поселившийся в ее душе после " +
-                               "замужества, способствует этому.")
+        if argument_paragraph2 is None:
+            argument_paragraph2 = ("Вспомним, например, рассказ А. П. Чехов «Анна на шее». Его главная героиня, " +
+                                   "Анюта, став по расчету женой состоятельного чиновника, быстро забывает о своем " +
+                                   "отце и братьях, которых прежде так любила. Эгоизм, поселившийся в ее душе после " +
+                                   "замужества, способствует этому.")
         #     next_sent = essay_template['6.1'].format(argument2_author=argument2_author,
         #                                              argument2_source_name=argument2_source_name)
         #     essay += next_sent
@@ -421,7 +445,7 @@ class EssayWriter(object):
 
         #     return essay + '\n'
 
-        sentence_1 = essay_template['6.1'].format(agrument_paragraph2=agrument_paragraph2)
+        sentence_1 = essay_template['6.1'].format(argument_paragraph2=argument_paragraph2)
 
         return " ".join([essay, sentence_1])
 
