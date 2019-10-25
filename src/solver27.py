@@ -307,20 +307,28 @@ class EssayWriter(object):
         brief_text = clear(summarizer.summarize(text, language="russian", ratio=0.25, split=False))
         citations = summarizer.summarize(text, language="russian", ratio=0.1, split=True)
 
-        essay = self._1st_paragraph(theme=self.custom_topics.loc[theme]["theme_to_insert_vinitelniy"],
-                                    problem_formulation=self.custom_topics.loc[theme]["problem_formulation"],
-                                    problem_explanation=self.custom_topics.loc[theme]["problem_explanation"],
-                                    author=mention_author(author))
+        essay = self._1st_paragraph(
+            theme=self.custom_topics.loc[theme]["theme_to_insert_vinitelniy"].rstrip(".?!…"),
+            problem_formulation=self.custom_topics.loc[theme]["problem_formulation"].rstrip(".?!…"),
+            problem_explanation=self.custom_topics.loc[theme]["problem_explanation"].rstrip(".?!…"),
+            author=mention_author(author)
+        )
         essay = self._2nd_paragraph(brief_text + '\n\n' + essay, citations[0], citations[1])
-        essay = self._3rd_paragraph(essay,
-                                    author_last_name=mention_author(author, mode='Aa'),
-                                    author_position=self.custom_topics.loc[theme]["author_position"],
-                                    author_position_reformulated='water')
+        essay = self._3rd_paragraph(
+            essay,
+            author_last_name=mention_author(author, mode='Aa'),
+            author_position=self.custom_topics.loc[theme]["author_position"].rstrip(".?!…"),
+            author_position_reformulated=self.custom_topics.loc[theme]["author_position"].rstrip(".?!…")
+        )
         essay = self._4th_paragraph(essay, own_position='water')
-        essay = self._5th_paragraph(essay,
-                                    argument_paragraph1=self.custom_topics.loc[theme]["argument_paragraph1"])
-        essay = self._6th_paragraph(essay,
-                                    argument_paragraph2=self.custom_topics.loc[theme]["argument_paragraph2"])
+        essay = self._5th_paragraph(
+            essay,
+            argument_paragraph1=self.custom_topics.loc[theme]["argument_paragraph1"].rstrip(".?!…")
+        )
+        essay = self._6th_paragraph(
+            essay,
+            argument_paragraph2=self.custom_topics.loc[theme]["argument_paragraph2"].rstrip(".?!…")
+        )
         essay = self._7th_paragraph(essay, conclusion='water')
 
         return essay[len(brief_text) + 2:]
