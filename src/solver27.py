@@ -501,7 +501,7 @@ def split_task_and_text(task_text):
 def clear(text):
     text = re.sub("[\t\r]+", "", text)
     text = re.sub(r"[ ]+([.,!?»: ])", r"\1", text)
-    text = re.sub(r"([«\])\s+", r"\1", text)
+    text = re.sub(r"([«])\s+", r"\1", text)
     text = [line.strip() for line in text.split("\n")]
     # text = [line[1:] + line[1].upper() for line in text if len(line)]
     text = "\n".join(text)
