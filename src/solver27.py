@@ -29,9 +29,8 @@ essay_template = {
     #   {theme_name} = "тему деревни и города"          надо подумать, выписал примеры)
     #   {theme_name} = "тему культуры и искусства"
     '1.1': [
-        'Автор в своем тексте раскрывает тему {theme_name} и рассматривает несколько актуальных проблем современности',
-        'Прочитанный мною текст затрагивает важную общечеловеческую тему {theme_name} и раскрывает ряд актуальных '
-        'проблем',
+        '{author} в своем тексте раскрывает тему {theme_name} и рассматривает несколько актуальных проблем современности',
+        '{author} затрагивает важную общечеловеческую тему {theme_name} и раскрывает ряд актуальных проблем',
     ],
     # здесь формулировка проблемы может быть сделана только в именительном падеже:
     # Пример:
@@ -47,8 +46,10 @@ essay_template = {
     # Пример:
     #   {problem_explanation} = "безразличие людей к своим родным и близким, таким же людям как и они"
     '1.3': [
-        '{author} заставляет нас глубоко задуматься о {problem_explanation}',
-        '{problem_explanation} - именно над этим заставляет нас поразмышлять {author}'
+        '{problem_explanation}',
+        '{problem_explanation}'
+        # '{author} заставляет нас глубоко задуматься о {problem_explanation}',
+        # '{problem_explanation} - именно над этим заставляет нас поразмышлять {author}'
     ],
     # 2. Комментарий проблемы (здесь два примера по проблеме из прочитанного текста, которые помогают понять суть
     # проблемы)
@@ -341,7 +342,6 @@ class EssayWriter(object):
             essay = self.continue_phrase(essay + sent_template.format(**replacement_dict, **{variable_name: ''}),
                                          n_words)
         elif (variable_value == '') or variable_value is None:
-            author_position = default_value
             essay += sent_template.format(**replacement_dict, **{variable_name: default_value})
         else:
             essay += sent_template.format(**replacement_dict, **{variable_name: variable_value})
@@ -368,10 +368,11 @@ class EssayWriter(object):
 
         var = np.random.choice(range(len(essay_template['1.1'])))
 
-        sentence_1 = essay_template['1.1'][var].format(theme_name=theme)
+        sentence_1 = essay_template['1.1'][var].format(
+            author=author[0].upper() + author[1:], theme_name=theme
+        )
         sentence_2 = essay_template['1.2'][var].format(problem_formulation=problem_formulation)
-        sentence_3 = essay_template['1.3'][var].format(
-            author=author, problem_explanation=problem_explanation
+        sentence_3 = essay_template['1.3'][var].format(problem_explanation=problem_explanation
         )
 
         return ". ".join([sentence_1, sentence_2, sentence_3]) + '.\n'
