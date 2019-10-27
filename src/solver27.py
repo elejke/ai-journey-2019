@@ -304,12 +304,8 @@ class EssayWriter(object):
         author = get_author(task)
         theme = self.get_custom_topic(text)
 
-        brief_text = clear(summarizer.summarize(text, language="russian", ratio=0.25, split=False))
-        citations = []
-        ratio = 0.01
-        while len(citations) < 2:
-            citations = summarizer.summarize(text, language="russian", ratio=ratio, split=True)
-            ratio *= 2
+        brief_text, citation1, citation2, _ = get_brief_text_and_citations(text)
+        brief_text = clear(brief_text) + '\n\n'
 
         essay = self._1st_paragraph(
             theme=self.custom_topics.loc[theme]["theme_to_insert_vinitelniy"].rstrip(".?!…"),
@@ -317,7 +313,7 @@ class EssayWriter(object):
             problem_explanation=self.custom_topics.loc[theme]["problem_explanation"].rstrip(".?!…"),
             author=mention_author(author)
         )
-        essay = self._2nd_paragraph(brief_text + '\n\n' + essay, citations[0], citations[1])
+        essay = self._2nd_paragraph(brief_text + essay, citation1, citation2)
         essay = self._3rd_paragraph(
             essay,
             author_last_name=mention_author(author, mode='Aa'),
@@ -335,7 +331,7 @@ class EssayWriter(object):
         )
         essay = self._7th_paragraph(essay, conclusion='water')
 
-        return essay[len(brief_text) + 2:]
+        return essay[len(brief_text):]
 
     def continue_phrase(self, text, n_words=10):
         init_len = len(text)
@@ -499,22 +495,22 @@ def split_task_and_text(task_text):
     :return : tuple(Task formulation, Referenced text of the task)
     """
 
-    splitted = re.split(r'\(\d{1,3}\)', task_text)
+    splitted = re.split(r'\(\d{1,3}\) *', task_text)
     if len(splitted) < 5:
         return "", task_text
     formulation = [splitted[0]]
     text = splitted[1:-1]
 
-    last = re.split(r'[!?.…]', splitted[-1])
+    last = re.split(r'([!?.…]|\.{3})', splitted[-1])
     text.append(last[0])
     formulation.append('.'.join(last[1:]))
 
-    return ''.join(formulation), ''.join(text).strip()
+    return ''.join(formulation), ''.join(text).strip() + splitted[-1][len(last[0])]
 
 
 def clear(text):
     text = re.sub("[\t\r]+", "", text)
-    text = re.sub(r"[ ]+([.,!?»: ])", r"\1", text)
+    text = re.sub(r"[ ]+([.,!?»: ]|\.{3})", r"\1", text)
     text = re.sub(r"([«])\s+", r"\1", text)
     text = [line.strip() for line in text.split("\n")]
     # text = [line[1:] + line[1].upper() for line in text if len(line)]
@@ -600,3 +596,58 @@ def mention_author(author, mode='A.A. Aa', case="nomn"):
         result = result.split('.')[-1].strip()
 
     return result
+
+
+def preprocess_citation_punctuation(citation):
+    return citation.group(0) \
+        .replace('…', ' punct_ellipsis') \
+        .replace('...', ' punct_ellipsis') \
+        .replace('.', ' punct_dot') \
+        .replace('!', ' punct_exclamatory') \
+        .replace('?', ' punct_question')
+
+
+def postprocess_citation_punctuation(citation):
+    return citation.group(0) \
+        .replace(' punct_ellipsis', '…') \
+        .replace(' punct_dot', '.') \
+        .replace(' punct_exclamatory', '!') \
+        .replace(' punct_question', '?')
+
+
+def get_brief_text_and_citations(text, brief_text=0.25):
+    """Генерит краткое содержание текста и возвращает 2 самые значимые цитаты (в качестве полного предложения с
+    пунктуацией в конце). Использует библиотеку summa, которая работает как PageRank, только для  предложений"""
+    processed_text = re.sub(r'([….!?]|\.{3})(») ([А-Я])', r'\1\2. \3', text)
+    processed_text = re.sub(r'([Тт])\. *е\.', r'\1_е', processed_text)  # т. е.
+
+    citations_pattern = r'(«.*?»|".*?")'
+    processed_text = re.sub(citations_pattern, preprocess_citation_punctuation, processed_text)
+    processed_text = re.sub(r'(…|\.{3})', ' xxellipsis.', processed_text)
+    ranked_sentences = summarizer.summarize(re.sub('[–-]\ ', ' ', processed_text), language="russian",
+                                            ratio=1., scores=True)
+
+    ranked_sentences = pd.DataFrame(ranked_sentences)
+    ranked_sentences[0] = ranked_sentences[0].apply(
+        lambda x: re.sub(
+            citations_pattern, postprocess_citation_punctuation, re.sub(
+                r'\ {0,1}xxellipsis.', '…', re.sub(r'([Тт])_е', r'\1. e.', x)
+            )
+        )
+    )
+
+    quant = ranked_sentences[1].quantile(1 - brief_text)
+    brief_text = ' '.join(ranked_sentences.loc[ranked_sentences[1] >= quant, 0])
+
+    ranked_sentences = ranked_sentences.sort_values(1, ascending=False)
+    ranked_sentences['sentence_len'] = ranked_sentences[0].apply(lambda x: len(x.split()))
+
+    try:
+        indices = (ranked_sentences['sentence_len'] > 8) & (ranked_sentences['sentence_len'] <= 25)
+        probs = ranked_sentences.loc[indices, 1].head(5)
+        citations = ranked_sentences.loc[indices].head(5).sample(2, weights=probs).sort_index().copy()
+    except ValueError:
+        citations = ranked_sentences.head(5).sample(2, weights=ranked_sentences.head(5)[1]).sort_index().copy()
+    citations[0] = citations[0].apply(lambda x: x[0].upper() + x[1:])
+
+    return brief_text, citations.iloc[0, 0], citations.iloc[1, 0], ranked_sentences
