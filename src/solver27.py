@@ -54,8 +54,8 @@ essay_template = {
     # 2. Комментарий проблемы (здесь два примера по проблеме из прочитанного текста, которые помогают понять суть
     # проблемы)
     '2.1': [
-        '«{citation1}» В данном предложении находит свое отражение главный тезис рассуждений автора',
-        'Основной тезис авторской позиции выражен в следующих словах: «{citation1}»',
+        '«{citation1}»»» В данном предложении находит свое отражение главный тезис рассуждений автора',
+        'Основной тезис авторской позиции выражен в следующих словах: «{citation1}»»»',
     ],
     # Трактовка цитаты. Но это только генератором скорее всего.
     '2.2': [
@@ -64,8 +64,8 @@ essay_template = {
         # 'В них звучит мысль о том, что {water}.'
     ],
     '2.3': [
-        'Более детально в сути проблемы можно разобраться прочитав предложение «{citation2}»',
-        'Но на этом рассуждения автора не заканчиваются. Он также пишет: «{citation2}»',
+        'Более детально в сути проблемы можно разобраться прочитав предложение «{citation2}»»»',
+        'Но на этом рассуждения автора не заканчиваются. Он также пишет: «{citation2}»»»',
     ],
     '2.4': [
         'Обе приведённых цитаты, дополняя друг друга, позволяют нам убедиться в том, что {water}',
@@ -394,13 +394,23 @@ class EssayWriter(object):
 
         var = np.random.choice(range(len(essay_template['2.1'])))
 
+        def postprocess_citation(x):
+            """Внимание! Точка всегда ставится после закрывающих кавычек, но не перед ними. Многоточие, вопросительный
+            и восклицательный знак ставятся перед закрывающими кавычками."""
+            if re.match(r'([!?…]|\.{3})»»»', x):
+                x = re.sub(r'([!?…]|\.{3})»»»', r'\1»', x)
+            else:
+                x = re.sub(r'\.»»»', r'».', x)
+            x = re.sub(r'»»»', r'»', x)
+            if '»' not in x[-3:]:
+                x += '.'
+            return x + ' '
+
         essay = essay + essay_template['2.1'][var].format(citation1=citation1)
-        if not essay.endswith('»'):
-            essay += '. '
+        essay = postprocess_citation(essay)
         essay = self.continue_phrase(essay + essay_template['2.2'][var].format(water=''), 40) + '. '
         essay = essay + ' ' + essay_template['2.3'][var].format(citation2=citation2)
-        if not essay.endswith('»'):
-            essay += '. '
+        essay = postprocess_citation(essay)
         essay = self.continue_phrase(essay + essay_template['2.4'][var].format(water=''), 50).rstrip('.')
 
         return essay + '.\n\n'
@@ -622,8 +632,8 @@ def postprocess_citation_punctuation(citation):
 def get_brief_text_and_citations(text, brief_text=0.25):
     """Генерит краткое содержание текста и возвращает 2 самые значимые цитаты (в качестве полного предложения с
     пунктуацией в конце). Использует библиотеку summa, которая работает как PageRank, только для  предложений"""
-    processed_text = re.sub(r'([….!?]|\.{3})(») ([А-Я])', r'\1\2. \3', text)
-    processed_text = re.sub(r'([Тт])\. *е\.', r'\1_е', processed_text)  # т. е.
+    # processed_text = re.sub(r'([….!?]|\.{3})(») ([А-Я])', r'\1\2. \3', text)
+    processed_text = re.sub(r'([Тт])\. *е\.', r'\1_е', text)  # т. е.
 
     citations_pattern = r'(«.*?»|".*?")'
     processed_text = re.sub(citations_pattern, preprocess_citation_punctuation, processed_text)
