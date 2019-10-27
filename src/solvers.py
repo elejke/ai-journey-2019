@@ -21,6 +21,8 @@ import stanfordnlp
 
 import pymorphy2
 
+from scipy.spatial.distance import pdist, squareform
+
 from keras_bert import extract_embeddings
 from keras_bert.tokenizer import Tokenizer
 from keras_bert.loader import load_vocabulary
@@ -456,7 +458,7 @@ with open("../models/dictionaries/freq_dict_ruscorpora.json") as f:
     freq_dict = json.load(f)
 
 
-def solver_24(task):
+def solver_24_old(task):
 
     text = task["text"]
     boundaries = regex.search("\s\d+[\p{Pd}−]\d+", text)
@@ -491,6 +493,190 @@ def solver_24(task):
     else:
         words = [word for word in text.lower().split() if len(word) > 1]
         return random.choice(words)
+
+
+words_for_drop = frozenset({
+    'а','абы','аж','ан','без','благо','буде',
+    'будто','бы','в','вам','вами','вас','ваш','ваша',
+    'ваше','вашего','вашей','вашем','вашему',
+    'ваши','вашим','вашими','ваших','вашу','во',
+    'вроде','вы','да','дабы','даже','для',
+    'до','дотуда','его','едва','ее','ежели',
+    'ей','ему','если','ею','её','ж','же','за',
+    'затем','зато','здесь','и','ибо','из','или',
+    'им','ими','итак','их','к','кабы','как','когда',
+    'коли','коль','который','ли','либо','лишь',
+    'меня','мне','мной','мною','мое','моего',
+    'моей','моем','моему','мои','моим','моими',
+    'моих','мой','мою','моя','моё','моём','мы',
+    'на','над','нам','нами','нас','наш','наша',
+    'наше','нашего','нашей','нашем','нашему','наши',
+    'нашим','нашими','наших','нашу','не','него','нее',
+    'нежели','ней','нему','нею','неё','ни','нибудь',
+    'ним','ними','них','но','ну','о','об','однако',
+    'он','она','они','оно','от','отсюда','оттого',
+    'оттуда','перед','по','под','пока','покамест',
+    'покуда','поскольку','потому','поэтому','при',
+    'притом','причем','про','пускай','пусть','раз',
+    'разве','ровно','с','свое','своего','своей',
+    'своем','своему','свои','своим','своими','своих',
+    'свой','свою','своя','своё','своём','сейчас',
+    'сиречь','словно','со','стольким','столькими',
+    'стольких','столько','сюда','та','так','такая',
+    'также','такие','таким','такими','таких','таков',
+    'такова','таково','таковы','такого','такое','такой',
+    'таком','такому','такою','такую','там','твое',
+    'твоего','твоей','твоем','твоему','твои','твоим',
+    'твоими','твоих','твой','твою','твоя','твоё',
+    'твоём','те','тебе','тебя','тем','теми','теперь',
+    'тех','то','тобой','тобою','тогда','того','тоже',
+    'той','только','том','тому','тот','точно','тою',
+    'ту','туда','тут','ты','у','уж','хоть','хотя',
+    'чем','чисто','что','чтоб','чтобы','чуть','эта',
+    'эти','этим','этих','это','этого','этой','этом',
+    'этому','этот','этою','эту','я','якобы', 'все',
+    'всё', 'сам'
+})
+
+
+def parse_task_with_text(text):
+    pre_formulation = ""
+    sentences = []
+    post_formulation = ""
+    t = re.search(r"\(\d{1,2}\)", text)
+    while t:
+        if t.group() == "(1)":
+            pre_formulation = text[:t.span()[0]]
+            text = text[t.span()[1]+1:]
+        else:
+            sentences.append(text[:t.span()[0]])
+            text = text[t.span()[1]+1:]
+        t = re.search(r"\(\d{1,2}\)", text)
+    last_delimiter = re.search(r"[\.\!\?]", text)
+    if not last_delimiter:
+        cut = len(text)
+    else:
+        cut = last_delimiter.span()[1]
+    sentences.append(text[:cut])
+    post_formulation = text[cut:]
+    sentences = [t.strip("\n").strip(" ") for t in sentences]
+    return pre_formulation, sentences, post_formulation
+
+
+def strings_similarity(X, Y):
+    m = len(X)
+    n = len(Y)
+    LCSuff = [[0 for k in range(n+1)] for l in range(m+1)]
+    result = 0
+
+    for i in range(m + 1):
+        for j in range(n + 1):
+            if (i == 0 or j == 0):
+                LCSuff[i][j] = 0
+            elif (X[i-1] == Y[j-1]):
+                LCSuff[i][j] = LCSuff[i-1][j-1] + 1
+                result = max(result, LCSuff[i][j])
+            else:
+                LCSuff[i][j] = 0
+    return min(result / m, result / n)
+
+
+def extract_words_syn_ant(text):
+    text = re.sub(r"[^а-я ё-]", " ", text.lower())
+    text = re.sub(r"\s+", " ", text).strip()
+    words = text.split(" ")
+    words_pos = {}
+    pos2ignore = {"NPRO", "PREP", "CONJ", "PRCL", "INTJ"}
+    for i, w in enumerate(words):
+        analysis = morph.parse(w)
+        poses = [an.tag.POS for an in analysis]
+        norm_forms = [an.normal_form for an in analysis]
+        if len(pos2ignore.intersection(poses))>0:
+            continue
+        if len(words_for_drop.intersection(norm_forms))>0:
+            continue
+        is_added = {}
+        for pos in poses:
+            is_added[pos] = False
+        for pos, norm_f in zip(poses, norm_forms):
+            if pos not in words_pos:
+                words_pos[pos] = []
+            if not is_added[pos]:
+                words_pos[pos] += [(w, norm_f, i)]
+                is_added[pos] = True
+    join_pos = {
+        "ADJF": [],
+        "ADJS": [],
+        "NOUN": [],
+        "COMP": [],
+        "VERB": ["INFN"],
+        "PRTF": [],
+        "PRTS": [],
+        "GRND": [],
+        "ADVB": [],
+    }
+    words_pos_new = {}
+    for k in join_pos:
+        if k in words_pos:
+            words_pos_new[k] = words_pos[k]
+            for v in join_pos[k]:
+                if v in words_pos:
+                    words_pos_new[k] += words_pos[v]
+            words_pos_new[k] = list(set(words_pos_new[k]))
+    return words_pos_new
+
+
+def solver_24(task):
+    text = task["text"]
+    pre_formulation, sentences, post_formulation = parse_task_with_text(text)
+    boundaries = []
+    task_type = "unknown"
+    for sent in re.split(r"[\.\!\?]", pre_formulation+post_formulation):
+        if "разеолог" in sent:
+            task_type = "phraseologism"
+        elif "нтоним" in sent:
+            task_type = "antonym"
+        elif "иноним" in sent:
+            task_type = "sinonym"
+        if task_type != "unknown":
+            sentences_range = re.search(r"\d{1,2}[^\d]{1,3}\d{1,2}", sent)
+            if sentences_range:
+                boundaries = [int(t) for t in re.split(r"[^\d]*", sentences_range.group())]
+            else:
+                sentences_range = re.search(r" \d{1,2} ", sent)
+                if sentences_range:
+                    boundaries = [int(sentences_range.group().strip())] * 2
+    if len(boundaries) > 0:
+        subtext = " ".join(sentences[boundaries[0]-1:boundaries[1]])
+    else:
+        subtext = text
+    answer = ""
+    if task_type in ["sinonym", "antonym"]:
+        words = extract_words_syn_ant(subtext)
+        best_pairs = {}
+        best_score = 1000
+        for group in words:
+            if len(words[group]) > 1:
+                list_of_words = [t[0] for t in words[group]]
+                list_of_normal_words = [t[1] for t in words[group]]
+                list_of_positions = [t[2] for t in words[group]]
+                embs = [model_fasttext[t] for t in list_of_normal_words]
+                embs = np.array([t / np.linalg.norm(t, ord=2) for t in embs])
+                dists = pairwise_distances(embs, metric="cosine")
+                dists2 = pairwise_distances(np.array(list_of_positions).reshape(-1, 1), metric="l1")
+                dists3 = squareform(pdist(np.array(list_of_normal_words).reshape(-1, 1), lambda x,y: strings_similarity(x[0],y[0])))
+                mask_exclude = (dists < 0.001) + (dists3 > 0.6)
+    #             dists *= np.log(dists2+2)
+                dists[mask_exclude] = 1000
+                preds = np.unravel_index(np.argmin(dists), (len(embs), len(embs)))
+                preds = np.array(preds)
+                best_pairs[group] = [np.array(list_of_words)[preds], dists[preds[0]][preds[1]], dists2[preds[0]][preds[1]]]
+                if best_pairs[group][1] < best_score:
+                    answer = "".join(best_pairs[group][0])
+                    best_score = best_pairs[group][1]
+    else:
+        return solver_24_old(task)
+    return answer
 
 
 with open("../models/task_16/task_16_clf.pkl", 'rb') as file:
