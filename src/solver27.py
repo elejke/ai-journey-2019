@@ -54,7 +54,7 @@ essay_template = {
     # 2. Комментарий проблемы (здесь два примера по проблеме из прочитанного текста, которые помогают понять суть
     # проблемы)
     '2.1': [
-        '«{citation1}» - в данном предложении текста находит свое отражение главный тезис рассуждений автора',
+        '«{citation1}» В данном предложении находит свое отражение главный тезис рассуждений автора',
         'Основной тезис авторской позиции выражен в следующих словах: «{citation1}»',
     ],
     # Трактовка цитаты. Но это только генератором скорее всего.
@@ -394,9 +394,13 @@ class EssayWriter(object):
 
         var = np.random.choice(range(len(essay_template['2.1'])))
 
-        essay = essay + essay_template['2.1'][var].format(citation1=citation1) + '. '
+        essay = essay + essay_template['2.1'][var].format(citation1=citation1)
+        if not essay.endswith('»'):
+            essay += '. '
         essay = self.continue_phrase(essay + essay_template['2.2'][var].format(water=''), 40) + '. '
-        essay = essay + ' ' + essay_template['2.3'][var].format(citation2=citation2) + '. '
+        essay = essay + ' ' + essay_template['2.3'][var].format(citation2=citation2)
+        if not essay.endswith('»'):
+            essay += '. '
         essay = self.continue_phrase(essay + essay_template['2.4'][var].format(water=''), 50).rstrip('.')
 
         return essay + '.\n\n'
