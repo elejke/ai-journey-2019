@@ -88,7 +88,8 @@ class Solver(BertEmbedder):
         elif regex.search("сложного", type_) or regex.search("сложное", type_):
             return "ошибка в построении сложного предложения"
         elif regex.search("сложноподчин", type_):
-            return "ошибка в построении сложноподчинённого предложения"
+            return "ошибка в построении сложного предложения"
+            # return "ошибка в построении сложноподчинённого предложения"
         elif regex.search("числительн", type_):
             return "ошибка в употреблении имени числительного"
         elif regex.search("глагол", type_) and regex.search("врем", type_):
