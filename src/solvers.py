@@ -495,7 +495,7 @@ def solver_24_old(task):
         return random.choice(words)
 
 
-words_for_drop = frozenset({
+solver_24_words_for_drop = frozenset({
     'а','абы','аж','ан','без','благо','буде',
     'будто','бы','в','вам','вами','вас','ваш','ваша',
     'ваше','вашего','вашей','вашем','вашему',
@@ -539,7 +539,7 @@ words_for_drop = frozenset({
 })
 
 
-def parse_task_with_text(text):
+def solver_24_parse_task_with_text(text):
     pre_formulation = ""
     sentences = []
     post_formulation = ""
@@ -563,7 +563,7 @@ def parse_task_with_text(text):
     return pre_formulation, sentences, post_formulation
 
 
-def strings_similarity(X, Y):
+def solver_24_strings_similarity(X, Y):
     m = len(X)
     n = len(Y)
     LCSuff = [[0 for k in range(n+1)] for l in range(m+1)]
@@ -581,7 +581,7 @@ def strings_similarity(X, Y):
     return min(result / m, result / n)
 
 
-def extract_words_syn_ant(text):
+def solver_24_extract_words_syn_ant(text):
     text = re.sub(r"[^а-я ё-]", " ", text.lower())
     text = re.sub(r"\s+", " ", text).strip()
     words = text.split(" ")
@@ -593,7 +593,7 @@ def extract_words_syn_ant(text):
         norm_forms = [an.normal_form for an in analysis]
         if len(pos2ignore.intersection(poses))>0:
             continue
-        if len(words_for_drop.intersection(norm_forms))>0:
+        if len(solver_24_words_for_drop.intersection(norm_forms))>0:
             continue
         is_added = {}
         for pos in poses:
@@ -628,7 +628,7 @@ def extract_words_syn_ant(text):
 
 def solver_24(task):
     text = task["text"]
-    pre_formulation, sentences, post_formulation = parse_task_with_text(text)
+    pre_formulation, sentences, post_formulation = solver_24_parse_task_with_text(text)
     boundaries = []
     task_type = "unknown"
     for sent in re.split(r"[\.\!\?]", pre_formulation+post_formulation):
@@ -652,7 +652,7 @@ def solver_24(task):
         subtext = text
     answer = ""
     if task_type in ["sinonym", "antonym"]:
-        words = extract_words_syn_ant(subtext)
+        words = solver_24_extract_words_syn_ant(subtext)
         best_pairs = {}
         best_score = 1000
         for group in words:
@@ -664,7 +664,7 @@ def solver_24(task):
                 embs = np.array([t / np.linalg.norm(t, ord=2) for t in embs])
                 dists = pairwise_distances(embs, metric="cosine")
                 dists2 = pairwise_distances(np.array(list_of_positions).reshape(-1, 1), metric="l1")
-                dists3 = squareform(pdist(np.array(list_of_normal_words).reshape(-1, 1), lambda x,y: strings_similarity(x[0],y[0])))
+                dists3 = squareform(pdist(np.array(list_of_normal_words).reshape(-1, 1), lambda x,y: solver_24_strings_similarity(x[0], y[0])))
                 mask_exclude = (dists < 0.001) + (dists3 > 0.6)
     #             dists *= np.log(dists2+2)
                 dists[mask_exclude] = 1000
