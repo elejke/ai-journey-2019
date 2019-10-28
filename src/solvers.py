@@ -645,7 +645,7 @@ def solver_24(task):
             sent = re.sub(r"\d{4}", "", sent)
             sentences_range = re.search(r"\d{1,2}[^\d]{1,3}\d{1,2}", sent)
             if sentences_range:
-                boundaries = [int(t) for t in re.split(r"[^\d]*", sentences_range.group())]
+                boundaries = [int(t) for t in re.split(r"[^\d]+", sentences_range.group())]
             else:
                 sentences_range = re.search(r" \d{1,2} ", sent)
                 if sentences_range:
