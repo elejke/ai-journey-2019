@@ -593,6 +593,8 @@ def solver_24_extract_words_syn_ant(text):
         if "-" in w:
             continue
         analysis = morph.parse(w)
+        if ("Name" in analysis[0].tag) or ("Patr" in analysis[0].tag):
+            continue
         poses = [an.tag.POS for an in analysis]
         norm_forms = [an.normal_form for an in analysis]
         if len(pos2ignore.intersection(poses))>0:
@@ -650,13 +652,11 @@ def solver_24(task):
             sentences_range = re.search(r" \d{1,2} ", sent)
             if sentences_range:
                 boundaries = [int(sentences_range.group().strip())] * 2
-    print(boundaries)
     if len(boundaries) > 0:
         subtext = " ".join(sentences[boundaries[0]-1:boundaries[1]])
     else:
         subtext = text
     answer = ""
-    print(task_type)
     if task_type in ["sinonym", "antonym"]:
         words = solver_24_extract_words_syn_ant(subtext)
         best_pairs = {}
@@ -690,14 +690,14 @@ def solver_24(task):
         min_freq = 1000000000
         min_freq_word = ""
         for i, w in enumerate(words):
-            if ("-" not in w) and (word_exists(w)):
+            if "-" not in w:
                 analysis = morph.parse(w)[0]
-                if "Name" in analysis.tag:
+                if ("Name" in analysis.tag) or ("Patr" in analysis.tag):
                     continue
                 normal_form = analysis.normal_form
                 if normal_form not in already_met_words:
                     already_met_words.add(normal_form)
-                    _count = max(freq_dict.get(normal_form, 0), freq_dict.get(w, 0))
+                    _count = freq_dict.get(normal_form, 0)
                     if (_count < min_freq):
                         min_freq = _count
                         min_freq_word = w
