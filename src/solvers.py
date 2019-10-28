@@ -540,6 +540,7 @@ solver_24_words_for_drop = frozenset({
 
 
 def solver_24_parse_task_with_text(text):
+    text = re.sub("\xa0", "\n", text)
     pre_formulation = ""
     sentences = []
     post_formulation = ""
@@ -547,10 +548,10 @@ def solver_24_parse_task_with_text(text):
     while t:
         if t.group() == "(1)":
             pre_formulation = text[:t.span()[0]]
-            text = text[t.span()[1]+1:]
+            text = text[t.span()[1]:]
         else:
             sentences.append(text[:t.span()[0]])
-            text = text[t.span()[1]+1:]
+            text = text[t.span()[1]:]
         t = re.search(r"\(\d{1,2}\)", text)
     last_delimiter = re.search(r"[\.\!\?]", text)
     if not last_delimiter:
@@ -588,6 +589,8 @@ def solver_24_extract_words_syn_ant(text):
     words_pos = {}
     pos2ignore = {"NPRO", "PREP", "CONJ", "PRCL", "INTJ"}
     for i, w in enumerate(words):
+        if "-" in w:
+            continue
         analysis = morph.parse(w)
         poses = [an.tag.POS for an in analysis]
         norm_forms = [an.normal_form for an in analysis]
@@ -639,6 +642,7 @@ def solver_24(task):
         elif "иноним" in sent:
             task_type = "sinonym"
         if task_type != "unknown":
+            sent = re.sub(r"\d{4}", "", sent)
             sentences_range = re.search(r"\d{1,2}[^\d]{1,3}\d{1,2}", sent)
             if sentences_range:
                 boundaries = [int(t) for t in re.split(r"[^\d]*", sentences_range.group())]
@@ -646,11 +650,13 @@ def solver_24(task):
                 sentences_range = re.search(r" \d{1,2} ", sent)
                 if sentences_range:
                     boundaries = [int(sentences_range.group().strip())] * 2
+    print(boundaries)
     if len(boundaries) > 0:
         subtext = " ".join(sentences[boundaries[0]-1:boundaries[1]])
     else:
         subtext = text
     answer = ""
+    print(task_type)
     if task_type in ["sinonym", "antonym"]:
         words = solver_24_extract_words_syn_ant(subtext)
         best_pairs = {}
