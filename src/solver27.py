@@ -150,12 +150,6 @@ class EssayWriter(object):
         Model name for load pretrained ulmfit model and store this.
     ulmfit_dict_name : str
         Dict name for load pretrained ulmfit dict and store this.
-    lda_tf_vectorizer_path : str
-        Path to vectorizer for topic modeling.
-    lda_path : str
-        Path to topic model.
-    lda_topics_path : str
-        Path to topics with first phrases.
     is_load : bool, optional(default=True)
         Load or not pretrained models.
     seed : int
@@ -180,9 +174,6 @@ class EssayWriter(object):
             self,
             ulmfit_model_name=None,
             ulmfit_dict_name=None,
-            lda_tf_vectorizer_path=None,
-            lda_path=None,
-            lda_topics_path=None,
             is_load=True,
             seed=42,
             fasttext_model=None,
@@ -196,13 +187,6 @@ class EssayWriter(object):
         self.data = None
         self.learn = None
         self.temperature = None
-        self.lda_tf_vectorizer_path = lda_tf_vectorizer_path
-        self.lda_path = lda_path
-        self.lda_topics_path = lda_topics_path
-        self.lda_tf_vectorizer = None
-        self.lda = None
-        self.lda_topics = None
-        self.lda_topic_dic = None
         self.custom_topic_keywords_vectors_path = custom_topic_keywords_vectors_path
         self.custom_topic_keywords_vectors = None
         self.fasttext_model = fasttext_model
@@ -217,25 +201,6 @@ class EssayWriter(object):
 
     def _init_seed(self):
         random.seed(self.seed)
-
-    def get_lda_topic(self, documents):
-        tf = self.lda_tf_vectorizer.transform(documents)
-        lda_doc_topic = self.lda.transform(tf)
-        doc_topics = []
-        for n in range(lda_doc_topic.shape[0]):
-            topic_most_pr = lda_doc_topic[n].argmax()
-            doc_topics.append(topic_most_pr)
-        return [self.lda_topic_dic[i] for i in doc_topics]
-
-    def get_lda_info(self, topic):
-        dic = {}
-        for i in range(len(self.lda_topics)):
-            if self.lda_topics.iloc[i]['Topic'] == topic:
-                dic['Первая_фраза'] = self.lda_topics.iloc[i]['First']
-                dic['Произведения для аргументов'] = self.lda_topics.iloc[i]['Books']
-                dic['Тема'] = self.lda_topics.iloc[i]['Theme']
-                dic['Писатели'] = self.lda_topics.iloc[i]['Authors']
-        return dic
 
     def get_custom_topic(self, text):
         text_keywords = kw_extractor.extract_keywords(" ".join(custom_tok(text, self.stopwords +
@@ -262,11 +227,6 @@ class EssayWriter(object):
         return topic
 
     def load(self):
-
-        self.lda_tf_vectorizer = joblib.load(self.lda_tf_vectorizer_path)
-        self.lda = joblib.load(self.lda_path)
-        self.lda_topics = pd.read_csv(self.lda_topics_path, sep="\t")
-        self.lda_topic_dic = {int(i): self.lda_topics.iloc[i]['Topic'] for i in range(len(self.lda_topics))}
 
         self.data = TextList.from_df(
             pd.DataFrame(["tmp", "tmp"]),
