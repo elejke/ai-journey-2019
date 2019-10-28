@@ -650,13 +650,11 @@ def solver_24(task):
                 sentences_range = re.search(r" \d{1,2} ", sent)
                 if sentences_range:
                     boundaries = [int(sentences_range.group().strip())] * 2
-    print(boundaries)
     if len(boundaries) > 0:
         subtext = " ".join(sentences[boundaries[0]-1:boundaries[1]])
     else:
         subtext = text
     answer = ""
-    print(task_type)
     if task_type in ["sinonym", "antonym"]:
         words = solver_24_extract_words_syn_ant(subtext)
         best_pairs = {}
