@@ -481,12 +481,13 @@ def solver_24_old(task):
         min_freq_word = ""
         for sent in sentences:
             for word in sent.lower().split(" "):
-                if len(word) > 2:
+                if (len(word) > 2):
                     word_normal_form = morph.parse(word)[0].normal_form
                     if word_normal_form not in already_met_words:
                         already_met_words.add(word_normal_form)
                         _count = freq_dict.get(word_normal_form, 0)
-                        if _count < min_freq:
+#                         print(word_normal_form, _count)
+                        if (_count < min_freq):
                             min_freq = _count
                             min_freq_word = word
         return min_freq_word
@@ -641,20 +642,21 @@ def solver_24(task):
             task_type = "antonym"
         elif "иноним" in sent:
             task_type = "sinonym"
-        if task_type != "unknown":
-            sent = re.sub(r"\d{4}", "", sent)
-            sentences_range = re.search(r"\d{1,2}[^\d]{1,3}\d{1,2}", sent)
+        sent = re.sub(r"\d{4}", "", sent)
+        sentences_range = re.search(r"\d{1,2}[^\d]{1,3}\d{1,2}", sent)
+        if sentences_range:
+            boundaries = [int(t) for t in re.split(r"[^\d]+", sentences_range.group())]
+        else:
+            sentences_range = re.search(r" \d{1,2} ", sent)
             if sentences_range:
-                boundaries = [int(t) for t in re.split(r"[^\d]+", sentences_range.group())]
-            else:
-                sentences_range = re.search(r" \d{1,2} ", sent)
-                if sentences_range:
-                    boundaries = [int(sentences_range.group().strip())] * 2
+                boundaries = [int(sentences_range.group().strip())] * 2
+    print(boundaries)
     if len(boundaries) > 0:
         subtext = " ".join(sentences[boundaries[0]-1:boundaries[1]])
     else:
         subtext = text
     answer = ""
+    print(task_type)
     if task_type in ["sinonym", "antonym"]:
         words = solver_24_extract_words_syn_ant(subtext)
         best_pairs = {}
@@ -678,8 +680,28 @@ def solver_24(task):
                 if best_pairs[group][1] < best_score:
                     answer = "".join(best_pairs[group][0])
                     best_score = best_pairs[group][1]
-    else:
+    elif task_type == "phraseologism":
         return solver_24_old(task)
+    else:
+        subtext = re.sub(r"[^а-я ё-]", " ", subtext.lower())
+        subtext = re.sub(r"\s+", " ", subtext).strip()
+        words = subtext.split(" ")
+        already_met_words = set()
+        min_freq = 1000000000
+        min_freq_word = ""
+        for i, w in enumerate(words):
+            if ("-" not in w) and (word_exists(w)):
+                analysis = morph.parse(w)[0]
+                if "Name" in analysis.tag:
+                    continue
+                normal_form = analysis.normal_form
+                if normal_form not in already_met_words:
+                    already_met_words.add(normal_form)
+                    _count = max(freq_dict.get(normal_form, 0), freq_dict.get(w, 0))
+                    if (_count < min_freq):
+                        min_freq = _count
+                        min_freq_word = w
+        answer = min_freq_word
     return answer
 
 
