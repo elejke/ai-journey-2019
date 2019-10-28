@@ -54,13 +54,13 @@ essay_template = {
     # 2. Комментарий проблемы (здесь два примера по проблеме из прочитанного текста, которые помогают понять суть
     # проблемы)
     '2.1': [
-        '«{citation1}»»» В данном предложении находит свое отражение главный тезис рассуждений автора',
-        'Основной тезис авторской позиции выражен в следующих словах: «{citation1}»»»',
+        '«{citation1}»»» В данном предложении находит свое отражение главный тезис автора',
+        'Основной тезис автора выражен в следующих словах: «{citation1}»»»',
     ],
     # Трактовка цитаты. Но это только генератором скорее всего.
     '2.2': [
-        'Эти слова обращают наше внимание на {water}',
-        'Этот отрывок объясняет нам, что {water}',
+        'Эти слова обращают наше внимание на {citation1_explained}',
+        'Этот отрывок объясняет нам, что {citation1_explained}',
         # 'В них звучит мысль о том, что {water}.'
     ],
     '2.3': [
@@ -68,8 +68,8 @@ essay_template = {
         'Но на этом рассуждения автора не заканчиваются. Он также пишет: «{citation2}»»»',
     ],
     '2.4': [
-        'Обе приведённых цитаты, дополняя друг друга, позволяют нам убедиться в том, что {water}',
-        'Этот пример еще раз показывает нам, что {water}',
+        'Обе приведённых цитаты, дополняя друг друга, позволяют нам убедиться в том, что {citation2_explained}',
+        'Этот пример еще раз показывает нам, что {citation2_explained}',
     ],
     # 3. Авторская позиция по обозначенной проблеме.
     # В случае авторской позиции, как мы уже обсуждали с @vovacher, хотелось бы захардкодить все возможные авторские
@@ -387,7 +387,7 @@ class EssayWriter(object):
 
         return ". ".join([sentence_1, sentence_2, sentence_3]) + '.\n\n'
 
-    def _2nd_paragraph(self, essay, citation1, citation2):
+    def _2nd_paragraph(self, essay, citation1, citation2, citation1_explained="water", citation2_explained="water"):
 
         # TODO: citation detector:
         # citation1, citation2 = self.citation_detector(text, problem_formulation, n_citations=2)
@@ -408,10 +408,18 @@ class EssayWriter(object):
 
         essay = essay + essay_template['2.1'][var].format(citation1=citation1)
         essay = postprocess_citation(essay)
-        essay = self.continue_phrase(essay + essay_template['2.2'][var].format(water=''), 40) + '. '
-        essay = essay + ' ' + essay_template['2.3'][var].format(citation2=citation2)
+        # essay = self.continue_phrase(essay + essay_template['2.2'][var].format(water=''), 40) + '. '
+        essay = self.continue_phrase_with_pattern(
+            essay, essay_template['2.2'][var], 40, 'citation1_explained', citation1_explained,
+            "это"
+        ).rstrip('.')
+        essay = essay + '. ' + essay_template['2.3'][var].format(citation2=citation2)
         essay = postprocess_citation(essay)
-        essay = self.continue_phrase(essay + essay_template['2.4'][var].format(water=''), 50).rstrip('.')
+        # essay = self.continue_phrase(essay + essay_template['2.4'][var].format(water=''), 50).rstrip('.')
+        essay = self.continue_phrase_with_pattern(
+            essay, essay_template['2.4'][var], 50, 'citation2_explained', citation2_explained,
+            "это"
+        ).rstrip('.')
 
         return essay + '.\n\n'
 
