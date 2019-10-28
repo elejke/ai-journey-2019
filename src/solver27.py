@@ -156,8 +156,6 @@ class EssayWriter(object):
         Random seed.
     fasttext_model : str or FastText model loaded
         FastText model.
-    custom_topic_keywords_vectors_path : str
-        path to the pickle file with dict topic: vectors of keywords
     custom_topics_path : str
         Path to custom topics.
     stopwords_path : str
@@ -177,7 +175,6 @@ class EssayWriter(object):
             is_load=True,
             seed=42,
             fasttext_model=None,
-            custom_topic_keywords_vectors_path=None,
             custom_topics_path=None,
             stopwords_path=None
     ):
@@ -187,7 +184,6 @@ class EssayWriter(object):
         self.data = None
         self.learn = None
         self.temperature = None
-        self.custom_topic_keywords_vectors_path = custom_topic_keywords_vectors_path
         self.custom_topic_keywords_vectors = None
         self.fasttext_model = fasttext_model
         self.stopwords_path = stopwords_path
@@ -246,11 +242,24 @@ class EssayWriter(object):
             raise ValueError("Pass loaded 'fasttext' instance")
         else:
             pass
-        with open(self.custom_topic_keywords_vectors_path, "rb") as f:
-            self.custom_topic_keywords_vectors = pickle.load(f)
+
         with open(self.stopwords_path, "rb") as f:
             self.stopwords = pickle.load(f)
+
         self.custom_topics = pd.read_csv(self.custom_topics_path, sep=';', index_col='theme')
+        self.custom_topics["theme_keywords"] = self.custom_topics["theme_keywords"].apply(eval)
+
+        self.custom_topic_keywords_vectors = {}
+        for row_num in range(len(self.custom_topics)):
+            _theme = self.custom_topics.index[row_num]
+            self.custom_topic_keywords_vectors[_theme] = np.zeros(
+                (len(self.custom_topics["theme_keywords"].iloc[row_num]), self.fasttext_model.get_dimension()))
+            for word_num, word in enumerate(self.custom_topics["theme_keywords"].iloc[row_num]):
+                self.custom_topic_keywords_vectors[_theme][word_num] = self.fasttext_model[word]
+            self.custom_topic_keywords_vectors[_theme] /= np.linalg.norm(self.custom_topic_keywords_vectors[_theme],
+                                                                         axis=1,
+                                                                         ord=2,
+                                                                         keepdims=True)
 
         return self
 
