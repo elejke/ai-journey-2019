@@ -184,7 +184,8 @@ class EssayWriter(object):
         self.data = None
         self.learn = None
         self.temperature = None
-        self.custom_topic_keywords_vectors = None
+        self.custom_theme_keywords_vectors = None
+        self.custom_problem_keywords_vectors = None
         self.fasttext_model = fasttext_model
         self.stopwords_path = stopwords_path
         self.stopwords = None
@@ -211,16 +212,31 @@ class EssayWriter(object):
         text_keywords_vectors /= np.linalg.norm(text_keywords_vectors, ord=2, axis=1, keepdims=True)
         text_keywords_dists = np.array(text_keywords_dists)
 
-        topics = []
-        topics_dist = []
-        for topic in self.custom_topic_keywords_vectors:
-            distance_matrix = pairwise_distances(text_keywords_vectors, self.custom_topic_keywords_vectors[topic])
-            topics.append(topic)
-            #         topics_dist.append(np.min(distance_matrix, axis=0).mean())
-            topics_dist.append(np.min(distance_matrix * text_keywords_dists.reshape(-1, 1), axis=0).mean())
-        topic = topics[np.argmin(topics_dist)]
+        themes = []
+        themes_dist = []
+        for theme in self.custom_theme_keywords_vectors:
+            distance_matrix = pairwise_distances(text_keywords_vectors, self.custom_theme_keywords_vectors[theme])
+            themes.append(theme)
+            #         themes_dist.append(np.min(distance_matrix, axis=0).mean())
+            themes_dist.append(np.min(distance_matrix * text_keywords_dists.reshape(-1, 1), axis=0).mean())
+        theme_selected = themes[np.argmin(themes_dist)]
 
-        return topic
+        problems = []
+        problems_dist = []
+        for problem in self.custom_problem_keywords_vectors[theme_selected]:
+            distance_matrix = pairwise_distances(text_keywords_vectors,
+                                                 self.custom_problem_keywords_vectors[theme_selected][problem])
+            problems.append(problem)
+            problems_dist.append(np.min(distance_matrix * text_keywords_dists.reshape(-1, 1), axis=0).mean())
+        problem_selected = problems[np.argmin(problems_dist)]
+
+        try:
+            topic_id = np.where((self.custom_topics["theme"] == theme_selected) &
+                                (self.custom_topics["problem_formulation"] == problem_selected))[0][0]
+        except:
+            topic_id = 0
+
+        return topic_id
 
     def load(self):
 
@@ -246,20 +262,42 @@ class EssayWriter(object):
         with open(self.stopwords_path, "rb") as f:
             self.stopwords = pickle.load(f)
 
-        self.custom_topics = pd.read_csv(self.custom_topics_path, sep=';', index_col='theme')
+        self.custom_topics = pd.read_csv(self.custom_topics_path, sep=';')
         self.custom_topics["theme_keywords"] = self.custom_topics["theme_keywords"].apply(eval)
+        self.custom_topics["problem_keywords"] = self.custom_topics["problem_keywords"].apply(eval)
 
-        self.custom_topic_keywords_vectors = {}
+        self.custom_theme_keywords_vectors = {}
+        self.custom_problem_keywords_vectors = {}
         for row_num in range(len(self.custom_topics)):
-            _theme = self.custom_topics.index[row_num]
-            self.custom_topic_keywords_vectors[_theme] = np.zeros(
-                (len(self.custom_topics["theme_keywords"].iloc[row_num]), self.fasttext_model.get_dimension()))
-            for word_num, word in enumerate(self.custom_topics["theme_keywords"].iloc[row_num]):
-                self.custom_topic_keywords_vectors[_theme][word_num] = self.fasttext_model[word]
-            self.custom_topic_keywords_vectors[_theme] /= np.linalg.norm(self.custom_topic_keywords_vectors[_theme],
-                                                                         axis=1,
-                                                                         ord=2,
-                                                                         keepdims=True)
+
+            _theme = self.custom_topics["theme"].iloc[row_num]
+            _problem = self.custom_topics["problem_formulation"].iloc[row_num]
+
+            # extract vectors for theme
+            if _theme not in self.custom_theme_keywords_vectors:
+                self.custom_theme_keywords_vectors[_theme] = np.zeros(
+                    (len(self.custom_topics["theme_keywords"].iloc[row_num]), self.fasttext_model.get_dimension()))
+                for word_num, word in enumerate(self.custom_topics["theme_keywords"].iloc[row_num]):
+                    self.custom_theme_keywords_vectors[_theme][word_num] = self.fasttext_model[word]
+                self.custom_theme_keywords_vectors[_theme] /= np.linalg.norm(self.custom_theme_keywords_vectors[_theme],
+                                                                             axis=1,
+                                                                             ord=2,
+                                                                             keepdims=True)
+
+            # extract vectors for problem inside theme
+            self.custom_problem_keywords_vectors[_theme] = self.custom_problem_keywords_vectors.get(_theme, {})
+            self.custom_problem_keywords_vectors[_theme][_problem] = np.zeros(
+                    (len(self.custom_topics["problem_keywords"].iloc[row_num]),
+                     self.fasttext_model.get_dimension())
+            )
+            for word_num, word in enumerate(self.custom_topics["problem_keywords"].iloc[row_num]):
+                self.custom_problem_keywords_vectors[_theme][_problem][word_num] = self.fasttext_model[word]
+            self.custom_problem_keywords_vectors[_theme][_problem] /= \
+                np.linalg.norm(self.custom_problem_keywords_vectors[_theme][_problem],
+                               axis=1,
+                               ord=2,
+                               keepdims=True)
+
 
         return self
 
@@ -271,32 +309,32 @@ class EssayWriter(object):
         task, text = split_task_and_text(task)
 
         author = get_author(task)
-        theme = self.get_custom_topic(text)
+        topic_id = self.get_custom_topic(text)
 
         brief_text, citation1, citation2, _ = get_brief_text_and_citations(text)
         brief_text = clear(brief_text) + '\n\n'
 
         essay = self._1st_paragraph(
-            theme=self.custom_topics.loc[theme]["theme_to_insert_vinitelniy"].rstrip(".?!…"),
-            problem_formulation=self.custom_topics.loc[theme]["problem_formulation"].rstrip(".?!…"),
-            problem_explanation=self.custom_topics.loc[theme]["problem_explanation"].rstrip(".?!…"),
+            theme=self.custom_topics.iloc[topic_id]["theme_to_insert_vinitelniy"].rstrip(".?!…"),
+            problem_formulation=self.custom_topics.iloc[topic_id]["problem_formulation"].rstrip(".?!…"),
+            problem_explanation=self.custom_topics.iloc[topic_id]["problem_explanation"].rstrip(".?!…"),
             author=mention_author(author)
         )
         essay = self._2nd_paragraph(brief_text + essay, citation1, citation2)
         essay = self._3rd_paragraph(
             essay,
             author_last_name=mention_author(author, mode='Aa'),
-            author_position=self.custom_topics.loc[theme]["author_position"].rstrip(".?!…"),
-            author_position_reformulated=self.custom_topics.loc[theme]["author_position"].rstrip(".?!…")
+            author_position=self.custom_topics.iloc[topic_id]["author_position"].rstrip(".?!…"),
+            author_position_reformulated=self.custom_topics.iloc[topic_id]["author_position"].rstrip(".?!…")
         )
         essay = self._4th_paragraph(essay, own_position='water')
         essay = self._5th_paragraph(
             essay,
-            argument_paragraph1=self.custom_topics.loc[theme]["argument_paragraph1"].rstrip(".?!…")
+            argument_paragraph1=self.custom_topics.iloc[topic_id]["argument_paragraph1"].rstrip(".?!…")
         )
         essay = self._6th_paragraph(
             essay,
-            argument_paragraph2=self.custom_topics.loc[theme]["argument_paragraph2"].rstrip(".?!…")
+            argument_paragraph2=self.custom_topics.iloc[topic_id]["argument_paragraph2"].rstrip(".?!…")
         )
         essay = self._7th_paragraph(essay, conclusion='water')
 
