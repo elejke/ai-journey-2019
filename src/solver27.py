@@ -398,13 +398,13 @@ class EssayWriter(object):
 
         var = np.random.choice(range(len(essay_template['1.1'])))
 
-        sentence_1 = essay_template['1.1'][var].format(
+        sentence_1 = pclear(essay_template['1.1'][var].format(
             author=author[0].upper() + author[1:], theme_name=theme
-        )
-        sentence_2 = essay_template['1.2'][var].format(problem_formulation=problem_formulation)
-        sentence_3 = essay_template['1.3'][var].format(problem_explanation=problem_explanation).rstrip('.')
+        ))
+        sentence_2 = pclear(essay_template['1.2'][var].format(problem_formulation=problem_formulation))
+        sentence_3 = pclear(essay_template['1.3'][var].format(problem_explanation=problem_explanation))
 
-        return ". ".join([sentence_1, sentence_2, sentence_3]) + '.\n\n'
+        return " ".join([sentence_1, sentence_2, sentence_3]) + '\n\n'
 
     def _2nd_paragraph(self, essay, citation1, citation2, citation1_explained="water", citation2_explained="water"):
 
@@ -427,20 +427,18 @@ class EssayWriter(object):
 
         essay = essay + essay_template['2.1'][var].format(citation1=citation1)
         essay = postprocess_citation(essay)
-        # essay = self.continue_phrase(essay + essay_template['2.2'][var].format(water=''), 40) + '. '
-        essay = self.continue_phrase_with_pattern(
+        essay = pclear(self.continue_phrase_with_pattern(
             essay, essay_template['2.2'][var], 40, 'citation1_explained', citation1_explained,
             "это"
-        ).rstrip('.')
-        essay = essay + '. ' + essay_template['2.3'][var].format(citation2=citation2)
+        )) + ' '
+        essay = essay + essay_template['2.3'][var].format(citation2=citation2)
         essay = postprocess_citation(essay)
-        # essay = self.continue_phrase(essay + essay_template['2.4'][var].format(water=''), 50).rstrip('.')
-        essay = self.continue_phrase_with_pattern(
+        essay = pclear(self.continue_phrase_with_pattern(
             essay, essay_template['2.4'][var], 50, 'citation2_explained', citation2_explained,
             "это"
-        ).rstrip('.')
+        ))
 
-        return essay + '.\n\n'
+        return essay + '\n\n'
 
     def _3rd_paragraph(self,
                        essay,
@@ -454,16 +452,16 @@ class EssayWriter(object):
 
         var = np.random.choice(range(len(essay_template['3.1'])))
 
-        essay = self.continue_phrase_with_pattern(
+        essay = pclear(self.continue_phrase_with_pattern(
             essay, essay_template['3.1'][var], 40, 'author_position', author_position,
             "в обществе распространилась страшная болезнь – «себялюбие»"
-        )[:-1]
+        )) + ' '
 
-        essay = self.continue_phrase_with_pattern(
-            essay + '. ', essay_template['3.2'][var], 60, 'author_position_reformulated',
+        essay = pclear(self.continue_phrase_with_pattern(
+            essay, essay_template['3.2'][var], 60, 'author_position_reformulated',
             author_position_reformulated, "эгоизм и «себялюбие» захватывают наше общество",
             {'author_last_name': author_last_name}
-        )
+        ))
 
         return essay + '\n\n'
 
@@ -472,11 +470,11 @@ class EssayWriter(object):
         # TODO: OWN POSITION detector????:
         var = np.random.choice(range(len(essay_template['4.1'])))
 
-        essay = self.continue_phrase_with_pattern(
+        essay = pclear(self.continue_phrase_with_pattern(
             essay, essay_template['4.1'][var], 30, 'own_position', own_position, 'эгоизм - это плохо'
-        )
+        )) + ' '
 
-        essay += ' ' + essay_template['4.2'][var] + '.'
+        essay += pclear((essay_template['4.2'][var]))
 
         return essay + '\n\n'
 
@@ -494,11 +492,11 @@ class EssayWriter(object):
                 "Катферт, придавленный телом Уэзерби, которого он прикончил в звериной драке " +
                 "из-за чашки сахара."
         )
-        essay = self.continue_phrase_with_pattern(
+        essay = pclear(self.continue_phrase_with_pattern(
             essay, essay_template['5.1'], 90, 'argument_paragraph1', argument_paragraph1, default_value
-        )
+        ))
 
-        return essay[:-1] + '\n\n'
+        return essay + '\n\n'
 
     def _6th_paragraph(self, essay, argument_paragraph2='water'):
 
@@ -510,20 +508,20 @@ class EssayWriter(object):
                 "отце и братьях, которых прежде так любила. Эгоизм, поселившийся в ее душе после " +
                 "замужества, способствует этому."
         )
-        essay = self.continue_phrase_with_pattern(
+        essay = pclear(self.continue_phrase_with_pattern(
             essay, essay_template['6.1'], 90, 'argument_paragraph2', argument_paragraph2, default_value
-        )
+        ))
 
-        return essay[:-1] + '\n\n'
+        return essay + '\n\n'
 
     def _7th_paragraph(self, essay, conclusion='water'):
 
         var = np.random.choice(range(len(essay_template['7.1'])))
 
-        essay = self.continue_phrase_with_pattern(
+        essay = pclear(self.continue_phrase_with_pattern(
             essay, essay_template['7.1'][var], 10, 'conclusion', conclusion,
             "«себялюбие» - это порок современного общества"
-        )
+        ))
 
         return essay
 
@@ -692,3 +690,12 @@ def get_brief_text_and_citations(text, brief_text=0.25):
     citations[0] = citations[0].apply(lambda x: x[0].upper() + x[1:])
 
     return brief_text, citations.iloc[0, 0], citations.iloc[1, 0], ranked_sentences
+
+
+def pclear(sentence):
+    if re.findall(r'([.!?…]|\.{3})$', sentence) and not re.findall(r'\w[.!?…]\.$', sentence):
+        return sentence
+    elif re.findall(r'\w[.!?…]\.$', sentence):
+        return sentence[:-1]
+    else:
+        return sentence + '.'
