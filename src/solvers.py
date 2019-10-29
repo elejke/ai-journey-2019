@@ -7,6 +7,7 @@ import regex
 import pickle
 import random
 import string
+import lightgbm
 
 import nltk.corpus
 
@@ -19,6 +20,8 @@ import fasttext
 import stanfordnlp
 
 import pymorphy2
+
+from scipy.spatial.distance import pdist, squareform
 
 from keras_bert import extract_embeddings
 from keras_bert.tokenizer import Tokenizer
@@ -56,6 +59,9 @@ with open("../models/dictionaries/freq_dict_ruscorpora.json") as f:
 slovarnie_slova = pd.read_csv("../models/dictionaries/slovarnie_slova.txt", header=None).rename({0: "word"}, axis=1)
 
 morph = pymorphy2.MorphAnalyzer()
+
+with open("../models/task_17_19/lgbm.pickle", "rb") as f:
+    lgbm = pickle.load(f)
 
 bert_folder = '/misc/models/bert'
 config_path = bert_folder + '/bert_config.json'
@@ -459,7 +465,7 @@ def solver_5(task):
     return ans.word
 
 
-def solver_24(task):
+def solver_24_old(task):
 
     text = task["text"]
     boundaries = regex.search("\s\d+[\p{Pd}−]\d+", text)
@@ -482,18 +488,228 @@ def solver_24(task):
         min_freq_word = ""
         for sent in sentences:
             for word in sent.lower().split(" "):
-                if len(word) > 2:
+                if (len(word) > 2):
                     word_normal_form = morph.parse(word)[0].normal_form
                     if word_normal_form not in already_met_words:
                         already_met_words.add(word_normal_form)
                         _count = freq_dict.get(word_normal_form, 0)
-                        if _count < min_freq:
+#                         print(word_normal_form, _count)
+                        if (_count < min_freq):
                             min_freq = _count
                             min_freq_word = word
         return min_freq_word
     else:
         words = [word for word in text.lower().split() if len(word) > 1]
         return random.choice(words)
+
+
+solver_24_words_for_drop = frozenset({
+    'а','абы','аж','ан','без','благо','буде',
+    'будто','бы','в','вам','вами','вас','ваш','ваша',
+    'ваше','вашего','вашей','вашем','вашему',
+    'ваши','вашим','вашими','ваших','вашу','во',
+    'вроде','вы','да','дабы','даже','для',
+    'до','дотуда','его','едва','ее','ежели',
+    'ей','ему','если','ею','её','ж','же','за',
+    'затем','зато','здесь','и','ибо','из','или',
+    'им','ими','итак','их','к','кабы','как','когда',
+    'коли','коль','который','ли','либо','лишь',
+    'меня','мне','мной','мною','мое','моего',
+    'моей','моем','моему','мои','моим','моими',
+    'моих','мой','мою','моя','моё','моём','мы',
+    'на','над','нам','нами','нас','наш','наша',
+    'наше','нашего','нашей','нашем','нашему','наши',
+    'нашим','нашими','наших','нашу','не','него','нее',
+    'нежели','ней','нему','нею','неё','ни','нибудь',
+    'ним','ними','них','но','ну','о','об','однако',
+    'он','она','они','оно','от','отсюда','оттого',
+    'оттуда','перед','по','под','пока','покамест',
+    'покуда','поскольку','потому','поэтому','при',
+    'притом','причем','про','пускай','пусть','раз',
+    'разве','ровно','с','свое','своего','своей',
+    'своем','своему','свои','своим','своими','своих',
+    'свой','свою','своя','своё','своём','сейчас',
+    'сиречь','словно','со','стольким','столькими',
+    'стольких','столько','сюда','та','так','такая',
+    'также','такие','таким','такими','таких','таков',
+    'такова','таково','таковы','такого','такое','такой',
+    'таком','такому','такою','такую','там','твое',
+    'твоего','твоей','твоем','твоему','твои','твоим',
+    'твоими','твоих','твой','твою','твоя','твоё',
+    'твоём','те','тебе','тебя','тем','теми','теперь',
+    'тех','то','тобой','тобою','тогда','того','тоже',
+    'той','только','том','тому','тот','точно','тою',
+    'ту','туда','тут','ты','у','уж','хоть','хотя',
+    'чем','чисто','что','чтоб','чтобы','чуть','эта',
+    'эти','этим','этих','это','этого','этой','этом',
+    'этому','этот','этою','эту','я','якобы', 'все',
+    'всё', 'сам'
+})
+
+
+def solver_24_parse_task_with_text(text):
+    text = re.sub("\xa0", "\n", text)
+    pre_formulation = ""
+    sentences = []
+    post_formulation = ""
+    t = re.search(r"\(\d{1,2}\)", text)
+    while t:
+        if t.group() == "(1)":
+            pre_formulation = text[:t.span()[0]]
+            text = text[t.span()[1]:]
+        else:
+            sentences.append(text[:t.span()[0]])
+            text = text[t.span()[1]:]
+        t = re.search(r"\(\d{1,2}\)", text)
+    last_delimiter = re.search(r"[\.\!\?]", text)
+    if not last_delimiter:
+        cut = len(text)
+    else:
+        cut = last_delimiter.span()[1]
+    sentences.append(text[:cut])
+    post_formulation = text[cut:]
+    sentences = [t.strip("\n").strip(" ") for t in sentences]
+    return pre_formulation, sentences, post_formulation
+
+
+def solver_24_strings_similarity(X, Y):
+    m = len(X)
+    n = len(Y)
+    LCSuff = [[0 for k in range(n+1)] for l in range(m+1)]
+    result = 0
+
+    for i in range(m + 1):
+        for j in range(n + 1):
+            if (i == 0 or j == 0):
+                LCSuff[i][j] = 0
+            elif (X[i-1] == Y[j-1]):
+                LCSuff[i][j] = LCSuff[i-1][j-1] + 1
+                result = max(result, LCSuff[i][j])
+            else:
+                LCSuff[i][j] = 0
+    return min(result / m, result / n)
+
+
+def solver_24_extract_words_syn_ant(text):
+    text = re.sub(r"[^а-я ё-]", " ", text.lower())
+    text = re.sub(r"\s+", " ", text).strip()
+    words = text.split(" ")
+    words_pos = {}
+    pos2ignore = {"NPRO", "PREP", "CONJ", "PRCL", "INTJ"}
+    for i, w in enumerate(words):
+        if "-" in w:
+            continue
+        analysis = morph.parse(w)
+        if ("Name" in analysis[0].tag) or ("Patr" in analysis[0].tag):
+            continue
+        poses = [an.tag.POS for an in analysis]
+        norm_forms = [an.normal_form for an in analysis]
+        if len(pos2ignore.intersection(poses))>0:
+            continue
+        if len(solver_24_words_for_drop.intersection(norm_forms))>0:
+            continue
+        is_added = {}
+        for pos in poses:
+            is_added[pos] = False
+        for pos, norm_f in zip(poses, norm_forms):
+            if pos not in words_pos:
+                words_pos[pos] = []
+            if not is_added[pos]:
+                words_pos[pos] += [(w, norm_f, i)]
+                is_added[pos] = True
+    join_pos = {
+        "ADJF": [],
+        "ADJS": [],
+        "NOUN": [],
+        "COMP": [],
+        "VERB": ["INFN"],
+        "PRTF": [],
+        "PRTS": [],
+        "GRND": [],
+        "ADVB": [],
+    }
+    words_pos_new = {}
+    for k in join_pos:
+        if k in words_pos:
+            words_pos_new[k] = words_pos[k]
+            for v in join_pos[k]:
+                if v in words_pos:
+                    words_pos_new[k] += words_pos[v]
+            words_pos_new[k] = list(set(words_pos_new[k]))
+    return words_pos_new
+
+
+def solver_24(task):
+    text = task["text"]
+    pre_formulation, sentences, post_formulation = solver_24_parse_task_with_text(text)
+    boundaries = []
+    task_type = "unknown"
+    for sent in re.split(r"[\.\!\?]", pre_formulation+post_formulation):
+        if "разеолог" in sent:
+            task_type = "phraseologism"
+        elif "нтоним" in sent:
+            task_type = "antonym"
+        elif "иноним" in sent:
+            task_type = "sinonym"
+        sent = re.sub(r"\d{4}", "", sent)
+        sentences_range = re.search(r"\d{1,2}[^\d]{1,3}\d{1,2}", sent)
+        if sentences_range:
+            boundaries = [int(t) for t in re.split(r"[^\d]+", sentences_range.group())]
+        else:
+            sentences_range = re.search(r" \d{1,2} ", sent)
+            if sentences_range:
+                boundaries = [int(sentences_range.group().strip())] * 2
+    if len(boundaries) > 0:
+        subtext = " ".join(sentences[boundaries[0]-1:boundaries[1]])
+    else:
+        subtext = text
+    answer = ""
+    if task_type in ["sinonym", "antonym"]:
+        words = solver_24_extract_words_syn_ant(subtext)
+        best_pairs = {}
+        best_score = 1000
+        for group in words:
+            if len(words[group]) > 1:
+                list_of_words = [t[0] for t in words[group]]
+                list_of_normal_words = [t[1] for t in words[group]]
+                list_of_positions = [t[2] for t in words[group]]
+                embs = [model_fasttext[t] for t in list_of_normal_words]
+                embs = np.array([t / np.linalg.norm(t, ord=2) for t in embs])
+                dists = pairwise_distances(embs, metric="cosine")
+                dists2 = pairwise_distances(np.array(list_of_positions).reshape(-1, 1), metric="l1")
+                dists3 = squareform(pdist(np.array(list_of_normal_words).reshape(-1, 1), lambda x,y: solver_24_strings_similarity(x[0], y[0])))
+                mask_exclude = (dists < 0.001) + (dists3 > 0.6)
+    #             dists *= np.log(dists2+2)
+                dists[mask_exclude] = 1000
+                preds = np.unravel_index(np.argmin(dists), (len(embs), len(embs)))
+                preds = np.array(preds)
+                best_pairs[group] = [np.array(list_of_words)[preds], dists[preds[0]][preds[1]], dists2[preds[0]][preds[1]]]
+                if best_pairs[group][1] < best_score:
+                    answer = "".join(best_pairs[group][0])
+                    best_score = best_pairs[group][1]
+    elif task_type == "phraseologism":
+        return solver_24_old(task)
+    else:
+        subtext = re.sub(r"[^а-я ё-]", " ", subtext.lower())
+        subtext = re.sub(r"\s+", " ", subtext).strip()
+        words = subtext.split(" ")
+        already_met_words = set()
+        min_freq = 1000000000
+        min_freq_word = ""
+        for i, w in enumerate(words):
+            if "-" not in w:
+                analysis = morph.parse(w)[0]
+                if ("Name" in analysis.tag) or ("Patr" in analysis.tag):
+                    continue
+                normal_form = analysis.normal_form
+                if normal_form not in already_met_words:
+                    already_met_words.add(normal_form)
+                    _count = freq_dict.get(normal_form, 0)
+                    if (_count < min_freq):
+                        min_freq = _count
+                        min_freq_word = w
+        answer = min_freq_word
+    return answer
 
 
 def solver_16(task):
@@ -1208,7 +1424,7 @@ def solver_2(task):
     return tokenizer_bert.convert_ids_to_tokens(np.argmax(predicts, axis=2)[0][mask_input.astype(bool)])[0].lower()
 
 
-def base_17_18_19_20(task):
+def base_18_20(task):
     max_length = 512
 
     text = task["text"]
@@ -1242,28 +1458,74 @@ def base_17_18_19_20(task):
     return comma_likelihoods, dot_likelihoods, and_likelihoods, or_likelihoods
 
 
+def base_17_19(task):
+    max_length = 512
+
+    text = task["text"]
+    text = re.sub(r"\(\s*\d{1,2}\s*\)", "[MASK]", text)
+    sentences = re.sub(r"([\.\!\?]+)", "\g<1>$", text)
+    sentences = sentences.split("$")
+    sentences = [t for t in sentences if "[MASK]" in t]
+    preds_list = []
+    for sent in sentences:
+        sent = sent.split("[MASK]")
+
+        tokens = ["[CLS]"]
+        for i in range(len(sent)):
+            if i == 0:
+                tokens = tokens + tokenizer_bert.tokenize(sent[i])
+            else:
+                tokens = tokens + ['[MASK]'] + tokenizer_bert.tokenize(sent[i])
+        tokens = tokens + ['[SEP]']
+        token_input = tokenizer_bert.convert_tokens_to_ids(tokens)
+        token_input = np.array(token_input + [0] * (512 - len(token_input)))
+
+        mask_input = np.zeros(max_length)
+        mask_token_id = tokenizer_bert.convert_tokens_to_ids(["[MASK]"])[0]
+        mask_input[token_input == mask_token_id] = 1
+
+        seg_input = np.zeros(max_length)
+        predicts = model_bert.predict([token_input.reshape(1, -1), seg_input.reshape(1, -1), mask_input.reshape(1, -1)])[0]
+        predicts = predicts[0, :, :][mask_input.astype(bool)]
+        preds_list.append(predicts)
+
+    return np.vstack(preds_list)
+
+
 def solver_17(task):
-    comma_likelihoods, dot_likelihoods, and_likelihoods, or_likelihoods = base_17_18_19_20(task)
-    final_preds = comma_likelihoods + and_likelihoods + dot_likelihoods
-    return [str(i + 1) for i, t in enumerate(final_preds) if t > 0.65]
+    vectors = base_17_19(task)
+    predictions = [lgbm.predict_proba(t.reshape(1, -1))[0, 1] for t in vectors]
+    ans = [str(i + 1) for i, t in enumerate(predictions) if t > 0.19]
+    if len(ans) == 0:
+        return [str(np.argmax(predictions) + 1)]
+    return ans
 
 
 def solver_18(task):
-    comma_likelihoods, dot_likelihoods, and_likelihoods, or_likelihoods = base_17_18_19_20(task)
+    comma_likelihoods, dot_likelihoods, and_likelihoods, or_likelihoods = base_18_20(task)
     final_preds = comma_likelihoods + and_likelihoods + dot_likelihoods
-    return [str(i + 1) for i, t in enumerate(final_preds) if t > 0.48]
+    ans = [str(i + 1) for i, t in enumerate(final_preds) if t > 0.48]
+    if len(ans) == 0:
+        return [str(np.argmax(final_preds) + 1)]
+    return ans
 
 
 def solver_19(task):
-    comma_likelihoods, dot_likelihoods, and_likelihoods, or_likelihoods = base_17_18_19_20(task)
-    final_preds = comma_likelihoods + or_likelihoods + dot_likelihoods
-    return [str(i + 1) for i, t in enumerate(final_preds) if t > 0.62]
+    vectors = base_17_19(task)
+    predictions = [lgbm.predict_proba(t.reshape(1, -1))[0, 1] for t in vectors]
+    ans = [str(i + 1) for i, t in enumerate(predictions) if t > 0.67]
+    if len(ans) == 0:
+        return [str(np.argmax(predictions) + 1)]
+    return ans
 
 
 def solver_20(task):
-    comma_likelihoods, dot_likelihoods, and_likelihoods, or_likelihoods = base_17_18_19_20(task)
-    final_preds = comma_likelihoods
-    return [str(i + 1) for i, t in enumerate(final_preds) if t > 0.93]
+    comma_likelihoods, dot_likelihoods, and_likelihoods, or_likelihoods = base_18_20(task)
+    final_preds = comma_likelihoods + and_likelihoods + dot_likelihoods
+    ans = [str(i + 1) for i, t in enumerate(final_preds) if t > 0.93]
+    if len(ans) == 0:
+        return [str(np.argmax(final_preds) + 1)]
+    return ans
 
 
 def solver_13(task):
