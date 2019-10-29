@@ -1,4 +1,4 @@
 {
-    "image": "vovacher/aij-combined:4.0",
+    "image": "vovacher/aij-combined:5.0",
     "entry_point": "cd sberbank-baseline && USE_EMBEDDED_ID=true USE_CUSTOM_SOLVERS=true python solution.py"
 }

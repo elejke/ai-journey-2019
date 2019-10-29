@@ -46,6 +46,9 @@ RUN pip install keras-bert
 # TextDistance
 RUN pip install "textdistance[extras]"
 
+# YAKE for keywords extraction
+RUN pip install git+https://github.com/LIAAD/yake
+
 # Additional from baseline
 RUN pip install ufal.udpipe \
                 pytorch_pretrained_bert \

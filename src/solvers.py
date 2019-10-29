@@ -53,6 +53,9 @@ big_words_set = frozenset(df_dict_full["Lemma"].values)
 df_dict = pd.read_table("../models/dictionaries/freqrnc2011.csv")
 small_words_dict = df_dict.set_index("Lemma")[["Freq(ipm)"]].to_dict()["Freq(ipm)"]
 
+with open("../models/dictionaries/freq_dict_ruscorpora.json") as f:
+    freq_dict = json.load(f)
+
 slovarnie_slova = pd.read_csv("../models/dictionaries/slovarnie_slova.txt", header=None).rename({0: "word"}, axis=1)
 
 morph = pymorphy2.MorphAnalyzer()
@@ -78,16 +81,49 @@ synt.processors["tokenize"].config["pretokenized"] = True
 with open("../models/dictionaries/task_9_words.pickle", "rb") as f:
     exact_labels = pickle.load(f)
 
+with open("../models/dictionaries/paronyms_ege.json") as f:
+    paronyms_ege = json.load(f)
+with open("../models/dictionaries/paronyms_all.json") as f:
+    paronyms_all = json.load(f)
+if os.path.exists("/misc/models/fasttext/cc.ru.300.bin"):
+    model_fasttext = fasttext.load_model("/misc/models/fasttext/cc.ru.300.bin")
+else:
+    model_fasttext = fasttext.load_model("../models/fasttext/cc.ru.300.bin")
+
+df_dict_orfoepicheskiy = pd.concat([
+    pd.read_csv("../models/dictionaries/orfoepicheckiy_ege2019.txt",
+                header=None,
+                names=["word"]),
+    pd.read_csv("../models/dictionaries/orfoepicheckiy_automatic_povtoru.txt",
+                header=None,
+                names=["word"]),
+    pd.read_csv("../models/dictionaries/orfoepicheskiy_automatic_gde_udarenie_rf.txt",
+                header=None,
+                names=["word"])
+], ignore_index=True)
+df_dict_orfoepicheskiy_lowercase = frozenset(df_dict_orfoepicheskiy["word"].str.lower())
+df_dict_orfoepicheskiy = frozenset(df_dict_orfoepicheskiy["word"])
+
+with open("../models/task_16/task_16_clf.pkl", 'rb') as file:
+    clf_task_16 = pickle.load(file)
+with open("../models/task_16/task_16_vectorizer_words.pkl", 'rb') as file:
+    vectorizer_words_task_16 = pickle.load(file)
+with open("../models/task_16/task_16_vectorizer_pos.pkl", 'rb') as file:
+    vectorizer_pos_task_16 = pickle.load(file)
+
+nltk_stopwords = frozenset(nltk.corpus.stopwords.words("russian"))
+
 solver_10_11_12 = Solver10(vocabulary=big_words_set, morph=morph)
+
 solver_27 = EssayWriter(
-                model_name='lm_5_ep_lr2-3_5_stlr',
-                dict_name='itos',
-                tf_vectorizer_path='data/tfvect.joblib',
-                lda_path='data/lda.joblib',
-                topics_path='data/topics.csv',
-                is_load=True,
-                seed=42,
-            )
+    ulmfit_model_name='lm_5_ep_lr2-3_5_stlr',
+    ulmfit_dict_name='itos',
+    is_load=True,
+    seed=42,
+    fasttext_model=model_fasttext,
+    custom_topics_path="../models/task_27/topics_with_problems.csv",
+    stopwords_path="../models/task_27/stopwords.pkl"
+)
 
 
 def solver_15(task):
@@ -119,21 +155,6 @@ def solver_15(task):
     if len(answers) == 0:
         answers.append(str(random.choice(list(possible_answers.keys()))))
     return sorted(answers, key=lambda x: int(x))
-
-
-df_dict_orfoepicheskiy = pd.concat([
-    pd.read_csv("../models/dictionaries/orfoepicheckiy_ege2019.txt",
-                header=None,
-                names=["word"]),
-    pd.read_csv("../models/dictionaries/orfoepicheckiy_automatic_povtoru.txt",
-                header=None,
-                names=["word"]),
-    pd.read_csv("../models/dictionaries/orfoepicheskiy_automatic_gde_udarenie_rf.txt",
-                header=None,
-                names=["word"])
-], ignore_index=True)
-df_dict_orfoepicheskiy_lowercase = frozenset(df_dict_orfoepicheskiy["word"].str.lower())
-df_dict_orfoepicheskiy = frozenset(df_dict_orfoepicheskiy["word"])
 
 
 def solver_4(task):
@@ -373,16 +394,6 @@ def solver_25(task):
     return sorted(answer, key=lambda x: int(x))
 
 
-with open("../models/dictionaries/paronyms_ege.json") as f:
-    paronyms_ege = json.load(f)
-with open("../models/dictionaries/paronyms_all.json") as f:
-    paronyms_all = json.load(f)
-if os.path.exists("/misc/models/fasttext/cc.ru.300.bin"):
-    model_fasttext = fasttext.load_model("/misc/models/fasttext/cc.ru.300.bin")
-else:
-    model_fasttext = fasttext.load_model("../models/fasttext/cc.ru.300.bin")
-
-
 def solver_5(task):
 
     text = task["text"]
@@ -452,10 +463,6 @@ def solver_5(task):
     if ans_formed is not None:
         return ans_formed.word
     return ans.word
-
-
-with open("../models/dictionaries/freq_dict_ruscorpora.json") as f:
-    freq_dict = json.load(f)
 
 
 def solver_24_old(task):
@@ -705,14 +712,6 @@ def solver_24(task):
     return answer
 
 
-with open("../models/task_16/task_16_clf.pkl", 'rb') as file:
-    clf_task_16 = pickle.load(file)
-with open("../models/task_16/task_16_vectorizer_words.pkl", 'rb') as file:
-    vectorizer_words_task_16 = pickle.load(file)
-with open("../models/task_16/task_16_vectorizer_pos.pkl", 'rb') as file:
-    vectorizer_pos_task_16 = pickle.load(file)
-
-
 def solver_16(task):
 
     def _embedder(sentence):
@@ -775,9 +774,6 @@ def solver_1(task):
     ans = [str(np.argsort(dist)[0] + 1), str(np.argsort(dist)[1] + 1)]
 
     return sorted(ans, key=lambda x: int(x))
-
-
-nltk_stopwords = frozenset(nltk.corpus.stopwords.words("russian"))
 
 
 def solver_6(task):

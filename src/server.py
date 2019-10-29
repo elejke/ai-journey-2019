@@ -81,8 +81,6 @@ def take_exam(tasks):
                 answer = ["8"]
         elif task['id'] in ["26"]:
             answer = solver_26(task)
-        elif task['id'] in ["27"]:
-            answer = solver_27(task)
 
         elif question['type'] == 'choice':
             # pick a random answer

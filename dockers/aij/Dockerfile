@@ -46,5 +46,8 @@ RUN pip install keras-bert
 # TextDistance
 RUN pip install "textdistance[extras]"
 
+# YAKE for keywords extraction
+RUN pip install git+https://github.com/LIAAD/yake
+
 # FastAI
 RUN pip install fastai summa
