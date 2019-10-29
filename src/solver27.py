@@ -320,14 +320,23 @@ class EssayWriter(object):
             problem_explanation=self.custom_topics.iloc[topic_id]["problem_explanation"].rstrip(".?!…"),
             author=mention_author(author)
         )
-        essay = self._2nd_paragraph(brief_text + essay, citation1, citation2)
+        essay = self._2nd_paragraph(
+            brief_text + essay,
+            citation1=citation1,
+            citation2=citation2,
+            citation1_explained=self.custom_topics.iloc[topic_id]["citation1_explained"].rstrip(".?!…"),
+            citation2_explained=self.custom_topics.iloc[topic_id]["citation2_explained"].rstrip(".?!…")
+        )
         essay = self._3rd_paragraph(
             essay,
             author_last_name=mention_author(author, mode='Aa'),
             author_position=self.custom_topics.iloc[topic_id]["author_position"].rstrip(".?!…"),
-            author_position_reformulated=self.custom_topics.iloc[topic_id]["author_position"].rstrip(".?!…")
+            author_position_reformulated=self.custom_topics.iloc[topic_id]["author_position_reformulated"].rstrip(".?!…")
         )
-        essay = self._4th_paragraph(essay, own_position='water')
+        essay = self._4th_paragraph(
+            essay,
+            own_position=self.custom_topics.iloc[topic_id]["own_position"].rstrip(".?!…")
+        )
         essay = self._5th_paragraph(
             essay,
             argument_paragraph1=self.custom_topics.iloc[topic_id]["argument_paragraph1"].rstrip(".?!…")
@@ -336,7 +345,10 @@ class EssayWriter(object):
             essay,
             argument_paragraph2=self.custom_topics.iloc[topic_id]["argument_paragraph2"].rstrip(".?!…")
         )
-        essay = self._7th_paragraph(essay, conclusion='water')
+        essay = self._7th_paragraph(
+            essay,
+            conclusion=self.custom_topics.iloc[topic_id]["conclusion"].rstrip(".?!…")
+        )
 
         return essay[len(brief_text):]
 
