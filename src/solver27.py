@@ -634,7 +634,7 @@ def get_brief_text_and_citations(text, brief_text=0.25):
     ranked_sentences['sentence_len'] = ranked_sentences[0].apply(lambda x: len(x.split()))
 
     try:
-        indices = (ranked_sentences['sentence_len'] > 8) & (ranked_sentences['sentence_len'] <= 25)
+        indices = (ranked_sentences['sentence_len'] > 8) & (ranked_sentences['sentence_len'] <= 35)
         probs = ranked_sentences.loc[indices, 1].head(5)
         citations = ranked_sentences.loc[indices].head(5).sample(2, weights=probs).sort_index().copy()
     except ValueError:
