@@ -1899,7 +1899,7 @@ def solver_3(task):
     features = solver_3_features(choices)
     ans = np.argmax(xgb_clf_solver_3.predict_proba(features)[:, 1]) + 1
 
-    return str(ans)
+    return [str(ans)]
 
 def solver_21(task):
 
