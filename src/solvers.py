@@ -63,7 +63,7 @@ morph = pymorphy2.MorphAnalyzer()
 with open("../models/task_17_19/lgbm.pickle", "rb") as f:
     lgbm = pickle.load(f)
 
-with open("../models/dictionaries/task_3_xgb.pkl") as f:
+with open("../models/dictionaries/task_3_xgb.pkl", "rb") as f:
     xgb_clf_solver_3 = pickle.load(f)
 
 bert_folder = '/misc/models/bert'
