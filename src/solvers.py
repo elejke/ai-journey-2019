@@ -104,6 +104,18 @@ df_dict_orfoepicheskiy = pd.concat([
 df_dict_orfoepicheskiy_lowercase = frozenset(df_dict_orfoepicheskiy["word"].str.lower())
 df_dict_orfoepicheskiy = frozenset(df_dict_orfoepicheskiy["word"])
 
+phraseologisms = pd.concat([
+    pd.read_csv("../models/dictionaries/phraseologs_baseline.txt", sep=";", header=None),
+    pd.read_csv("../models/dictionaries/phraseologisms.txt", sep=";", header=None)
+])[0].apply(lambda x: x.lower()).values
+phraseologisms_normalized = []
+for sent_phr in phraseologisms:
+    sent_phr_normalized = []
+    for w in re.split("[,.?!…\s]", sent_phr):
+        sent_phr_normalized.append(morph.parse(w)[0].normal_form)
+    phraseologisms_normalized.append(" ".join(sent_phr_normalized).strip())
+phr_normalized = np.array(phraseologisms_normalized)
+
 with open("../models/task_16/task_16_clf.pkl", 'rb') as file:
     clf_task_16 = pickle.load(file)
 with open("../models/task_16/task_16_vectorizer_words.pkl", 'rb') as file:
@@ -639,6 +651,15 @@ def solver_24_extract_words_syn_ant(text):
     return words_pos_new
 
 
+def solver_24_check_include(text, needle):
+    if len(needle) > len(text):
+        return False, (-1, -1)
+    for i in range(len(text) - len(needle) + 1):
+        if text[i : i + len(needle)] == needle:
+            return True, (i, i + len(needle))
+    return False, (-1, -1)
+
+
 def solver_24(task):
     text = task["text"]
     pre_formulation, sentences, post_formulation = solver_24_parse_task_with_text(text)
@@ -688,7 +709,22 @@ def solver_24(task):
                     answer = "".join(best_pairs[group][0])
                     best_score = best_pairs[group][1]
     elif task_type == "phraseologism":
-        return solver_24_old(task)
+        subtext_lower = subtext.lower()
+        subtext_split = re.split("[,.?!…\s]", subtext_lower)
+        subtext_normalized = []
+        for word in subtext_split:
+            subtext_normalized.append(morph.parse(word)[0].normal_form)
+        for i in range(len(phraseologisms)):
+            candidate_split = re.split("[,.?!…\s]", phraseologisms[i])
+            res = solver_24_check_include(subtext_split, candidate_split)
+            if res[0]:
+                answer = re.sub("[,.?!…\s]", "", phraseologisms[i])
+                break
+            candidate_split = re.split("[,.?!…\s]", phraseologisms_normalized[i])
+            res = solver_24_check_include(subtext_normalized, candidate_split)
+            if res[0]:
+                answer = re.sub("[,.?!…\s]", "", " ".join(subtext_split[res[1][0]:res[1][1]]))
+                break
     else:
         subtext = re.sub(r"[^а-я ё-]", " ", subtext.lower())
         subtext = re.sub(r"\s+", " ", subtext).strip()
