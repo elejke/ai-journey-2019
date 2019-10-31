@@ -59,7 +59,7 @@ essay_template = {
     ],
     # Трактовка цитаты. Но это только генератором скорее всего.
     '2.2': [
-        'Эти слова обращают наше внимание на {citation1_explained}',
+        'Эти слова обращают наше внимание на то, что {citation1_explained}',
         'Этот отрывок объясняет нам, что {citation1_explained}',
         # 'В них звучит мысль о том, что {water}.'
     ],
@@ -85,7 +85,7 @@ essay_template = {
     # Пример:
     #   {author_position_reformulated} = "эгоизм и «себялюбие» захватывают наше общество"
     '3.2': [
-        'Таким образом {author_last_name} считает, что {author_position_reformulated}',
+        '{author_last_name} считает, что {author_position_reformulated}',
         '{author_last_name} убеждает нас в том, что {author_position_reformulated}'
     ],
     # 4. Собственное мнение по обозначенной проблеме (согласие).
