@@ -544,7 +544,10 @@ def split_task_and_text(task_text):
     text.append(last[0])
     formulation.append('.'.join(last[1:]))
 
-    return ''.join(formulation), ''.join(text).strip() + splitted[-1][len(last[0])]
+    formulation = ''.join(formulation)
+    text = ' '.join(text).strip() + ' ' + splitted[-1][len(last[0])]
+
+    return re.sub(r' +', ' ', formulation), re.sub(r' +', ' ', text)
 
 
 def clear(text):
