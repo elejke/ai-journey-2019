@@ -63,6 +63,9 @@ morph = pymorphy2.MorphAnalyzer()
 with open("../models/task_17_19/lgbm.pickle", "rb") as f:
     lgbm = pickle.load(f)
 
+with open("../models/dictionaries/task_3_xgb.pkl") as f:
+    xgb_clf_solver_3 = pickle.load(f)
+
 bert_folder = '/misc/models/bert'
 config_path = bert_folder + '/bert_config.json'
 checkpoint_path = bert_folder + '/bert_model.ckpt'
@@ -1864,13 +1867,39 @@ def solver_14(task):
     return answer
 
 
+# def solver_3(task):
+#     lens = [len(choice["text"]) for choice in task["question"]["choices"]]
+#     argsorted = np.argsort(lens)
+#     ans = [str(task["question"]["choices"][argsorted[-1]]["id"])]
+#
+#     return ans
+
+def solver_3_features(choices):
+    def feats_(choice, choice_id, choices_):
+        features_ = []
+        choice = choice['text']
+        choices_lens = np.array([len(choice_['text']) for choice_ in choices_])
+        features_.append(len(choice) == np.min(choices_lens))
+        features_.append(len(choice) == np.max(choices_lens))
+
+        features_.append(len(choice.split()))
+        features_.append(int("см." in choice))
+        features_.append(int("Устар." in choice or "устар" in choice))
+        features_.append(int("Пер." in choice or "пер." in choice))
+        features_.append(int("Книжн." in choice))
+        features_.append(choice_id / len(choices_))
+        return features_
+
+    features = [feats_(choice_, id_, choices) for (id_, choice_) in enumerate(choices)]
+    return np.array(features).astype(float)
+
+
 def solver_3(task):
-    lens = [len(choice["text"]) for choice in task["question"]["choices"]]
-    argsorted = np.argsort(lens)
-    ans = [str(task["question"]["choices"][argsorted[-1]]["id"])]
+    choices = task["question"]["choices"]
+    features = solver_3_features(choices)
+    ans = np.argmax(xgb_clf_solver_3.predict_proba(features)[:, 1]) + 1
 
-    return ans
-
+    return str(ans)
 
 def solver_21(task):
 
