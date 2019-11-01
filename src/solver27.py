@@ -669,7 +669,7 @@ def get_brief_text_and_citations(text, brief_text=0.25):
     citations_pattern = r'(«.*?»|".*?")'
     processed_text = re.sub(citations_pattern, preprocess_citation_punctuation, processed_text)
     processed_text = re.sub(r'(…|\.{3})', ' xxellipsis.', processed_text)
-    ranked_sentences = summarizer.summarize(re.sub('[–-]\ ', ' ', processed_text), language="russian",
+    ranked_sentences = summarizer.summarize(re.sub('[\p{Pd}−]\ ', ' ', processed_text), language="russian",
                                             ratio=1., scores=True)
 
     ranked_sentences = pd.DataFrame(ranked_sentences)
@@ -689,6 +689,7 @@ def get_brief_text_and_citations(text, brief_text=0.25):
 
     try:
         indices = (ranked_sentences['sentence_len'] > 8) & (ranked_sentences['sentence_len'] <= 35)
+        indices &= ranked_sentences[0].apply(lambda x: re.findall(r'[\'\"\“\”\‘\’\„\”\«\»]', x) is None)
         probs = ranked_sentences.loc[indices, 1].head(5)
         citations = ranked_sentences.loc[indices].head(5).sample(2, weights=probs).sort_index().copy()
     except ValueError:
