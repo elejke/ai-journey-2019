@@ -690,7 +690,7 @@ def get_brief_text_and_citations(text, brief_text=0.25):
 
     try:
         indices = (ranked_sentences['sentence_len'] > 8) & (ranked_sentences['sentence_len'] <= 35)
-        indices &= ranked_sentences[0].apply(lambda x: re.findall(r'[\'\"\“\”\‘\’\„\”\«\»]', x) is None)
+        indices &= ranked_sentences[0].apply(lambda x: len(re.findall(r'[\'\"\“\”\‘\’\„\”\«\»]', x)) == 0)
         probs = ranked_sentences.loc[indices, 1].head(5)
         citations = ranked_sentences.loc[indices].head(5).sample(2, weights=probs).sort_index().copy()
     except ValueError:
