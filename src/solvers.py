@@ -136,7 +136,7 @@ solver_27 = EssayWriter(
     is_load=True,
     seed=42,
     fasttext_model=model_fasttext,
-    custom_topics_path="../models/task_27/topics_with_problems.csv",
+    custom_topics_path="../models/task_27/topics_more_columns.csv",
     stopwords_path="../models/task_27/stopwords.pkl"
 )
 

@@ -59,16 +59,16 @@ essay_template = {
     ],
     # Трактовка цитаты. Но это только генератором скорее всего.
     '2.2': [
-        'Эти слова обращают наше внимание на {citation1_explained}',
+        'Эти слова обращают наше внимание на то, что {citation1_explained}',
         'Этот отрывок объясняет нам, что {citation1_explained}',
         # 'В них звучит мысль о том, что {water}.'
     ],
     '2.3': [
-        'Более детально в сути проблемы можно разобраться прочитав предложение «{citation2}»»»',
+        'Более детально в сути проблемы можно разобраться, прочитав предложение «{citation2}»»»',
         'Но на этом рассуждения автора не заканчиваются. Он также пишет: «{citation2}»»»',
     ],
     '2.4': [
-        'Обе приведённых цитаты, дополняя друг друга, позволяют нам убедиться в том, что {citation2_explained}',
+        'Обе приведённые цитаты, дополняя друг друга, позволяют нам убедиться в том, что {citation2_explained}',
         'Этот пример еще раз показывает нам, что {citation2_explained}',
     ],
     # 3. Авторская позиция по обозначенной проблеме.
@@ -85,7 +85,7 @@ essay_template = {
     # Пример:
     #   {author_position_reformulated} = "эгоизм и «себялюбие» захватывают наше общество"
     '3.2': [
-        'Таким образом {author_last_name} считает, что {author_position_reformulated}',
+        '{author_last_name} считает, что {author_position_reformulated}',
         '{author_last_name} убеждает нас в том, что {author_position_reformulated}'
     ],
     # 4. Собственное мнение по обозначенной проблеме (согласие).
@@ -97,7 +97,7 @@ essay_template = {
         # "С полной уверенностью могу сказать, что автор прав. {own_position}."
     ],
     '4.2': [
-        'Не зря этот вопрос поднимался и во многих других произведениях известных литераторов',
+        'Данный вопрос часто привлекает к себе внимание и других писателей и публицистов',
         'Этот вопрос не раз поднимался и в других произведениях известных литераторов',
     ],
     # 5. Аргумент 1 (из художественной, публицистической или научной литературы).
@@ -184,7 +184,8 @@ class EssayWriter(object):
         self.data = None
         self.learn = None
         self.temperature = None
-        self.custom_topic_keywords_vectors = None
+        self.custom_theme_keywords_vectors = None
+        self.custom_problem_keywords_vectors = None
         self.fasttext_model = fasttext_model
         self.stopwords_path = stopwords_path
         self.stopwords = None
@@ -211,16 +212,31 @@ class EssayWriter(object):
         text_keywords_vectors /= np.linalg.norm(text_keywords_vectors, ord=2, axis=1, keepdims=True)
         text_keywords_dists = np.array(text_keywords_dists)
 
-        topics = []
-        topics_dist = []
-        for topic in self.custom_topic_keywords_vectors:
-            distance_matrix = pairwise_distances(text_keywords_vectors, self.custom_topic_keywords_vectors[topic])
-            topics.append(topic)
-            #         topics_dist.append(np.min(distance_matrix, axis=0).mean())
-            topics_dist.append(np.min(distance_matrix * text_keywords_dists.reshape(-1, 1), axis=0).mean())
-        topic = topics[np.argmin(topics_dist)]
+        themes = []
+        themes_dist = []
+        for theme in self.custom_theme_keywords_vectors:
+            distance_matrix = pairwise_distances(text_keywords_vectors, self.custom_theme_keywords_vectors[theme])
+            themes.append(theme)
+            #         themes_dist.append(np.min(distance_matrix, axis=0).mean())
+            themes_dist.append(np.min(distance_matrix * text_keywords_dists.reshape(-1, 1), axis=0).mean())
+        theme_selected = themes[np.argmin(themes_dist)]
 
-        return topic
+        problems = []
+        problems_dist = []
+        for problem in self.custom_problem_keywords_vectors[theme_selected]:
+            distance_matrix = pairwise_distances(text_keywords_vectors,
+                                                 self.custom_problem_keywords_vectors[theme_selected][problem])
+            problems.append(problem)
+            problems_dist.append(np.min(distance_matrix * text_keywords_dists.reshape(-1, 1), axis=0).mean())
+        problem_selected = problems[np.argmin(problems_dist)]
+
+        try:
+            topic_id = np.where((self.custom_topics["theme"] == theme_selected) &
+                                (self.custom_topics["problem_formulation"] == problem_selected))[0][0]
+        except:
+            topic_id = 0
+
+        return topic_id
 
     def load(self):
 
@@ -246,20 +262,42 @@ class EssayWriter(object):
         with open(self.stopwords_path, "rb") as f:
             self.stopwords = pickle.load(f)
 
-        self.custom_topics = pd.read_csv(self.custom_topics_path, sep=';', index_col='theme')
+        self.custom_topics = pd.read_csv(self.custom_topics_path, sep=';')
         self.custom_topics["theme_keywords"] = self.custom_topics["theme_keywords"].apply(eval)
+        self.custom_topics["problem_keywords"] = self.custom_topics["problem_keywords"].apply(eval)
 
-        self.custom_topic_keywords_vectors = {}
+        self.custom_theme_keywords_vectors = {}
+        self.custom_problem_keywords_vectors = {}
         for row_num in range(len(self.custom_topics)):
-            _theme = self.custom_topics.index[row_num]
-            self.custom_topic_keywords_vectors[_theme] = np.zeros(
-                (len(self.custom_topics["theme_keywords"].iloc[row_num]), self.fasttext_model.get_dimension()))
-            for word_num, word in enumerate(self.custom_topics["theme_keywords"].iloc[row_num]):
-                self.custom_topic_keywords_vectors[_theme][word_num] = self.fasttext_model[word]
-            self.custom_topic_keywords_vectors[_theme] /= np.linalg.norm(self.custom_topic_keywords_vectors[_theme],
-                                                                         axis=1,
-                                                                         ord=2,
-                                                                         keepdims=True)
+
+            _theme = self.custom_topics["theme"].iloc[row_num]
+            _problem = self.custom_topics["problem_formulation"].iloc[row_num]
+
+            # extract vectors for theme
+            if _theme not in self.custom_theme_keywords_vectors:
+                self.custom_theme_keywords_vectors[_theme] = np.zeros(
+                    (len(self.custom_topics["theme_keywords"].iloc[row_num]), self.fasttext_model.get_dimension()))
+                for word_num, word in enumerate(self.custom_topics["theme_keywords"].iloc[row_num]):
+                    self.custom_theme_keywords_vectors[_theme][word_num] = self.fasttext_model[word]
+                self.custom_theme_keywords_vectors[_theme] /= np.linalg.norm(self.custom_theme_keywords_vectors[_theme],
+                                                                             axis=1,
+                                                                             ord=2,
+                                                                             keepdims=True)
+
+            # extract vectors for problem inside theme
+            self.custom_problem_keywords_vectors[_theme] = self.custom_problem_keywords_vectors.get(_theme, {})
+            self.custom_problem_keywords_vectors[_theme][_problem] = np.zeros(
+                    (len(self.custom_topics["problem_keywords"].iloc[row_num]),
+                     self.fasttext_model.get_dimension())
+            )
+            for word_num, word in enumerate(self.custom_topics["problem_keywords"].iloc[row_num]):
+                self.custom_problem_keywords_vectors[_theme][_problem][word_num] = self.fasttext_model[word]
+            self.custom_problem_keywords_vectors[_theme][_problem] /= \
+                np.linalg.norm(self.custom_problem_keywords_vectors[_theme][_problem],
+                               axis=1,
+                               ord=2,
+                               keepdims=True)
+
 
         return self
 
@@ -271,34 +309,46 @@ class EssayWriter(object):
         task, text = split_task_and_text(task)
 
         author = get_author(task)
-        theme = self.get_custom_topic(text)
+        topic_id = self.get_custom_topic(text)
 
         brief_text, citation1, citation2, _ = get_brief_text_and_citations(text)
         brief_text = clear(brief_text) + '\n\n'
 
         essay = self._1st_paragraph(
-            theme=self.custom_topics.loc[theme]["theme_to_insert_vinitelniy"].rstrip(".?!…"),
-            problem_formulation=self.custom_topics.loc[theme]["problem_formulation"].rstrip(".?!…"),
-            problem_explanation=self.custom_topics.loc[theme]["problem_explanation"].rstrip(".?!…"),
+            theme=self.custom_topics.iloc[topic_id]["theme_to_insert_vinitelniy"].rstrip(".?!…"),
+            problem_formulation=self.custom_topics.iloc[topic_id]["problem_formulation"].rstrip(".?!…"),
+            problem_explanation=self.custom_topics.iloc[topic_id]["problem_explanation"].rstrip(".?!…"),
             author=mention_author(author)
         )
-        essay = self._2nd_paragraph(brief_text + essay, citation1, citation2)
+        essay = self._2nd_paragraph(
+            brief_text + essay,
+            citation1=citation1,
+            citation2=citation2,
+            citation1_explained=self.custom_topics.iloc[topic_id]["citation1_explained"].rstrip(".?!…"),
+            citation2_explained=self.custom_topics.iloc[topic_id]["citation2_explained"].rstrip(".?!…")
+        )
         essay = self._3rd_paragraph(
             essay,
             author_last_name=mention_author(author, mode='Aa'),
-            author_position=self.custom_topics.loc[theme]["author_position"].rstrip(".?!…"),
-            author_position_reformulated=self.custom_topics.loc[theme]["author_position"].rstrip(".?!…")
+            author_position=self.custom_topics.iloc[topic_id]["author_position"].rstrip(".?!…"),
+            author_position_reformulated=self.custom_topics.iloc[topic_id]["author_position_reformulated"].rstrip(".?!…")
         )
-        essay = self._4th_paragraph(essay, own_position='water')
+        essay = self._4th_paragraph(
+            essay,
+            own_position=self.custom_topics.iloc[topic_id]["own_position"].rstrip(".?!…")
+        )
         essay = self._5th_paragraph(
             essay,
-            argument_paragraph1=self.custom_topics.loc[theme]["argument_paragraph1"].rstrip(".?!…")
+            argument_paragraph1=self.custom_topics.iloc[topic_id]["argument_paragraph1"].rstrip(".?!…")
         )
         essay = self._6th_paragraph(
             essay,
-            argument_paragraph2=self.custom_topics.loc[theme]["argument_paragraph2"].rstrip(".?!…")
+            argument_paragraph2=self.custom_topics.iloc[topic_id]["argument_paragraph2"].rstrip(".?!…")
         )
-        essay = self._7th_paragraph(essay, conclusion='water')
+        essay = self._7th_paragraph(
+            essay,
+            conclusion=self.custom_topics.iloc[topic_id]["conclusion"].rstrip(".?!…")
+        )
 
         return essay[len(brief_text):]
 
@@ -348,13 +398,13 @@ class EssayWriter(object):
 
         var = np.random.choice(range(len(essay_template['1.1'])))
 
-        sentence_1 = essay_template['1.1'][var].format(
+        sentence_1 = pclear(essay_template['1.1'][var].format(
             author=author[0].upper() + author[1:], theme_name=theme
-        )
-        sentence_2 = essay_template['1.2'][var].format(problem_formulation=problem_formulation)
-        sentence_3 = essay_template['1.3'][var].format(problem_explanation=problem_explanation).rstrip('.')
+        ))
+        sentence_2 = pclear(essay_template['1.2'][var].format(problem_formulation=problem_formulation))
+        sentence_3 = pclear(essay_template['1.3'][var].format(problem_explanation=problem_explanation))
 
-        return ". ".join([sentence_1, sentence_2, sentence_3]) + '.\n\n'
+        return " ".join([sentence_1, sentence_2, sentence_3]) + '\n\n'
 
     def _2nd_paragraph(self, essay, citation1, citation2, citation1_explained="water", citation2_explained="water"):
 
@@ -377,20 +427,18 @@ class EssayWriter(object):
 
         essay = essay + essay_template['2.1'][var].format(citation1=citation1)
         essay = postprocess_citation(essay)
-        # essay = self.continue_phrase(essay + essay_template['2.2'][var].format(water=''), 40) + '. '
-        essay = self.continue_phrase_with_pattern(
+        essay = pclear(self.continue_phrase_with_pattern(
             essay, essay_template['2.2'][var], 40, 'citation1_explained', citation1_explained,
             "это"
-        ).rstrip('.')
-        essay = essay + '. ' + essay_template['2.3'][var].format(citation2=citation2)
+        )) + ' '
+        essay = essay + essay_template['2.3'][var].format(citation2=citation2)
         essay = postprocess_citation(essay)
-        # essay = self.continue_phrase(essay + essay_template['2.4'][var].format(water=''), 50).rstrip('.')
-        essay = self.continue_phrase_with_pattern(
+        essay = pclear(self.continue_phrase_with_pattern(
             essay, essay_template['2.4'][var], 50, 'citation2_explained', citation2_explained,
             "это"
-        ).rstrip('.')
+        ))
 
-        return essay + '.\n\n'
+        return essay + '\n\n'
 
     def _3rd_paragraph(self,
                        essay,
@@ -400,20 +448,20 @@ class EssayWriter(object):
 
         # TODO: author position detector (???)):
         if author_last_name is None:
-            author_last_name = "автор"
+            author_last_name = "Автор"
 
         var = np.random.choice(range(len(essay_template['3.1'])))
 
-        essay = self.continue_phrase_with_pattern(
+        essay = pclear(self.continue_phrase_with_pattern(
             essay, essay_template['3.1'][var], 40, 'author_position', author_position,
             "в обществе распространилась страшная болезнь – «себялюбие»"
-        )[:-1]
+        )) + ' '
 
-        essay = self.continue_phrase_with_pattern(
-            essay + '. ', essay_template['3.2'][var], 60, 'author_position_reformulated',
+        essay = pclear(self.continue_phrase_with_pattern(
+            essay, essay_template['3.2'][var], 60, 'author_position_reformulated',
             author_position_reformulated, "эгоизм и «себялюбие» захватывают наше общество",
-            {'author_last_name': author_last_name}
-        )
+            {'author_last_name': author_last_name[0].upper() + author_last_name[1:]}
+        ))
 
         return essay + '\n\n'
 
@@ -422,11 +470,11 @@ class EssayWriter(object):
         # TODO: OWN POSITION detector????:
         var = np.random.choice(range(len(essay_template['4.1'])))
 
-        essay = self.continue_phrase_with_pattern(
+        essay = pclear(self.continue_phrase_with_pattern(
             essay, essay_template['4.1'][var], 30, 'own_position', own_position, 'эгоизм - это плохо'
-        )
+        )) + ' '
 
-        essay += ' ' + essay_template['4.2'][var] + '.'
+        essay += pclear((essay_template['4.2'][var]))
 
         return essay + '\n\n'
 
@@ -444,11 +492,11 @@ class EssayWriter(object):
                 "Катферт, придавленный телом Уэзерби, которого он прикончил в звериной драке " +
                 "из-за чашки сахара."
         )
-        essay = self.continue_phrase_with_pattern(
+        essay = pclear(self.continue_phrase_with_pattern(
             essay, essay_template['5.1'], 90, 'argument_paragraph1', argument_paragraph1, default_value
-        )
+        ))
 
-        return essay[:-1] + '\n\n'
+        return essay + '\n\n'
 
     def _6th_paragraph(self, essay, argument_paragraph2='water'):
 
@@ -460,20 +508,20 @@ class EssayWriter(object):
                 "отце и братьях, которых прежде так любила. Эгоизм, поселившийся в ее душе после " +
                 "замужества, способствует этому."
         )
-        essay = self.continue_phrase_with_pattern(
+        essay = pclear(self.continue_phrase_with_pattern(
             essay, essay_template['6.1'], 90, 'argument_paragraph2', argument_paragraph2, default_value
-        )
+        ))
 
-        return essay[:-1] + '\n\n'
+        return essay + '\n\n'
 
     def _7th_paragraph(self, essay, conclusion='water'):
 
         var = np.random.choice(range(len(essay_template['7.1'])))
 
-        essay = self.continue_phrase_with_pattern(
+        essay = pclear(self.continue_phrase_with_pattern(
             essay, essay_template['7.1'][var], 10, 'conclusion', conclusion,
             "«себялюбие» - это порок современного общества"
-        )
+        ))
 
         return essay
 
@@ -496,7 +544,10 @@ def split_task_and_text(task_text):
     text.append(last[0])
     formulation.append('.'.join(last[1:]))
 
-    return ''.join(formulation), ''.join(text).strip() + splitted[-1][len(last[0])]
+    formulation = ''.join(formulation)
+    text = ' '.join(text).strip() + ' ' + splitted[-1][len(last[0])]
+
+    return re.sub(r' +', ' ', formulation), re.sub(r' +', ' ', text)
 
 
 def clear(text):
@@ -642,3 +693,12 @@ def get_brief_text_and_citations(text, brief_text=0.25):
     citations[0] = citations[0].apply(lambda x: x[0].upper() + x[1:])
 
     return brief_text, citations.iloc[0, 0], citations.iloc[1, 0], ranked_sentences
+
+
+def pclear(sentence):
+    if re.findall(r'([.!?…]|\.{3})$', sentence) and not re.findall(r'\w[.!?…]\.$', sentence):
+        return sentence
+    elif re.findall(r'\w[.!?…]\.$', sentence):
+        return sentence[:-1]
+    else:
+        return sentence + '.'
