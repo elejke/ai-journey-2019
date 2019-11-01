@@ -669,7 +669,7 @@ def get_brief_text_and_citations(text, brief_text=0.25):
     citations_pattern = r'(«.*?»|".*?"|“.*?”|\'.*?\'|\„.*?\”|\‘.*?\’)'
     processed_text = re.sub(citations_pattern, preprocess_citation_punctuation, processed_text)
     processed_text = re.sub(r'(…|\.{3})', ' xxellipsis.', processed_text)
-    ranked_sentences = summarizer.summarize(re.sub('[\p{Pd}−]\ ', ' ', processed_text), language="russian",
+    ranked_sentences = summarizer.summarize(re.sub(r'[\p{Pd}−]\ ', ' ', processed_text), language="russian",
                                             ratio=1., scores=True)
 
     ranked_sentences = pd.DataFrame(ranked_sentences)
