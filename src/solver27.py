@@ -666,7 +666,7 @@ def get_brief_text_and_citations(text, brief_text=0.25):
     # processed_text = re.sub(r'([….!?]|\.{3})(») ([А-Я])', r'\1\2. \3', text)
     processed_text = re.sub(r'([Тт])\. *е\.', r'\1_е', text)  # т. е.
 
-    citations_pattern = r'(«.*?»|".*?")'
+    citations_pattern = r'(«.*?»|".*?"|“.*?”|\'.*?\'|\„.*?\”|\‘.*?\’)'
     processed_text = re.sub(citations_pattern, preprocess_citation_punctuation, processed_text)
     processed_text = re.sub(r'(…|\.{3})', ' xxellipsis.', processed_text)
     ranked_sentences = summarizer.summarize(re.sub('[\p{Pd}−]\ ', ' ', processed_text), language="russian",
