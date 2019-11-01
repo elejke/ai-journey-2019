@@ -448,7 +448,7 @@ class EssayWriter(object):
 
         # TODO: author position detector (???)):
         if author_last_name is None:
-            author_last_name = "автор"
+            author_last_name = "Автор"
 
         var = np.random.choice(range(len(essay_template['3.1'])))
 
@@ -460,7 +460,7 @@ class EssayWriter(object):
         essay = pclear(self.continue_phrase_with_pattern(
             essay, essay_template['3.2'][var], 60, 'author_position_reformulated',
             author_position_reformulated, "эгоизм и «себялюбие» захватывают наше общество",
-            {'author_last_name': author_last_name}
+            {'author_last_name': author_last_name[0].upper() + author_last_name[1:]}
         ))
 
         return essay + '\n\n'
