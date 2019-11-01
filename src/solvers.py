@@ -1867,12 +1867,12 @@ def solver_14(task):
     return answer
 
 
-# def solver_3(task):
-#     lens = [len(choice["text"]) for choice in task["question"]["choices"]]
-#     argsorted = np.argsort(lens)
-#     ans = [str(task["question"]["choices"][argsorted[-1]]["id"])]
-#
-#     return ans
+def solver_3(task):
+    lens = [len(choice["text"]) for choice in task["question"]["choices"]]
+    argsorted = np.argsort(lens)
+    ans = [str(task["question"]["choices"][argsorted[-1]]["id"])]
+
+    return ans
 #
 # def solver_3_features(choices):
 #     def feats_(choice, choice_id, choices_):
@@ -1900,57 +1900,57 @@ def solver_14(task):
 #     ans = np.argmax(xgb_clf_solver_3.predict_proba(features)[:, 1]) + 1
 #
 #     return [str(ans)]
-
-def solver_3_features(choices, task):
-    def feats_(choice, choice_id, choices_, target_word):
-        features_ = []
-        choice = choice['text']
-        choices_lens = np.array([len(choice_['text']) for choice_ in choices_])
-        #         features_.append(len(choice))
-        features_.append(len(choice) == np.min(choices_lens))
-        features_.append(len(choice) == np.max(choices_lens))
-
-        features_.append(len(choice.split()))
-        features_.append(int("см." in choice))
-        features_.append(int("Устар." in choice or "устар" in choice))
-        features_.append(int("Пер." in choice or "пер." in choice
-                             or "перен." in choice or "Перен." in choice))
-        features_.append(int("Книжн." in choice))
-        features_.append(int("ед." in choice or "Ед." in choice))
-        features_.append(np.linalg.norm(model_fasttext.get_sentence_vector(choice)))
-        features_.append(len(re.findall("\ [а-яА-Я]\.", choice)))
-        features_.append(choice_id / len(choices_))
-        features_.append(len(re.findall("[А-Я]+", choice)))
-        features_.append(len(re.findall("[а-я]+", choice)))
-        features_.append(len(re.findall("[\.]", choice)))
-        features_.append(len(re.findall("[\,]", choice)))
-        features_.append(len(re.findall("[\?]", choice)))
-        features_.append(len(re.findall(target_word, choice.lower())))
-        #         features_.append(choice_id)
-        return features_
-
-    target_words = re.findall("[А-ЯЁ][А-ЯЁ]+",
-                              task['text'].replace("Е́", "Е").replace("О́", "О").replace("И́", "И"))
-
-    try:
-        target_word = target_words[0]
-    except:
-        target_word = "@@@@"
-
-    target_word = target_word.lower()
-
-    features = [feats_(choice_, id_, choices, target_word) for (id_, choice_) in enumerate(choices)]
-    #     print(features_)
-    return np.array(features).astype(float)
-
-
-def solver_3(task):
-    choices = task["question"]["choices"]
-    features = solver_3_features(choices, task)
-
-    ans = np.argmax(xgb_clf_solver_3.predict_proba(features)[:, 1]) + 1
-
-    return [str(ans)]
+#
+# def solver_3_features(choices, task):
+#     def feats_(choice, choice_id, choices_, target_word):
+#         features_ = []
+#         choice = choice['text']
+#         choices_lens = np.array([len(choice_['text']) for choice_ in choices_])
+#         #         features_.append(len(choice))
+#         features_.append(len(choice) == np.min(choices_lens))
+#         features_.append(len(choice) == np.max(choices_lens))
+#
+#         features_.append(len(choice.split()))
+#         features_.append(int("см." in choice))
+#         features_.append(int("Устар." in choice or "устар" in choice))
+#         features_.append(int("Пер." in choice or "пер." in choice
+#                              or "перен." in choice or "Перен." in choice))
+#         features_.append(int("Книжн." in choice))
+#         features_.append(int("ед." in choice or "Ед." in choice))
+#         features_.append(np.linalg.norm(model_fasttext.get_sentence_vector(choice)))
+#         features_.append(len(re.findall("\ [а-яА-Я]\.", choice)))
+#         features_.append(choice_id / len(choices_))
+#         features_.append(len(re.findall("[А-Я]+", choice)))
+#         features_.append(len(re.findall("[а-я]+", choice)))
+#         features_.append(len(re.findall("[\.]", choice)))
+#         features_.append(len(re.findall("[\,]", choice)))
+#         features_.append(len(re.findall("[\?]", choice)))
+#         features_.append(len(re.findall(target_word, choice.lower())))
+#         #         features_.append(choice_id)
+#         return features_
+#
+#     target_words = re.findall("[А-ЯЁ][А-ЯЁ]+",
+#                               task['text'].replace("Е́", "Е").replace("О́", "О").replace("И́", "И"))
+#
+#     try:
+#         target_word = target_words[0]
+#     except:
+#         target_word = "@@@@"
+#
+#     target_word = target_word.lower()
+#
+#     features = [feats_(choice_, id_, choices, target_word) for (id_, choice_) in enumerate(choices)]
+#     #     print(features_)
+#     return np.array(features).astype(float)
+#
+#
+# def solver_3(task):
+#     choices = task["question"]["choices"]
+#     features = solver_3_features(choices, task)
+#
+#     ans = np.argmax(xgb_clf_solver_3.predict_proba(features)[:, 1]) + 1
+#
+#     return [str(ans)]
 
 def solver_21(task):
 
