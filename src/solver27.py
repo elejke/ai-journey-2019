@@ -351,6 +351,7 @@ class EssayWriter(object):
         )
 
         essay = essay[len(brief_text):]
+        essay = regex.sub("\u2003", " ", essay)
         essay = regex.sub("[ ]+", " ", essay)
 
         return essay
