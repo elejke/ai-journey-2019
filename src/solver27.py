@@ -350,7 +350,10 @@ class EssayWriter(object):
             conclusion=self.custom_topics.iloc[topic_id]["conclusion"].rstrip(".?!…")
         )
 
-        return essay[len(brief_text):]
+        essay = essay[len(brief_text):]
+        essay = regex.sub("[ ]+", " ", essay)
+
+        return essay
 
     def continue_phrase(self, text, n_words=10):
         init_len = len(text)
